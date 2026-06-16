@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js'
 // 1. Go to https://supabase.com and create a free project
 // 2. Go to Project Settings → API
 // 3. Copy "Project URL" and "anon public" key and paste below
-const SUPABASE_URL = 'YOUR_SUPABASE_URL'
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY'
+const SUPABASE_URL = https://bbbadcikbhshxofrefto.supabase.co/rest/v1/
+const SUPABASE_ANON_KEY = sb_publishable_Xin-unpJ3PCvTO2Jr-az7A_POxIzYvs
 // ─────────────────────────────────────────────────────────────────────────────
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
