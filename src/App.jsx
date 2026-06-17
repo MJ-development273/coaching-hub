@@ -644,8 +644,13 @@ export default function App() {
       try{
         const{data,error}=await supabase.from('drills').select('*').order('id')
         if(error) throw error
-        if(!data||data.length===0){const{error:ie}=await supabase.from('drills').insert(SEED_DRILLS);if(ie)throw ie;setDrills(SEED_DRILLS)}
-        else setDrills(data)
+        if(!data||data.length===0){
+          const{error:ie}=await supabase.from('drills').upsert(SEED_DRILLS,{onConflict:'id'})
+          if(ie) throw ie
+          setDrills(SEED_DRILLS)
+        } else {
+          setDrills(data)
+        }
         const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single()
         if(hs) setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})
       }catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
@@ -654,8 +659,16 @@ export default function App() {
     load()
   },[])
 
+  // Only listen for custom drills added by coaches — prevents seed inserts doubling up
   useEffect(()=>{
-    const ch=supabase.channel('drills-rt').on('postgres_changes',{event:'INSERT',schema:'public',table:'drills'},p=>setDrills(prev=>[...prev,p.new])).subscribe()
+    const ch=supabase.channel('drills-rt')
+      .on('postgres_changes',{event:'INSERT',schema:'public',table:'drills'},p=>{
+        if(p.new.is_custom) setDrills(prev=>{
+          if(prev.find(d=>d.id===p.new.id)) return prev
+          return [...prev,p.new]
+        })
+      })
+      .subscribe()
     return()=>supabase.removeChannel(ch)
   },[])
 
