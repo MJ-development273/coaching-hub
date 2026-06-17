@@ -1,7 +1,7 @@
 {
-  "name": "Coaching Hub",
-  "short_name": "CoachHub",
-  "description": "Junior football coaching drills and session planner",
+  "name": "Clydach Training Hub",
+  "short_name": "Clydach",
+  "description": "Football drills and Coaches Hub",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#14532d",
