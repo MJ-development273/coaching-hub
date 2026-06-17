@@ -166,7 +166,7 @@ function FilterPill({ label, active, onClick }) {
 
 // ─── Add Drill Form ───────────────────────────────────────────────────────────
 function AddDrillForm({ onSave, onClose }) {
-  const [form,setForm]=useState({title:'',category:CATEGORIES[0],age_groups:['U11'],duration:'',players:'',description:'',coach_notes:'',home_ready:false,diagram:'default'})
+  const [form,setForm]=useState({title:'',category:CATEGORIES[0],age_groups:['U12'],duration:'',players:'',description:'',coach_notes:'',home_ready:false,diagram:'default'})
   const [saving,setSaving]=useState(false)
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
   const toggleAge=ag=>set('age_groups',form.age_groups.includes(ag)?form.age_groups.filter(a=>a!==ag):[...form.age_groups,ag])
@@ -262,8 +262,17 @@ const SESSION_BLOCKS = [
   { key:'smallgame',label:'Small Sided Game',           time:'15 min', icon:'⚽', cat:null,                      fixed:true  },
 ]
 
+// Normalise age_groups — Supabase may return as array OR as string "{U12,U13}"
+function parseAges(age_groups) {
+  if (!age_groups) return []
+  if (Array.isArray(age_groups)) return age_groups
+  return String(age_groups).replace(/[{}"]/g, '').split(',').map(s => s.trim()).filter(Boolean)
+}
+
 function pickDrill(drills, cat, weekNum, ageFilter) {
-  const pool = drills.filter(d => d.category === cat && (ageFilter === 'All' || (d.age_groups||[]).includes(ageFilter)))
+  const pool = drills.filter(d =>
+    d.category === cat && (ageFilter === 'All' || parseAges(d.age_groups).includes(ageFilter))
+  )
   if (!pool.length) return null
   const sorted = [...pool].sort((a,b) => a.id > b.id ? 1 : -1)
   return sorted[(weekNum - 1) % sorted.length]
@@ -445,7 +454,7 @@ function TrainingPlanner({ drills }) {
             <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}</h2>
             <p className="text-sm text-gray-500 mb-4">Choose a different drill for this block:</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
-              {drills.filter(d => d.category === swapBlock.cat && (ageFilter==='All'||(d.age_groups||[]).includes(ageFilter))).map(d => (
+              {drills.filter(d => d.category === swapBlock.cat && (ageFilter==='All'||parseAges(d.age_groups).includes(ageFilter))).map(d => (
                 <div key={d.id} onClick={()=>handleSwap(swapTarget, d)}
                   className="bg-white rounded-xl overflow-hidden cursor-pointer transition-all border-2"
                   style={{borderColor: d.id===session[swapTarget]?.id ? N.bg : '#e5e7eb'}}
@@ -695,7 +704,7 @@ export default function App() {
 
   const filtered=drills.filter(d=>{
     if(filterCat!=='All'&&d.category!==filterCat) return false
-    if(filterAge!=='All'&&!(d.age_groups||[]).includes(filterAge)) return false
+    if(filterAge!=='All'&&!parseAges(d.age_groups).includes(filterAge)) return false
     if(search&&!d.title.toLowerCase().includes(search.toLowerCase())&&!d.description.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
