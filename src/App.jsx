@@ -7,7 +7,7 @@ import { SEED_DRILLS } from './drills'
 const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', text:'#1e3a5f' }
 
 const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Age Group Changes']
-const AGE_GROUPS = ['U11', 'U12', 'U13', 'U14', 'U15']
+const AGE_GROUPS = ['U12', 'U13', 'U14', 'U15']
 const COACH_PIN = '1234'
 
 const CAT_COLORS = {
@@ -253,28 +253,38 @@ function ShareDrillModal({ drill, onClose }) {
 }
 
 // ─── Training Planner ─────────────────────────────────────────────────────────
-function generatePlan(drills, weekNum, ageFilter) {
-  const plan = {}
-  CATEGORIES.forEach(cat=>{
-    const pool=drills.filter(d=>d.category===cat&&(ageFilter==='All'||(d.age_groups||[]).includes(ageFilter)))
-    if(pool.length===0) return
-    const sorted=[...pool].sort((a,b)=>a.id>b.id?1:-1)
-    plan[cat]=sorted[(weekNum-1)%sorted.length]
-  })
-  return plan
+// Session structure: 10min warm-up + age group intro | 10min passing | 10min tackling | 10min attacking | 15min small game
+const SESSION_BLOCKS = [
+  { key:'warmup',   label:'Warm-Up & Age Group Topic', time:'10 min', icon:'🏃', cat:'Strength & Conditioning', fixed:false },
+  { key:'passing',  label:'Passing Drill',              time:'10 min', icon:'🎯', cat:'Passing',                 fixed:false },
+  { key:'tackling', label:'Tackling / Defending Drill', time:'10 min', icon:'🛡️', cat:'Tackling',                fixed:false },
+  { key:'attack',   label:'Attacking Drill',            time:'10 min', icon:'⚡', cat:'Attacking',               fixed:false },
+  { key:'smallgame',label:'Small Sided Game',           time:'15 min', icon:'⚽', cat:null,                      fixed:true  },
+]
+
+function pickDrill(drills, cat, weekNum, ageFilter) {
+  const pool = drills.filter(d => d.category === cat && (ageFilter === 'All' || (d.age_groups||[]).includes(ageFilter)))
+  if (!pool.length) return null
+  const sorted = [...pool].sort((a,b) => a.id > b.id ? 1 : -1)
+  return sorted[(weekNum - 1) % sorted.length]
 }
 
-function SharePlanModal({ plan, weekNum, sessionDate, sessionNotes, onClose }) {
-  const dateStr=sessionDate||`Week ${weekNum}`
-  const lines=[`⚽ *Training Session Plan — ${dateStr}*\n`]
-  CATEGORIES.forEach(cat=>{const drill=plan[cat];if(!drill)return;lines.push(`${(CAT_COLORS[cat]||{}).icon||'📋'} *${cat}*\n${drill.title}\n⏱ ${drill.duration} | 👥 ${drill.players}\n${drill.description}`)})
-  if(sessionNotes) lines.push(`\n📝 *Session Notes:*\n${sessionNotes}`)
-  lines.push('\n— Clydach Juniors')
-  const text=lines.join('\n\n')
+function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter, onClose }) {
+  const dateStr = sessionDate || `Week ${weekNum}`
+  const lines = [`⚽ *Clydach Juniors — Training Session*\n📅 ${dateStr}${ageFilter!=='All'?' | '+ageFilter:''}\n`]
+  lines.push(`🏃 *10 min — Warm-Up & Age Group Topic*\n${session.warmup ? session.warmup.title : 'Dynamic warm-up + coaching topic'}`)
+  lines.push(`🎯 *10 min — Passing*\n${session.passing ? session.passing.title+'\n'+session.passing.description : 'Passing drill TBC'}`)
+  lines.push(`🛡️ *10 min — Tackling / Defending*\n${session.tackling ? session.tackling.title+'\n'+session.tackling.description : 'Tackling drill TBC'}`)
+  lines.push(`⚡ *10 min — Attacking*\n${session.attack ? session.attack.title+'\n'+session.attack.description : 'Attacking drill TBC'}`)
+  lines.push(`⚽ *15 min — Small Sided Game*\nApply today's theme in a free small sided game. Keep teams even, rotate regularly.`)
+  if (sessionNotes) lines.push(`📝 *Notes:* ${sessionNotes}`)
+  lines.push('— Clydach Juniors Coaching Team')
+  const text = lines.join('\n\n')
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
         <h2 className="text-xl font-bold text-gray-900 mb-2">📲 Share Session Plan</h2>
+        <p className="text-xs text-gray-500 mb-3">Full 1-hour session sent to your coaches via WhatsApp.</p>
         <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-5 text-xs text-gray-700 whitespace-pre-wrap font-mono leading-relaxed max-h-64 overflow-y-auto">{text}</div>
         <div className="flex gap-3">
           <a href={`https://wa.me/?text=${encodeURIComponent(text)}`} target="_blank" rel="noreferrer"
@@ -296,21 +306,33 @@ function TrainingPlanner({ drills }) {
   const [sessionDate,setSessionDate]=useState('')
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
-  const basePlan=generatePlan(drills,weekNum,ageFilter)
-  const weekOverrides=overrides[weekNum]||{}
-  const plan={...basePlan}
-  Object.keys(weekOverrides).forEach(cat=>{if(weekOverrides[cat])plan[cat]=weekOverrides[cat]})
-  const totalMins=Object.values(plan).reduce((s,d)=>s+(parseInt(d?.duration)||0),0)
-  const handleSwap=(cat,drill)=>{setOverrides(prev=>({...prev,[weekNum]:{...(prev[weekNum]||{}),[cat]:drill}}));setSwapTarget(null)}
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
+
+  // Build auto session
+  const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
+  const session = {}
+  SESSION_BLOCKS.forEach(b => {
+    if (b.fixed) return
+    session[b.key] = weekOverrides[b.key] || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
+  })
+
+  const handleSwap = (key, drill) => {
+    const okey = `${weekNum}-${ageFilter}`
+    setOverrides(prev => ({ ...prev, [okey]: { ...(prev[okey]||{}), [key]: drill } }))
+    setSwapTarget(null)
+  }
+
+  const swapBlock = SESSION_BLOCKS.find(b => b.key === swapTarget)
+
   return (
     <div>
+      {/* Controls */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-900 text-sm">📅 Session Planner</h2>
-          <span className="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-lg">~{totalMins} min total</span>
+          <h2 className="font-bold text-gray-900 text-sm">📅 1-Hour Session Planner</h2>
+          <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
@@ -331,56 +353,110 @@ function TrainingPlanner({ drills }) {
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Date</label><input type="date" value={sessionDate} onChange={e=>setSessionDate(e.target.value)} className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
-          <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Notes</label><input value={sessionNotes} onChange={e=>setSessionNotes(e.target.value)} placeholder="e.g. Focus on fitness" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+          <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Notes</label><input value={sessionNotes} onChange={e=>setSessionNotes(e.target.value)} placeholder="e.g. Focus on pressing" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
         </div>
       </div>
-      <div className="space-y-3 mb-4">
-        {CATEGORIES.map(cat=>{
-          const drill=plan[cat];const cc=CAT_COLORS[cat];const isOverridden=!!weekOverrides[cat]
-          if(!drill) return <div key={cat} className={`border-2 border-dashed ${cc.border} ${cc.bg} rounded-2xl p-4 flex items-center gap-2`}><span className="text-lg">{cc.icon}</span><div><p className="text-xs font-bold text-gray-700">{cat}</p><p className="text-xs text-gray-400">No drills for {ageFilter}</p></div></div>
-          return (
-            <div key={cat} className="bg-white rounded-2xl overflow-hidden border-2" style={{borderColor:isOverridden?N.bg:'#e5e7eb'}}>
-              <div className={`px-4 py-2 flex items-center justify-between ${cc.bg} border-b ${cc.border}`}>
+
+      {/* Session timeline */}
+      <div className="space-y-2 mb-4">
+        {SESSION_BLOCKS.map((block, i) => {
+          const drill = session[block.key]
+          const isOverridden = !!(weekOverrides[block.key])
+          const timeOffset = [0,10,20,30,40][i]
+
+          // Fixed small game block
+          if (block.fixed) return (
+            <div key={block.key} className="bg-white rounded-2xl border-2 overflow-hidden" style={{borderColor:'#e5e7eb'}}>
+              <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100" style={{background:'#f8fafc'}}>
                 <div className="flex items-center gap-2">
-                  <span>{cc.icon}</span><span className="text-xs font-bold text-gray-700">{cat}</span>
-                  {isOverridden&&<span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{background:N.bg}}>Swapped</span>}
+                  <span className="text-base">{block.icon}</span>
+                  <span className="text-xs font-bold text-gray-700">{block.label}</span>
+                  <span className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">Fixed</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">⏱ {drill.duration}</span>
-                  <button onClick={()=>setSwapTarget(cat)} className="text-xs font-semibold underline underline-offset-2" style={{color:N.text}}>swap</button>
+                  <span className="text-xs text-gray-400">{timeOffset} min mark</span>
+                  <span className="text-xs font-bold text-gray-500">{block.time}</span>
                 </div>
               </div>
-              <div className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(drill)}>
-                <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-gray-900 text-sm">{drill.title}</p>
-                  <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{drill.description}</p>
-                  <div className="flex gap-1 mt-1 flex-wrap">{(drill.age_groups||[]).map(ag=><span key={ag} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{ag}</span>)}</div>
+              <div className="p-4">
+                <p className="text-sm font-semibold text-gray-900 mb-1">Free Small Sided Game</p>
+                <p className="text-xs text-gray-500 leading-relaxed">Apply the session's theme in a free small sided game. Keep teams even, rotate regularly, and let the players express themselves. Avoid heavy coaching — observe and note what to work on next week.</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Equal playing time</span>
+                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Apply today's theme</span>
+                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Rotate teams</span>
                 </div>
               </div>
             </div>
           )
+
+          // Drill blocks
+          return (
+            <div key={block.key} className="bg-white rounded-2xl overflow-hidden border-2" style={{borderColor:isOverridden?N.bg:'#e5e7eb'}}>
+              <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100" style={{background:N.light}}>
+                <div className="flex items-center gap-2">
+                  <span className="text-base">{block.icon}</span>
+                  <span className="text-xs font-bold text-gray-800">{block.label}</span>
+                  {isOverridden && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{background:N.bg}}>Swapped</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{timeOffset} min mark</span>
+                  <span className="text-xs font-bold" style={{color:N.text}}>{block.time}</span>
+                  {!block.fixed && <button onClick={()=>setSwapTarget(block.key)} className="text-xs font-semibold underline underline-offset-2 ml-1" style={{color:N.text}}>swap</button>}
+                </div>
+              </div>
+              {drill ? (
+                <div className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(drill)}>
+                  <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-semibold text-gray-900 text-sm">{drill.title}</p>
+                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{drill.description}</p>
+                    <div className="flex gap-1 mt-1 flex-wrap">{(drill.age_groups||[]).map(ag=><span key={ag} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{ag}</span>)}</div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center text-gray-400">
+                  <p className="text-xs">No {block.cat} drills available for {ageFilter}</p>
+                  <button onClick={()=>setSwapTarget(block.key)} className="text-xs font-semibold mt-1 underline" style={{color:N.text}}>Choose manually</button>
+                </div>
+              )}
+            </div>
+          )
         })}
       </div>
+
+      {/* Total time bar */}
+      <div className="rounded-xl p-3 mb-4 flex items-center justify-between" style={{background:N.light}}>
+        <div className="flex gap-4 text-xs text-gray-600">
+          <span>🏃 10 min</span><span>🎯 10 min</span><span>🛡️ 10 min</span><span>⚡ 10 min</span><span>⚽ 15 min</span>
+        </div>
+        <span className="text-sm font-black" style={{color:N.text}}>= 55 min</span>
+      </div>
+
       <button onClick={()=>setShareOpen(true)} onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
-        className="w-full text-white font-bold py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2"
-        style={navyBtn}>📲 Share This Session Plan</button>
-      <p className="text-center text-xs text-gray-400 mt-2">Sends all 5 drills to your coaches via WhatsApp</p>
-      {swapTarget&&(
+        className="w-full text-white font-bold py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2 mb-2"
+        style={navyBtn}>📲 Share Full Session Plan</button>
+      <p className="text-center text-xs text-gray-400">Sends complete 1-hour plan to your coaches via WhatsApp</p>
+
+      {/* Swap modal */}
+      {swapTarget && swapBlock && (
         <Modal onClose={()=>setSwapTarget(null)} wide>
           <div className="p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">Swap {swapTarget} drill</h2>
-            <p className="text-sm text-gray-500 mb-4">Pick a replacement:</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}</h2>
+            <p className="text-sm text-gray-500 mb-4">Choose a different drill for this block:</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
-              {drills.filter(d=>d.category===swapTarget&&(ageFilter==='All'||(d.age_groups||[]).includes(ageFilter))).map(d=>(
-                <div key={d.id} onClick={()=>handleSwap(swapTarget,d)}
+              {drills.filter(d => d.category === swapBlock.cat && (ageFilter==='All'||(d.age_groups||[]).includes(ageFilter))).map(d => (
+                <div key={d.id} onClick={()=>handleSwap(swapTarget, d)}
                   className="bg-white rounded-xl overflow-hidden cursor-pointer transition-all border-2"
-                  style={{borderColor:d.id===plan[swapTarget]?.id?N.bg:'#e5e7eb'}}
+                  style={{borderColor: d.id===session[swapTarget]?.id ? N.bg : '#e5e7eb'}}
                   onMouseEnter={e=>e.currentTarget.style.borderColor=N.bg}
-                  onMouseLeave={e=>e.currentTarget.style.borderColor=d.id===plan[swapTarget]?.id?N.bg:'#e5e7eb'}>
+                  onMouseLeave={e=>e.currentTarget.style.borderColor=d.id===session[swapTarget]?.id?N.bg:'#e5e7eb'}>
                   <div className="h-20"><DrillDiagram type={d.diagram} category={d.category}/></div>
-                  <div className="p-2"><p className="text-xs font-semibold text-gray-900 leading-tight">{d.title}</p><p className="text-xs text-gray-400">⏱ {d.duration}</p></div>
-                  {d.id===plan[swapTarget]?.id&&<div className="text-white text-xs font-bold text-center py-1" style={{background:N.bg}}>✓ Current</div>}
+                  <div className="p-2">
+                    <p className="text-xs font-semibold text-gray-900 leading-tight">{d.title}</p>
+                    <p className="text-xs text-gray-400">⏱ {d.duration} · 👥 {d.players}</p>
+                  </div>
+                  {d.id===session[swapTarget]?.id && <div className="text-white text-xs font-bold text-center py-1" style={{background:N.bg}}>✓ Current</div>}
                 </div>
               ))}
             </div>
@@ -388,8 +464,8 @@ function TrainingPlanner({ drills }) {
           </div>
         </Modal>
       )}
-      {shareOpen&&<SharePlanModal plan={plan} weekNum={weekNum} sessionDate={sessionDate} sessionNotes={sessionNotes} onClose={()=>setShareOpen(false)}/>}
-      {detailDrill&&<DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
+      {shareOpen && <SharePlanModal session={session} weekNum={weekNum} sessionDate={sessionDate} sessionNotes={sessionNotes} ageFilter={ageFilter} onClose={()=>setShareOpen(false)}/>}
+      {detailDrill && <DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
     </div>
   )
 }
