@@ -299,7 +299,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
 
 function TrainingPlanner({ drills }) {
   const [weekNum,setWeekNum]=useState(1)
-  const [ageFilter,setAgeFilter]=useState('U11')
+  const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
