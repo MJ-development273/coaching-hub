@@ -281,8 +281,8 @@ function AddDrillForm({ onSave, onClose }) {
 function ShareDrillModal({ drill, onClose }) {
   const [target,setTarget]=useState('coaches')
   const text=target==='coaches'
-    ?`⚽ *Training Drill — ${drill.title}*\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration} | 👥 ${drill.players}\n\n${drill.description}${drill.coach_notes?`\n\n📋 *Coach Notes:* ${drill.coach_notes}`:''}\n\n— Clydach Juniors`
-    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Clydach Juniors Coaching Team`
+    ?`⚽ *Training Drill — ${drill.title}*\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration} | 👥 ${drill.players}\n\n${drill.description}${drill.coach_notes?`\n\n📋 *Coach Notes:* ${drill.coach_notes}`:''}\n\n— Coaches`
+    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Coaches`
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
@@ -336,14 +336,14 @@ function pickDrill(drills, cat, weekNum, ageFilter) {
 
 function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter, onClose }) {
   const dateStr = sessionDate || `Week ${weekNum}`
-  const lines = [`⚽ *Clydach Juniors — Training Session*\n📅 ${dateStr}${ageFilter!=='All'?' | '+ageFilter:''}\n`]
+  const lines = [`⚽ *Training Session*\n📅 ${dateStr}${ageFilter!=='All'?' | '+ageFilter:''}\n`]
   lines.push(`🏃 *10 min — Warm-Up & Age Group Topic*\n${session.warmup ? session.warmup.title : 'Dynamic warm-up + coaching topic'}`)
   lines.push(`🎯 *10 min — Passing*\n${session.passing ? session.passing.title+'\n'+session.passing.description : 'Passing drill TBC'}`)
   lines.push(`🛡️ *10 min — Tackling / Defending*\n${session.tackling ? session.tackling.title+'\n'+session.tackling.description : 'Tackling drill TBC'}`)
   lines.push(`⚡ *10 min — Attacking*\n${session.attack ? session.attack.title+'\n'+session.attack.description : 'Attacking drill TBC'}`)
   lines.push(`⚽ *15 min — Small Sided Game*\nApply today's theme in a free small sided game. Keep teams even, rotate regularly.`)
   if (sessionNotes) lines.push(`📝 *Notes:* ${sessionNotes}`)
-  lines.push('— Clydach Juniors Coaching Team')
+  lines.push('— Coaches')
   const text = lines.join('\n\n')
   return (
     <Modal onClose={onClose}>
@@ -547,10 +547,10 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
   const publish=async()=>{setSaving(true);await onSave({drill_ids:selected,message});setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000)}
   const selectedDrills=drills.filter(d=>selected.includes(d.id))
   const shareText=()=>{
-    const lines=[`🏠 *This Week's Home Practice — Clydach Juniors*\n`]
+    const lines=[`🏠 *This Week's Skill Drill*\n`]
     if(message) lines.push(`${message}\n`)
     selectedDrills.forEach((d,i)=>lines.push(`*Drill ${i+1}: ${d.title}*\n⏱ ${d.duration} | 👥 ${d.players}\n\n${d.description}`))
-    lines.push('\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team')
+    lines.push('\nGive these a go before next training! 💪\n— Coaches')
     return lines.join('\n\n')
   }
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
