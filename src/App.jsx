@@ -500,11 +500,10 @@ function TrainingPlanner({ drills }) {
                     style={{minWidth:0}} onFocus={focusNavy} onBlur={blurGray}
                     title="Set season start date (Week 1)"/>
                 ) : (
-                  <input type="date" value={sessionDate}
-                    readOnly
-                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none cursor-default"
-                    style={{minWidth:0, color:isDateOverridden?'#f59e0b':N.text}}
-                    title={`Week ${weekNum} date${isDateOverridden?' (manually set)':' (auto-calculated)'}`}/>
+                  <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white"
+                    style={{minWidth:0, color:isDateOverridden?'#f59e0b':N.text}}>
+                    {sessionDate || '—'}
+                  </div>
                 )}
                 {seasonStart && (
                   <button onClick={()=>setEditingDate(true)}
