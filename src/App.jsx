@@ -9,7 +9,7 @@ const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', te
 const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Age Group Changes']
 const AGE_GROUPS = ['U12', 'U13', 'U14', 'U15']
 const COACH_PIN = '1234'
-const SITE_URL = 'https://clydachcoaching.netlify.app'
+const SITE_URL = 'https://coaching-hub-virid.vercel.app'
 
 const CAT_COLORS = {
   'Passing':                  { pill:'bg-blue-100 text-blue-800',    border:'border-blue-300',    bg:'bg-blue-50',    icon:'🎯', accent:'#3b82f6' },
