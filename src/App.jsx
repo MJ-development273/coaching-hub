@@ -518,7 +518,7 @@ function TrainingPlanner({ drills }) {
                   <button onClick={()=>setEditingDate(true)}
                     className="w-full text-xs py-1.5 rounded-lg border transition-colors font-semibold"
                     style={{borderColor:N.bg+'44', color:N.text, background:N.light}}>
-                    {isDateOverridden ? '✏️ Edit this week's date' : '📅 Override this week's date'}
+                    {isDateOverridden ? "✏️ Edit this week's date" : "📅 Override this week's date"}
                   </button>
                 ) : (
                   <div className="space-y-1.5">
