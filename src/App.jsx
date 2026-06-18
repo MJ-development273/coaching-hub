@@ -105,32 +105,63 @@ function DrillDiagram({ type, category }) {
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
 function AuthScreen({ onAuth }) {
+  const [screen, setScreen] = useState('home') // 'home' | 'coach'
   const [pin, setPin] = useState('')
   const [err, setErr] = useState('')
   const check = () => { if (pin === COACH_PIN) { onAuth('coach') } else { setErr('Incorrect PIN. Try again.'); setPin('') } }
+
   return (
     <div className="min-h-screen flex items-center justify-center px-6" style={{background:N.bg}}>
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-sm text-center">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4" style={{background:N.bg}}>⚽</div>
-        <h1 className="text-2xl font-black text-gray-900 mb-1">Clydach Juniors</h1>
-        <p className="text-sm font-semibold text-gray-700 mb-3 mt-4">Enter your coach PIN</p>
-        <input type="password" value={pin} onChange={e=>setPin(e.target.value)} onKeyDown={e=>e.key==='Enter'&&check()} placeholder="••••" maxLength={6}
-          className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-center text-2xl tracking-widest font-bold focus:outline-none mb-3"
-          style={{'--tw-ring-color':N.bg}} onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
-        {err && <p className="text-red-500 text-xs mb-3">{err}</p>}
-        <button onClick={check} onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
-          className="w-full text-white font-bold py-3 rounded-xl mb-4 transition-colors" style={navyBtn}>
-          Sign In as Coach
-        </button>
-        <div className="border-t border-gray-200 pt-4">
-          <p className="text-xs text-gray-500 mb-2">Parent or player?</p>
-          <button onClick={()=>onAuth('parent')} className="w-full border-2 font-semibold py-2.5 rounded-xl transition-colors"
-            style={{borderColor:N.bg, color:N.text}}
-            onMouseEnter={e=>{e.currentTarget.style.background=N.light}}
-            onMouseLeave={e=>{e.currentTarget.style.background='white'}}>
-            View This Week's Home Drills 🏠
-          </button>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm text-center overflow-hidden">
+
+        {/* Header */}
+        <div className="px-8 pt-8 pb-6">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4" style={{background:N.bg}}>⚽</div>
+          <h1 className="text-2xl font-black text-gray-900 mb-1">Clydach Juniors</h1>
+          <p className="text-sm text-gray-500">Coaching Hub</p>
         </div>
+
+        {/* Landing — two buttons */}
+        {screen === 'home' && (
+          <div className="px-8 pb-8 space-y-3">
+            <button onClick={()=>setScreen('coach')}
+              onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
+              className="w-full text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-3 text-base"
+              style={navyBtn}>
+              <span className="text-xl">👨‍🏫</span> Coach Login
+            </button>
+            <button onClick={()=>onAuth('parent')}
+              className="w-full text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-3 text-base"
+              style={{background:'#2d5a8e'}}
+              onMouseEnter={e=>e.currentTarget.style.background='#243f6b'}
+              onMouseLeave={e=>e.currentTarget.style.background='#2d5a8e'}>
+              <span className="text-xl">👪</span> Player / Parent
+            </button>
+          </div>
+        )}
+
+        {/* Coach PIN screen */}
+        {screen === 'coach' && (
+          <div className="px-8 pb-8">
+            <button onClick={()=>{setScreen('home');setPin('');setErr('')}}
+              className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-4 mx-auto transition-colors">
+              ‹ Back
+            </button>
+            <p className="text-sm font-semibold text-gray-700 mb-3">Enter your coach PIN</p>
+            <input type="password" value={pin} onChange={e=>setPin(e.target.value)}
+              onKeyDown={e=>e.key==='Enter'&&check()}
+              placeholder="••••" maxLength={6} autoFocus
+              className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-center text-2xl tracking-widest font-bold focus:outline-none mb-3"
+              onFocus={e=>e.target.style.borderColor=N.bg}
+              onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+            {err && <p className="text-red-500 text-xs mb-3">{err}</p>}
+            <button onClick={check} onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
+              className="w-full text-white font-bold py-3 rounded-xl transition-colors" style={navyBtn}>
+              Sign In
+            </button>
+          </div>
+        )}
+
       </div>
     </div>
   )
@@ -369,12 +400,56 @@ function TrainingPlanner({ drills }) {
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
-  const [sessionDate,setSessionDate]=useState('')
+  const [seasonStart,setSeasonStart]=useState('') // ISO date string for week 1
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
+
+  const [dateOverrides,setDateOverrides]=useState({}) // { [weekNum]: 'YYYY-MM-DD' }
+  const [editingDate,setEditingDate]=useState(false)
+
+  // Calculate this week's date from season start + (weekNum-1) * 7 days
+  const getAutoDate = (wNum) => {
+    if (!seasonStart) return ''
+    const d = new Date(seasonStart)
+    d.setDate(d.getDate() + (wNum - 1) * 7)
+    return d.toISOString().split('T')[0]
+  }
+
+  // Use manual override if set, otherwise auto-calculate
+  const sessionDate = dateOverrides[weekNum] || getAutoDate(weekNum)
+  const isDateOverridden = !!dateOverrides[weekNum]
+
+  // Format date nicely for display e.g. "Tue 14 Jan 2025"
+  const formatDate = (iso) => {
+    if (!iso) return null
+    return new Date(iso).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' })
+  }
+
+  // Push all future weeks forward by 7 days from a given week
+  const pushFutureWeeks = (fromWeek) => {
+    setDateOverrides(prev => {
+      const updated = {...prev}
+      // Push all existing overrides from this week onwards
+      for (let w = fromWeek; w <= 40; w++) {
+        const base = updated[w] || getAutoDate(w)
+        if (base) {
+          const d = new Date(base)
+          d.setDate(d.getDate() + 7)
+          updated[w] = d.toISOString().split('T')[0]
+        }
+      }
+      return updated
+    })
+    setEditingDate(false)
+  }
+
+  const clearDateOverride = (wNum) => {
+    setDateOverrides(prev => { const u={...prev}; delete u[wNum]; return u })
+    setEditingDate(false)
+  }
 
   // Build auto session
   const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
@@ -400,14 +475,77 @@ function TrainingPlanner({ drills }) {
           <h2 className="font-bold text-gray-900 text-sm">📅 1-Hour Session Planner</h2>
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
+
+        {/* Season start date */}
+        <div className="mb-3 rounded-xl p-3 border" style={{background:N.light, borderColor:N.bg+'33'}}>
+          <div className="flex items-center justify-between mb-1">
+            <label className="text-xs font-semibold uppercase tracking-wide" style={{color:N.text}}>Season Start Date (Week 1)</label>
+            {seasonStart && (
+              <button onClick={()=>setSeasonStart('')}
+                className="text-xs text-red-400 hover:text-red-600 font-semibold transition-colors">
+                ✕ Clear all dates
+              </button>
+            )}
+          </div>
+          <input type="date" value={seasonStart} onChange={e=>setSeasonStart(e.target.value)}
+            className={inputCls} style={{background:'white'}} onFocus={focusNavy} onBlur={blurGray}/>
+          {seasonStart
+            ? <p className="text-xs mt-1.5" style={{color:N.text}}>Week {weekNum} → <strong>{formatDate(sessionDate)}</strong></p>
+            : <p className="text-xs text-gray-400 mt-1.5">Set once — all weekly dates calculate automatically</p>
+          }
+        </div>
+
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Week</label>
             <div className="flex items-center gap-2">
-              <button onClick={()=>setWeekNum(w=>Math.max(1,w-1))} className="w-8 h-8 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50">‹</button>
-              <span className="flex-1 text-center font-bold text-gray-900 text-sm">Week {weekNum}</span>
-              <button onClick={()=>setWeekNum(w=>w+1)} className="w-8 h-8 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50">›</button>
+              <button onClick={()=>{setWeekNum(w=>Math.max(1,w-1));setEditingDate(false)}} className="w-8 h-8 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50">‹</button>
+              <div className="flex-1 text-center">
+                <div className="font-bold text-gray-900 text-sm">Week {weekNum}</div>
+                {sessionDate && (
+                  <div className="text-xs mt-0.5" style={{color: isDateOverridden ? '#f59e0b' : '#9ca3af'}}>
+                    {formatDate(sessionDate)}
+                    {isDateOverridden && ' ✏️'}
+                  </div>
+                )}
+              </div>
+              <button onClick={()=>{setWeekNum(w=>w+1);setEditingDate(false)}} className="w-8 h-8 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50">›</button>
             </div>
+            {/* Date edit controls — shown when season start is set */}
+            {seasonStart && (
+              <div className="mt-2">
+                {!editingDate ? (
+                  <button onClick={()=>setEditingDate(true)}
+                    className="w-full text-xs py-1.5 rounded-lg border transition-colors font-semibold"
+                    style={{borderColor:N.bg+'44', color:N.text, background:N.light}}>
+                    {isDateOverridden ? '✏️ Edit this week's date' : '📅 Override this week's date'}
+                  </button>
+                ) : (
+                  <div className="space-y-1.5">
+                    <input type="date" value={sessionDate}
+                      onChange={e=>setDateOverrides(prev=>({...prev,[weekNum]:e.target.value}))}
+                      className="w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none"
+                      style={{borderColor:N.bg}} autoFocus/>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button onClick={()=>pushFutureWeeks(weekNum)}
+                        className="text-xs py-1.5 rounded-lg font-semibold text-white transition-colors"
+                        style={{background:'#f59e0b'}}
+                        title="Shift this week and all future weeks forward by 7 days">
+                        ⏭️ Push week & future +7d
+                      </button>
+                      <button onClick={()=>clearDateOverride(weekNum)}
+                        className="text-xs py-1.5 rounded-lg font-semibold border transition-colors text-red-500 border-red-200 hover:bg-red-50">
+                        🗑️ Reset to auto date
+                      </button>
+                    </div>
+                    <button onClick={()=>setEditingDate(false)}
+                      className="w-full text-xs py-1 text-gray-400 hover:text-gray-600">
+                      Cancel
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Age Group</label>
@@ -417,9 +555,9 @@ function TrainingPlanner({ drills }) {
             </select>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Date</label><input type="date" value={sessionDate} onChange={e=>setSessionDate(e.target.value)} className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
-          <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Notes</label><input value={sessionNotes} onChange={e=>setSessionNotes(e.target.value)} placeholder="e.g. Focus on pressing" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+        <div>
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Notes</label>
+          <input value={sessionNotes} onChange={e=>setSessionNotes(e.target.value)} placeholder="e.g. Focus on pressing" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/>
         </div>
       </div>
 
@@ -545,10 +683,16 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
   const [saved,setSaved]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
   const toggle=(id)=>{setSelected(prev=>prev.includes(id)?prev.filter(x=>x!==id):prev.length>=2?[...prev.slice(1),id]:[...prev,id]);setSaved(false)}
-  const publish=async()=>{setSaving(true);await onSave({drill_ids:selected,message});setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000)}
+  const publish=async()=>{
+    setSaving(true)
+    await onSave({drill_ids:selected,message})
+    setSaving(false)
+    setSaved(true)
+    setTimeout(()=>setSaved(false),3000)
+  }
   const selectedDrills=drills.filter(d=>selected.includes(d.id))
   const shareText=()=>{
-    const lines=[`🏠 *This Week's Home Practice — Clydach Juniors*\n`]
+    const lines=[`🏠 *This Week's Home Skill Drills — Clydach Juniors*\n`]
     if(message) lines.push(`${message}\n`)
     selectedDrills.forEach((d,i)=>lines.push(`*Drill ${i+1}: ${d.title}*\n⏱ ${d.duration} | 👥 ${d.players}\n\n${d.description}`))
     lines.push(`\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
@@ -587,12 +731,12 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
         </div>
       )}
       <div className="flex gap-3 mb-6">
-        <button onClick={publish} disabled={saving||selected.length===0}
+        <button onClick={publish} disabled={saving}
           className="flex-1 font-bold py-3 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2"
-          style={saved?{background:N.light,color:N.text,border:`2px solid ${N.bg}44`}:selected.length===0?{background:'#f3f4f6',color:'#9ca3af'}:navyBtn}
-          onMouseEnter={e=>{if(!saved&&selected.length>0)e.currentTarget.style.background=N.hover}}
-          onMouseLeave={e=>{if(!saved&&selected.length>0)e.currentTarget.style.background=N.bg}}>
-          {saved?'✓ Published!':saving?'Publishing…':'🚀 Publish to Parents'}
+          style={saved?{background:N.light,color:N.text,border:`2px solid ${N.bg}44`}:navyBtn}
+          onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}}
+          onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
+          {saved?(selected.length===0?'✓ Cleared!':'✓ Published!'):saving?'Publishing…':selected.length===0?'🗑️ Clear Parent View':'🚀 Publish to Parents'}
         </button>
         {selectedDrills.length>0&&(
           <a href={`https://wa.me/?text=${encodeURIComponent(shareText())}`} target="_blank" rel="noreferrer"
@@ -656,7 +800,7 @@ function ParentHomeView({ drills, homeSession }) {
       <div className="rounded-2xl p-4 mb-5 flex gap-3 items-start" style={{background:N.light,border:`1px solid ${N.bg}44`}}>
         <span className="text-2xl">🏠</span>
         <div>
-          <p className="font-bold text-sm" style={{color:N.text}}>This Week's Home Practice</p>
+          <p className="font-bold text-sm" style={{color:N.text}}>This Week's Home Skill Drills</p>
           {homeSession.message
             ?<p className="text-sm mt-1" style={{color:N.text}}>{homeSession.message}</p>
             :<p className="text-xs mt-0.5" style={{color:N.text+'bb'}}>Try these drills in your garden or local park before the next session!</p>}
@@ -811,7 +955,7 @@ export default function App() {
 
           {!isCoach&&(
             <div className="rounded-xl px-3 py-2 text-center" style={{background:N.light}}>
-              <p className="text-xs font-semibold" style={{color:N.text}}>🏠 This Week's Home Practice from Clydach Juniors</p>
+              <p className="text-xs font-semibold" style={{color:N.text}}>🏠 This Week's Home Skill Drills</p>
             </div>
           )}
         </div>
