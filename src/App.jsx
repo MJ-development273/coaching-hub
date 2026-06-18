@@ -9,7 +9,7 @@ const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', te
 const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Age Group Changes']
 const AGE_GROUPS = ['U12', 'U13', 'U14', 'U15']
 const COACH_PIN = '1234'
-const SITE_URL = 'https://coaching-hub-virid.vercel.app/'
+const SITE_URL = 'https://clydachcoaching.netlify.app'
 
 const CAT_COLORS = {
   'Passing':                  { pill:'bg-blue-100 text-blue-800',    border:'border-blue-300',    bg:'bg-blue-50',    icon:'🎯', accent:'#3b82f6' },
@@ -425,7 +425,8 @@ function TrainingPlanner({ drills }) {
   // Format date nicely for display e.g. "Tue 14 Jan 2025"
   const formatDate = (iso) => {
     if (!iso) return null
-    return new Date(iso).toLocaleDateString('en-GB', { weekday:'short', day:'numeric', month:'short', year:'numeric' })
+    const d = new Date(iso)
+    return d.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' })
   }
 
   // Push all future weeks forward by 7 days from a given week
@@ -493,17 +494,18 @@ function TrainingPlanner({ drills }) {
             {/* Date row */}
             {!editingDate ? (
               <div className="flex items-center gap-1">
-               {!seasonStart ? (
-  <input type="date" value={seasonStart} onChange={e=>{setSeasonStart(e.target.value);setDateOverrides({})}}
-    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
-    style={{minWidth:0}} onFocus={focusNavy} onBlur={blurGray}/>
-) : (
-  <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white"
-    style={{color:isDateOverridden?'#f59e0b':'#1e3a5f'}}>
-    {sessionDate || '—'}
-  </div>
-)} 
-              
+                {/* Show season start picker if not set, otherwise show current week's date */}
+                {!seasonStart ? (
+                  <input type="date" value={seasonStart} onChange={e=>{setSeasonStart(e.target.value);setDateOverrides({})}}
+                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
+                    style={{minWidth:0}} onFocus={focusNavy} onBlur={blurGray}
+                    title="Set season start date (Week 1)"/>
+                ) : (
+                  <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white font-semibold"
+                    style={{minWidth:0, color:isDateOverridden?'#f59e0b':N.text}}>
+                    {formatDate(sessionDate) || '—'}
+                  </div>
+                )}
                 {seasonStart && (
                   <button onClick={()=>setEditingDate(true)}
                     className="text-xs px-1.5 py-1 rounded-lg border font-semibold shrink-0"
@@ -533,13 +535,6 @@ function TrainingPlanner({ drills }) {
                 </div>
                 <button onClick={()=>setEditingDate(false)}
                   className="w-full text-xs py-0.5 text-gray-400 hover:text-gray-600">Cancel</button>
-              </div>
-            )}
-            {/* Date display */}
-            {sessionDate && !editingDate && (
-              <div className="text-xs text-center mt-1.5 font-semibold"
-                style={{color: isDateOverridden ? '#f59e0b' : N.text}}>
-                {formatDate(sessionDate)}{isDateOverridden ? ' ✏️' : ''}
               </div>
             )}
             {!seasonStart && (
