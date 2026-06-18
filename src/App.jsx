@@ -517,15 +517,25 @@ function TrainingPlanner({ drills }) {
                   {formatDate(sessionDate)}{isDateOverridden?' ✏️':''}
                 </div>
                 <div className="flex gap-1">
-                  <button onClick={()=>{setTempDate(sessionDate);setEditingDate(true)}}
+                  <button onClick={()=>{setTempDate('');setEditingDate(true)}}
                     className="flex-1 text-xs py-1 rounded-lg border font-semibold"
                     style={{borderColor:N.bg+'44', color:N.text, background:'white'}}>
                     📅 Override
                   </button>
-                  <button onClick={()=>{setSeasonStart('');setDateOverrides({});setTempDate('')}}
-                    className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600">
-                    ✕
-                  </button>
+                  {isDateOverridden && (
+                    <button onClick={()=>{clearDateOverride(weekNum);setTempDate('')}}
+                      className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600"
+                      title="Remove override for this week">
+                      ✕
+                    </button>
+                  )}
+                  {!isDateOverridden && (
+                    <button onClick={()=>{setSeasonStart('');setDateOverrides({});setTempDate('')}}
+                      className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600"
+                      title="Clear all dates">
+                      🗑️
+                    </button>
+                  )}
                 </div>
               </div>
             )}
