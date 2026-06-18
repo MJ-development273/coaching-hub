@@ -493,18 +493,17 @@ function TrainingPlanner({ drills }) {
             {/* Date row */}
             {!editingDate ? (
               <div className="flex items-center gap-1">
-                {/* Show season start picker if not set, otherwise show current week's date */}
-                {!seasonStart ? (
-                  <input type="date" value={seasonStart} onChange={e=>{setSeasonStart(e.target.value);setDateOverrides({})}}
-                    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
-                    style={{minWidth:0}} onFocus={focusNavy} onBlur={blurGray}
-                    title="Set season start date (Week 1)"/>
-                ) : (
-                  <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white"
-                    style={{minWidth:0, color:isDateOverridden?'#f59e0b':N.text}}>
-                    {sessionDate || '—'}
-                  </div>
-                )}
+               {!seasonStart ? (
+  <input type="date" value={seasonStart} onChange={e=>{setSeasonStart(e.target.value);setDateOverrides({})}}
+    className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
+    style={{minWidth:0}} onFocus={focusNavy} onBlur={blurGray}/>
+) : (
+  <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white"
+    style={{color:isDateOverridden?'#f59e0b':'#1e3a5f'}}>
+    {sessionDate || '—'}
+  </div>
+)} 
+              
                 {seasonStart && (
                   <button onClick={()=>setEditingDate(true)}
                     className="text-xs px-1.5 py-1 rounded-lg border font-semibold shrink-0"
