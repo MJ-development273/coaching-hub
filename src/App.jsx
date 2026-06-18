@@ -314,7 +314,7 @@ function ShareDrillModal({ drill, onClose }) {
   const [target,setTarget]=useState('coaches')
   const text=target==='coaches'
     ?`⚽ *Training Drill — ${drill.title}*\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration} | 👥 ${drill.players}\n\n${drill.description}${drill.coach_notes?`\n\n📋 *Coach Notes:* ${drill.coach_notes}`:''}\n\n— Clydach Juniors\n🔗 ${SITE_URL}`
-    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`
+    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Coaches\n🔗 ${SITE_URL}`
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
@@ -375,7 +375,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   lines.push(`⚡ *10 min — Attacking*\n${session.attack ? session.attack.title+'\n'+session.attack.description : 'Attacking drill TBC'}`)
   lines.push(`⚽ *15 min — Small Sided Game*\nApply today's theme in a free small sided game. Keep teams even, rotate regularly.`)
   if (sessionNotes) lines.push(`📝 *Notes:* ${sessionNotes}`)
-  lines.push(`— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
+  lines.push(`— Coaches\n🔗 ${SITE_URL}`)
   const text = lines.join('\n\n')
   return (
     <Modal onClose={onClose}>
@@ -476,88 +476,85 @@ function TrainingPlanner({ drills }) {
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
 
-        {/* Season start date */}
-        <div className="mb-3 rounded-xl p-3 border" style={{background:N.light, borderColor:N.bg+'33'}}>
-          <div className="flex items-center justify-between mb-1">
-            <label className="text-xs font-semibold uppercase tracking-wide" style={{color:N.text}}>Season Start Date (Week 1)</label>
-            {seasonStart && (
-              <button onClick={()=>setSeasonStart('')}
-                className="text-xs text-red-400 hover:text-red-600 font-semibold transition-colors">
-                ✕ Clear all dates
-              </button>
-            )}
-          </div>
-          <input type="date" value={seasonStart} onChange={e=>setSeasonStart(e.target.value)}
-            className={inputCls} style={{background:'white'}} onFocus={focusNavy} onBlur={blurGray}/>
-          {seasonStart
-            ? <p className="text-xs mt-1.5" style={{color:N.text}}>Week {weekNum} → <strong>{formatDate(sessionDate)}</strong></p>
-            : <p className="text-xs text-gray-400 mt-1.5">Set once — all weekly dates calculate automatically</p>
-          }
-        </div>
-
+        {/* Week + Date + Age Group — all in one compact row */}
         <div className="grid grid-cols-2 gap-3 mb-3">
-          <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Week</label>
-            <div className="flex items-center gap-2">
-              <button onClick={()=>{setWeekNum(w=>Math.max(1,w-1));setEditingDate(false)}} className="w-8 h-8 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50">‹</button>
+
+          {/* Week navigator with integrated date */}
+          <div className="rounded-xl border p-2" style={{borderColor:N.bg+'33', background:N.light}}>
+            <div className="flex items-center gap-1 mb-1.5">
+              <button onClick={()=>{setWeekNum(w=>Math.max(1,w-1));setEditingDate(false)}}
+                className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">‹</button>
               <div className="flex-1 text-center">
-                <div className="font-bold text-gray-900 text-sm">Week {weekNum}</div>
-                {sessionDate && (
-                  <div className="text-xs mt-0.5" style={{color: isDateOverridden ? '#f59e0b' : '#9ca3af'}}>
-                    {formatDate(sessionDate)}
-                    {isDateOverridden && ' ✏️'}
-                  </div>
+                <div className="font-bold text-gray-900 text-xs">Week {weekNum}</div>
+              </div>
+              <button onClick={()=>{setWeekNum(w=>w+1);setEditingDate(false)}}
+                className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">›</button>
+            </div>
+            {/* Date row */}
+            {!editingDate ? (
+              <div className="flex items-center gap-1">
+                <input type="date" value={seasonStart} onChange={e=>{setSeasonStart(e.target.value);setDateOverrides({})}}
+                  className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
+                  style={{minWidth:0}} onFocus={focusNavy} onBlur={blurGray}
+                  title="Season start date (Week 1)"/>
+                {seasonStart && (
+                  <button onClick={()=>setEditingDate(true)}
+                    className="text-xs px-1.5 py-1 rounded-lg border font-semibold shrink-0"
+                    style={{borderColor:N.bg+'44', color:N.text, background:'white'}}
+                    title="Override this week's date">
+                    {isDateOverridden ? '✏️' : '📅'}
+                  </button>
+                )}
+                {seasonStart && (
+                  <button onClick={()=>{setSeasonStart('');setDateOverrides({})}}
+                    className="text-xs px-1.5 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600 shrink-0"
+                    title="Clear all dates">✕</button>
                 )}
               </div>
-              <button onClick={()=>{setWeekNum(w=>w+1);setEditingDate(false)}} className="w-8 h-8 rounded-lg border border-gray-300 text-gray-600 font-bold hover:bg-gray-50">›</button>
-            </div>
-            {/* Date edit controls — shown when season start is set */}
-            {seasonStart && (
-              <div className="mt-2">
-                {!editingDate ? (
-                  <button onClick={()=>setEditingDate(true)}
-                    className="w-full text-xs py-1.5 rounded-lg border transition-colors font-semibold"
-                    style={{borderColor:N.bg+'44', color:N.text, background:N.light}}>
-                    {isDateOverridden ? "✏️ Edit this week's date" : "📅 Override this week's date"}
-                  </button>
-                ) : (
-                  <div className="space-y-1.5">
-                    <input type="date" value={sessionDate}
-                      onChange={e=>setDateOverrides(prev=>({...prev,[weekNum]:e.target.value}))}
-                      className="w-full border rounded-xl px-3 py-1.5 text-sm focus:outline-none"
-                      style={{borderColor:N.bg}} autoFocus/>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      <button onClick={()=>pushFutureWeeks(weekNum)}
-                        className="text-xs py-1.5 rounded-lg font-semibold text-white transition-colors"
-                        style={{background:'#f59e0b'}}
-                        title="Shift this week and all future weeks forward by 7 days">
-                        ⏭️ Push week & future +7d
-                      </button>
-                      <button onClick={()=>clearDateOverride(weekNum)}
-                        className="text-xs py-1.5 rounded-lg font-semibold border transition-colors text-red-500 border-red-200 hover:bg-red-50">
-                        🗑️ Reset to auto date
-                      </button>
-                    </div>
-                    <button onClick={()=>setEditingDate(false)}
-                      className="w-full text-xs py-1 text-gray-400 hover:text-gray-600">
-                      Cancel
-                    </button>
-                  </div>
-                )}
+            ) : (
+              <div className="space-y-1">
+                <input type="date" value={sessionDate}
+                  onChange={e=>setDateOverrides(prev=>({...prev,[weekNum]:e.target.value}))}
+                  className="w-full border rounded-lg px-2 py-1 text-xs focus:outline-none bg-white"
+                  style={{borderColor:N.bg}} autoFocus/>
+                <div className="grid grid-cols-2 gap-1">
+                  <button onClick={()=>pushFutureWeeks(weekNum)}
+                    className="text-xs py-1 rounded-lg font-semibold text-white"
+                    style={{background:'#f59e0b'}}>⏭️ Push +7d</button>
+                  <button onClick={()=>clearDateOverride(weekNum)}
+                    className="text-xs py-1 rounded-lg font-semibold border text-red-500 border-red-200">🗑️ Reset</button>
+                </div>
+                <button onClick={()=>setEditingDate(false)}
+                  className="w-full text-xs py-0.5 text-gray-400 hover:text-gray-600">Cancel</button>
               </div>
             )}
+            {/* Date display */}
+            {sessionDate && !editingDate && (
+              <div className="text-xs text-center mt-1.5 font-semibold"
+                style={{color: isDateOverridden ? '#f59e0b' : N.text}}>
+                {formatDate(sessionDate)}{isDateOverridden ? ' ✏️' : ''}
+              </div>
+            )}
+            {!seasonStart && (
+              <p className="text-xs text-gray-400 text-center mt-1">Set date for Week 1</p>
+            )}
           </div>
-          <div>
-            <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Age Group</label>
-            <select value={ageFilter} onChange={e=>setAgeFilter(e.target.value)} className={inputCls} onFocus={focusNavy} onBlur={blurGray}>
-              <option value="All">All Ages</option>
-              {AGE_GROUPS.map(ag=><option key={ag}>{ag}</option>)}
-            </select>
+
+          {/* Age group + notes stacked */}
+          <div className="space-y-2">
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Age Group</label>
+              <select value={ageFilter} onChange={e=>setAgeFilter(e.target.value)} className={inputCls} onFocus={focusNavy} onBlur={blurGray}>
+                <option value="All">All Ages</option>
+                {AGE_GROUPS.map(ag=><option key={ag}>{ag}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Notes</label>
+              <input value={sessionNotes} onChange={e=>setSessionNotes(e.target.value)} placeholder="e.g. Focus on pressing" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/>
+            </div>
           </div>
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Session Notes</label>
-          <input value={sessionNotes} onChange={e=>setSessionNotes(e.target.value)} placeholder="e.g. Focus on pressing" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/>
+
         </div>
       </div>
 
@@ -695,7 +692,7 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
     const lines=[`🏠 *This Week's Home Skill Drills — Clydach Juniors*\n`]
     if(message) lines.push(`${message}\n`)
     selectedDrills.forEach((d,i)=>lines.push(`*Drill ${i+1}: ${d.title}*\n⏱ ${d.duration} | 👥 ${d.players}\n\n${d.description}`))
-    lines.push(`\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
+    lines.push(`\nGive these a go before next training! 💪\n— Coaches\n🔗 ${SITE_URL}`)
     return lines.join('\n\n')
   }
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
