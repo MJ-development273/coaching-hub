@@ -924,7 +924,7 @@ export default function App() {
 
   const isCoach=role==='coach'
 
-  if(!role) return <AuthScreen onAuth={r=>{setRole(r);if(r==='parent')setView('home')}}/>
+  if(!role) return <AuthScreen onAuth={r=>{setRole(r);if(r==='parent')setView('home');else setView('drills')}}/>
   if(loading) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-3"><div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl animate-pulse" style={{background:N.bg}}>⚽</div><p className="text-sm font-semibold" style={{color:N.text}}>Loading…</p></div>
 
   const filtered=drills.filter(d=>{
@@ -977,11 +977,7 @@ export default function App() {
             </div>
           )}
 
-          {!isCoach&&(
-            <div className="rounded-xl px-3 py-2 text-center" style={{background:N.light}}>
-              <p className="text-xs font-semibold" style={{color:N.text}}>🏠 This Week's Home Skill Drills</p>
-            </div>
-          )}
+
         </div>
       </header>
 
