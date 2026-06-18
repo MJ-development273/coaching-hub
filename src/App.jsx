@@ -500,8 +500,7 @@ function TrainingPlanner({ drills }) {
                     className="flex-1 border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
                     style={{minWidth:0, borderColor:N.bg}}
                     title="Set season start date (Week 1)"
-                    onBlur={e=>{if(e.target.value){setSeasonStart(e.target.value);setDateOverrides({})}}}
-                    onChange={e=>{if(e.target.value){setSeasonStart(e.target.value);setDateOverrides({})}}}/>
+                    onBlur={e=>{if(e.target.value){setSeasonStart(e.target.value);setDateOverrides({})}}}/>
                 ) : (
                   <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white font-semibold"
                     style={{minWidth:0, color:isDateOverridden?'#f59e0b':N.text}}>
