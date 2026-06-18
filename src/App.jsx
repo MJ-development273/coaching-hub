@@ -409,6 +409,7 @@ function TrainingPlanner({ drills }) {
 
   const [dateOverrides,setDateOverrides]=useState({}) // { [weekNum]: 'YYYY-MM-DD' }
   const [editingDate,setEditingDate]=useState(false)
+  const [tempDate,setTempDate]=useState('')
 
   // Calculate this week's date from season start + (weekNum-1) * 7 days
   const getAutoDate = (wNum) => {
@@ -482,65 +483,78 @@ function TrainingPlanner({ drills }) {
 
           {/* Week navigator with integrated date */}
           <div className="rounded-xl border p-2" style={{borderColor:N.bg+'33', background:N.light}}>
-            <div className="flex items-center gap-1 mb-1.5">
+
+            {/* Week nav */}
+            <div className="flex items-center gap-1 mb-2">
               <button onClick={()=>{setWeekNum(w=>Math.max(1,w-1));setEditingDate(false)}}
                 className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">‹</button>
-              <div className="flex-1 text-center">
-                <div className="font-bold text-gray-900 text-xs">Week {weekNum}</div>
-              </div>
+              <div className="flex-1 text-center font-bold text-gray-900 text-xs">Week {weekNum}</div>
               <button onClick={()=>{setWeekNum(w=>w+1);setEditingDate(false)}}
                 className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">›</button>
             </div>
-            {/* Date row */}
-            {!editingDate ? (
-              <div className="flex items-center gap-1">
-                {/* Show season start picker if not set, otherwise show current week's date */}
-                {!seasonStart ? (
-                  <input type="date"
-                    className="flex-1 border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none"
-                    style={{minWidth:0, borderColor:N.bg}}
-                    title="Set season start date (Week 1)"
-                    onBlur={e=>{if(e.target.value){setSeasonStart(e.target.value);setDateOverrides({})}}}/>
-                ) : (
-                  <div className="flex-1 border border-gray-200 rounded-lg px-2 py-1 text-xs bg-white font-semibold"
-                    style={{minWidth:0, color:isDateOverridden?'#f59e0b':N.text}}>
-                    {formatDate(sessionDate) || '—'}
-                  </div>
-                )}
-                {seasonStart && (
-                  <button onClick={()=>setEditingDate(true)}
-                    className="text-xs px-1.5 py-1 rounded-lg border font-semibold shrink-0"
-                    style={{borderColor:N.bg+'44', color:N.text, background:'white'}}
-                    title="Override this week's date">
-                    {isDateOverridden ? '✏️' : '📅'}
-                  </button>
-                )}
-                {seasonStart && (
-                  <button onClick={()=>{setSeasonStart('');setDateOverrides({})}}
-                    className="text-xs px-1.5 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600 shrink-0"
-                    title="Clear all dates">✕</button>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <input type="date" value={sessionDate}
-                  onChange={e=>setDateOverrides(prev=>({...prev,[weekNum]:e.target.value}))}
-                  className="w-full border rounded-lg px-2 py-1 text-xs focus:outline-none bg-white"
+
+            {/* No season start yet — show picker + confirm button */}
+            {!seasonStart && !editingDate && (
+              <div>
+                <p className="text-xs text-gray-400 text-center mb-1">Set Week 1 start date</p>
+                <input type="date" value={tempDate} onChange={e=>setTempDate(e.target.value)}
+                  className="w-full border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none mb-1"
                   style={{borderColor:N.bg}}/>
+                <button onClick={()=>{if(tempDate){setSeasonStart(tempDate);setDateOverrides({});setTempDate('')}}}
+                  disabled={!tempDate}
+                  className="w-full text-xs py-1 rounded-lg font-semibold text-white disabled:opacity-40 transition-colors"
+                  style={{background:N.bg}}>
+                  ✓ Set Season Start
+                </button>
+              </div>
+            )}
+
+            {/* Season start set — show current week date */}
+            {seasonStart && !editingDate && (
+              <div>
+                <div className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white font-semibold text-center mb-1"
+                  style={{color:isDateOverridden?'#f59e0b':N.text}}>
+                  {formatDate(sessionDate)}{isDateOverridden?' ✏️':''}
+                </div>
+                <div className="flex gap-1">
+                  <button onClick={()=>{setTempDate(sessionDate);setEditingDate(true)}}
+                    className="flex-1 text-xs py-1 rounded-lg border font-semibold"
+                    style={{borderColor:N.bg+'44', color:N.text, background:'white'}}>
+                    📅 Override
+                  </button>
+                  <button onClick={()=>{setSeasonStart('');setDateOverrides({});setTempDate('')}}
+                    className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600">
+                    ✕
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Override mode — pick new date + push/reset */}
+            {editingDate && (
+              <div>
+                <input type="date" value={tempDate} onChange={e=>setTempDate(e.target.value)}
+                  className="w-full border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none mb-1"
+                  style={{borderColor:N.bg}}/>
+                <button onClick={()=>{if(tempDate){setDateOverrides(prev=>({...prev,[weekNum]:tempDate}));setEditingDate(false);setTempDate('')}}}
+                  disabled={!tempDate}
+                  className="w-full text-xs py-1 rounded-lg font-semibold text-white disabled:opacity-40 mb-1"
+                  style={{background:N.bg}}>
+                  ✓ Confirm Date
+                </button>
                 <div className="grid grid-cols-2 gap-1">
-                  <button onClick={()=>pushFutureWeeks(weekNum)}
-                    className="text-xs py-1 rounded-lg font-semibold text-white"
+                  <button onClick={()=>{if(tempDate){setDateOverrides(prev=>{const u={...prev};for(let w=weekNum;w<=40;w++){const base=u[w]||getAutoDate(w);if(base){const d=new Date(base);d.setDate(d.getDate()+7);u[w]=d.toISOString().split('T')[0]}};return u});setEditingDate(false);setTempDate('')}}}
+                    disabled={!tempDate}
+                    className="text-xs py-1 rounded-lg font-semibold text-white disabled:opacity-40"
                     style={{background:'#f59e0b'}}>⏭️ Push +7d</button>
-                  <button onClick={()=>clearDateOverride(weekNum)}
+                  <button onClick={()=>{clearDateOverride(weekNum);setTempDate('')}}
                     className="text-xs py-1 rounded-lg font-semibold border text-red-500 border-red-200">🗑️ Reset</button>
                 </div>
-                <button onClick={()=>setEditingDate(false)}
-                  className="w-full text-xs py-0.5 text-gray-400 hover:text-gray-600">Cancel</button>
+                <button onClick={()=>{setEditingDate(false);setTempDate('')}}
+                  className="w-full text-xs py-0.5 mt-1 text-gray-400 hover:text-gray-600">Cancel</button>
               </div>
             )}
-            {!seasonStart && (
-              <p className="text-xs text-gray-400 text-center mt-1">Set date for Week 1</p>
-            )}
+
           </div>
 
           {/* Age group + notes stacked */}
