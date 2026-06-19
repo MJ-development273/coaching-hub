@@ -409,16 +409,39 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
 
   const [weekNum,setWeekNum]=useState(()=>calcCurrentWeek(seasonStart))
   const [ageFilter,setAgeFilter]=useState('U12')
-  const [overrides,setOverrides]=useState({})
+  const [overrides,setOverrides]=useState({}) // { 'weekNum-ageFilter': { blockKey: drill } }
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
+  const [overridesLoaded,setOverridesLoaded]=useState(false)
 
   // When season start changes, jump to the correct current week
   useEffect(()=>{
     setWeekNum(calcCurrentWeek(seasonStart))
   },[seasonStart])
+
+  // Load all session overrides from Supabase on mount
+  useEffect(()=>{
+    async function loadOverrides(){
+      try {
+        const { data, error } = await supabase.from('session_overrides').select('*')
+        if (error) throw error
+        if (data && data.length > 0) {
+          // Rebuild the overrides object { 'weekNum-ageFilter': { blockKey: drillId } }
+          const rebuilt = {}
+          data.forEach(row => {
+            const key = `${row.week_num}-${row.age_filter}`
+            if (!rebuilt[key]) rebuilt[key] = {}
+            rebuilt[key][row.block_key] = row.drill_id
+          })
+          setOverrides(rebuilt)
+        }
+      } catch(e) { console.error('Failed to load overrides:', e) }
+      setOverridesLoaded(true)
+    }
+    loadOverrides()
+  },[])
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
@@ -469,21 +492,66 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
     setEditingDate(false)
   }
 
-  // Build auto session
+  // Build auto session — resolve stored drill IDs back to drill objects
   const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
   const session = {}
   SESSION_BLOCKS.forEach(b => {
     if (b.fixed) return
-    session[b.key] = weekOverrides[b.key] || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
+    const overrideDrillId = weekOverrides[b.key]
+    const overrideDrill = overrideDrillId ? drills.find(d => d.id === overrideDrillId) : null
+    session[b.key] = overrideDrill || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
   })
 
-  const handleSwap = (key, drill) => {
+  const handleSwap = async (key, drill) => {
     const okey = `${weekNum}-${ageFilter}`
-    setOverrides(prev => ({ ...prev, [okey]: { ...(prev[okey]||{}), [key]: drill } }))
+    // Update local state immediately
+    setOverrides(prev => ({ ...prev, [okey]: { ...(prev[okey]||{}), [key]: drill.id } }))
     setSwapTarget(null)
+    // Save to Supabase
+    try {
+      await supabase.from('session_overrides').upsert({
+        week_num: weekNum,
+        age_filter: ageFilter,
+        block_key: key,
+        drill_id: drill.id
+      }, { onConflict: 'week_num,age_filter,block_key' })
+    } catch(e) { console.error('Failed to save override:', e) }
+  }
+
+  const clearOverride = async (key) => {
+    const okey = `${weekNum}-${ageFilter}`
+    setOverrides(prev => {
+      const updated = { ...prev }
+      if (updated[okey]) {
+        delete updated[okey][key]
+        if (Object.keys(updated[okey]).length === 0) delete updated[okey]
+      }
+      return updated
+    })
+    try {
+      await supabase.from('session_overrides')
+        .delete()
+        .eq('week_num', weekNum)
+        .eq('age_filter', ageFilter)
+        .eq('block_key', key)
+    } catch(e) { console.error('Failed to clear override:', e) }
+  }
+
+  const clearAllOverridesForWeek = async () => {
+    const okey = `${weekNum}-${ageFilter}`
+    setOverrides(prev => { const u={...prev}; delete u[okey]; return u })
+    try {
+      await supabase.from('session_overrides')
+        .delete()
+        .eq('week_num', weekNum)
+        .eq('age_filter', ageFilter)
+    } catch(e) { console.error('Failed to clear week overrides:', e) }
   }
 
   const swapBlock = SESSION_BLOCKS.find(b => b.key === swapTarget)
+
+  // isOverridden checks if a block has been manually swapped for this week
+  const isWeekOverridden = Object.keys(weekOverrides).length > 0
 
   return (
     <div>
@@ -641,12 +709,13 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
                 <div className="flex items-center gap-2">
                   <span className="text-base">{block.icon}</span>
                   <span className="text-xs font-bold text-gray-800">{block.label}</span>
-                  {isOverridden && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{background:N.bg}}>Swapped</span>}
+                  {isOverridden && <span className="text-xs font-semibold px-1.5 py-0.5 rounded-full text-white" style={{background:N.bg}}>Saved</span>}
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400">{timeOffset} min mark</span>
                   <span className="text-xs font-bold" style={{color:N.text}}>{block.time}</span>
                   {!block.fixed && <button onClick={()=>setSwapTarget(block.key)} className="text-xs font-semibold underline underline-offset-2 ml-1" style={{color:N.text}}>swap</button>}
+                  {!block.fixed && isOverridden && <button onClick={()=>clearOverride(block.key)} className="text-xs text-red-400 hover:text-red-600 ml-1" title="Reset to auto drill">✕</button>}
                 </div>
               </div>
               {drill ? (
@@ -681,6 +750,12 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
         className="w-full text-white font-bold py-3.5 rounded-2xl transition-colors flex items-center justify-center gap-2 mb-2"
         style={navyBtn}>📲 Share Full Session Plan</button>
       <p className="text-center text-xs text-gray-400">Sends complete 1-hour plan to your coaches via WhatsApp</p>
+      {isWeekOverridden && (
+        <button onClick={clearAllOverridesForWeek}
+          className="w-full mt-2 text-xs py-2 rounded-xl border border-red-200 text-red-400 hover:bg-red-50 font-semibold transition-colors">
+          🗑️ Reset Week {weekNum} to auto-generated drills
+        </button>
+      )}
 
       {/* Swap modal */}
       {swapTarget && swapBlock && (
