@@ -394,15 +394,31 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills }) {
-  const [weekNum,setWeekNum]=useState(1)
+function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
+  // Auto-calculate current week number based on today's date and season start
+  const calcCurrentWeek = (start) => {
+    if (!start) return 1
+    const startDate = new Date(start)
+    const today = new Date()
+    today.setHours(0,0,0,0)
+    startDate.setHours(0,0,0,0)
+    if (today < startDate) return 1
+    const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24))
+    return Math.floor(diffDays / 7) + 1
+  }
+
+  const [weekNum,setWeekNum]=useState(()=>calcCurrentWeek(seasonStart))
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
-  const [seasonStart,setSeasonStart]=useState('') // ISO date string for week 1
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
+
+  // When season start changes, jump to the correct current week
+  useEffect(()=>{
+    setWeekNum(calcCurrentWeek(seasonStart))
+  },[seasonStart])
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
@@ -500,7 +516,7 @@ function TrainingPlanner({ drills }) {
                 <input type="date" value={tempDate} onChange={e=>setTempDate(e.target.value)}
                   className="w-full border rounded-lg px-2 py-1 text-xs bg-white focus:outline-none mb-1"
                   style={{borderColor:N.bg}}/>
-                <button onClick={()=>{if(tempDate){setSeasonStart(tempDate);setDateOverrides({});setTempDate('')}}}
+                <button onClick={()=>{if(tempDate){onSeasonStartChange(tempDate);setDateOverrides({});setTempDate('')}}}
                   disabled={!tempDate}
                   className="w-full text-xs py-1 rounded-lg font-semibold text-white disabled:opacity-40 transition-colors"
                   style={{background:N.bg}}>
@@ -530,7 +546,7 @@ function TrainingPlanner({ drills }) {
                     </button>
                   )}
                   {!isDateOverridden && (
-                    <button onClick={()=>{setSeasonStart('');setDateOverrides({});setTempDate('')}}
+                    <button onClick={()=>{onSeasonStartChange('');setDateOverrides({});setTempDate('')}}
                       className="text-xs px-2 py-1 rounded-lg border border-red-200 text-red-400 hover:text-red-600"
                       title="Clear all dates">
                       🗑️
@@ -864,6 +880,7 @@ export default function App() {
   const [view,setView]=useState('drills')
   const [drills,setDrills]=useState([])
   const [homeSession,setHomeSession]=useState({drill_ids:[],message:''})
+  const [seasonStart,setSeasonStartState]=useState('') // persisted to Supabase
   const [filterCat,setFilterCat]=useState('All')
   const [filterAge,setFilterAge]=useState('All')
   const [search,setSearch]=useState('')
@@ -872,6 +889,14 @@ export default function App() {
   const [shareTarget,setShareTarget]=useState(null)
   const [loading,setLoading]=useState(true)
   const [dbError,setDbError]=useState(false)
+
+  // Save season start to Supabase and update local state
+  const saveSeasonStart = async (dateStr) => {
+    setSeasonStartState(dateStr)
+    try {
+      await supabase.from('season_settings').upsert({ id:1, season_start: dateStr||null })
+    } catch(e) { console.error(e) }
+  }
 
   useEffect(()=>{
     async function load(){
@@ -887,6 +912,8 @@ export default function App() {
         }
         const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single()
         if(hs) setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})
+        const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single()
+        if(ss&&ss.season_start) setSeasonStartState(ss.season_start)
       }catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       setLoading(false)
     }
@@ -982,7 +1009,7 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
-        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills}/>}
+        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {!isCoach&&<ParentHomeView drills={drills} homeSession={homeSession}/>}
 
