@@ -128,7 +128,7 @@ function AuthScreen({ onAuth }) {
               onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
               className="w-full text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-3 text-base"
               style={navyBtn}>
-              <span className="text-xl">👨‍🏫</span> Coach Login
+              <span className="text-xl">👨🏫</span> Coach Login
             </button>
             <button onClick={()=>onAuth('parent')}
               className="w-full text-white font-bold py-4 rounded-xl transition-colors flex items-center justify-center gap-3 text-base"
@@ -326,7 +326,7 @@ function ShareDrillModal({ drill, onClose }) {
             <button key={t} onClick={()=>setTarget(t)}
               className="flex-1 py-2 rounded-xl text-sm font-semibold border transition-all"
               style={target===t?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#d1d5db'}}>
-              {t==='coaches'?'👨‍🏫 Coaches':'👪 Parents'}
+              {t==='coaches'?'👨🏫 Coaches':'👪 Parents'}
             </button>
           ))}
         </div>
@@ -1281,7 +1281,7 @@ const FAW_RULES = [
   { icon:'🏟️', title:'Buffer Zone', rule:'2-metre buffer zone required from touchlines. No spectators behind goals. Coaches stay in technical area.' },
   { icon:'🚭', title:'Match Day', rule:'Smoking and vaping banned from sideline. Coaches must not continuously shout instructions during matches.' },
   { icon:'📋', title:'Team Roster', rule:'Team roster on COMET compulsory. Maximum 18 players per match day squad.' },
-  { icon:'👨‍🏫', title:'Coach Requirements', rule:'Minimum FAW Football Leaders Award required. Valid Enhanced DBS check mandatory. First Aid Award required.' },
+  { icon:'👨🏫', title:'Coach Requirements', rule:'Minimum FAW Football Leaders Award required. Valid Enhanced DBS check mandatory. First Aid Award required.' },
 ]
 
 function FAWReference() {
