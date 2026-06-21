@@ -396,19 +396,17 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
-  // Auto-calculate current week number based on today's date and season start
-  const calcCurrentWeek = (start) => {
-    if (!start) return 1
-    const startDate = new Date(start)
-    const today = new Date()
-    today.setHours(0,0,0,0)
-    startDate.setHours(0,0,0,0)
-    if (today < startDate) return 1
-    const diffDays = Math.floor((today - startDate) / (1000 * 60 * 60 * 24))
-    return Math.floor(diffDays / 7) + 1
-  }
+function calcCurrentWeek(start) {
+  if (!start) return 1
+  const startDate = new Date(start)
+  const today = new Date()
+  today.setHours(0,0,0,0)
+  startDate.setHours(0,0,0,0)
+  if (today < startDate) return 1
+  return Math.floor((today - startDate) / (1000 * 60 * 60 * 24 * 7)) + 1
+}
 
+function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
   // ALL useState hooks must come before any useEffect -- React rules of hooks
   const [weekNum,setWeekNum]=useState(()=>calcCurrentWeek(seasonStart))
   const [ageFilter,setAgeFilter]=useState('U12')
@@ -2195,14 +2193,7 @@ export default function App() {
 
   const catCounts=CATEGORIES.reduce((acc,c)=>{acc[c]=drills.filter(d=>d.category===c).length;return acc},{})
   const publishedCount=(homeSession.drill_ids||[]).length
-  // Calculate current week for use across tabs
-  const calcWeek = (start) => {
-    if(!start) return 1
-    const d=new Date(start); const t=new Date(); t.setHours(0,0,0,0); d.setHours(0,0,0,0)
-    if(t<d) return 1
-    return Math.floor((t-d)/(1000*60*60*24*7))+1
-  }
-  const currentWeek = calcWeek(seasonStart)
+  const currentWeek = calcCurrentWeek(seasonStart)
   useEffect(()=>{ setMatchWeek(currentWeek); setSquadWeek(currentWeek) },[currentWeek])
 
   return (
