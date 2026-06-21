@@ -2272,6 +2272,15 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
+        {isCoach&&view==='drills'&&(
+          <div>
+            {showAdd&&<AddDrillForm onAdd={addDrill} onClose={()=>setShowAdd(false)}/>}
+            <DrillFilter filterCat={filterCat} setFilterCat={setFilterCat} filterAge={filterAge} setFilterAge={setFilterAge} search={search} setSearch={setSearch} catCounts={catCounts}/>
+            <DrillGrid drills={filteredDrills} onSelect={setSelected} isCoach={isCoach}/>
+            {selected&&<DrillDetail drill={selected} onClose={()=>setSelected(null)} isCoach={isCoach} onShare={setShareTarget}/>}
+            {shareTarget&&<ShareDrillModal drill={shareTarget} onClose={()=>setShareTarget(null)}/>}
+          </div>
+        )}
         {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
