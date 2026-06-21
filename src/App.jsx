@@ -185,7 +185,7 @@ function DrillDetail({ drill, onClose, isCoach }) {
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
-        <div className="h-48 rounded-xl overflow-hidden mb-5"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
+        <div className="w-full rounded-xl overflow-hidden mb-5" style={{aspectRatio:"16/9"}}><TacticalDiagram type={drill.diagram} category={drill.category}/></div>
         <div className="flex items-start justify-between gap-3 mb-3">
           <h2 className="text-xl font-bold text-gray-900">{drill.title}</h2>
           {drill.home_ready && <span className="shrink-0 bg-amber-100 text-amber-700 text-xs font-bold px-2 py-1 rounded-full">🏠 Home</span>}
@@ -198,6 +198,7 @@ function DrillDetail({ drill, onClose, isCoach }) {
         </div>
         <div className="mb-4"><h4 className="text-sm font-semibold text-gray-800 mb-1">How to run this drill</h4><p className="text-sm text-gray-600 leading-relaxed">{drill.description}</p></div>
         {isCoach && drill.coach_notes && <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4"><h4 className="text-sm font-semibold text-amber-800 mb-1">📋 Coach Notes</h4><p className="text-sm text-amber-700 leading-relaxed">{drill.coach_notes}</p></div>}
+        {isCoach && drill.progression && <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4"><h4 className="text-sm font-semibold text-purple-800 mb-1">⬆️ Progression — Make it Harder</h4><p className="text-sm text-purple-700 leading-relaxed">{drill.progression}</p></div>}
         {!isCoach && <div className="rounded-xl p-4" style={{background:N.light,border:`1px solid ${N.bg}22`}}><h4 className="text-sm font-semibold mb-1" style={{color:N.text}}>💡 Tips for practising at home</h4><p className="text-sm leading-relaxed" style={{color:N.text}}>Find a safe open space — a garden or park works great. Plastic bottles or jumpers can substitute for cones. Start slow and focus on getting the technique right before trying to go fast.</p></div>}
       </div>
     </Modal>
@@ -254,7 +255,7 @@ function FilterPill({ label, active, onClick }) {
 
 // ─── Add Drill Form ───────────────────────────────────────────────────────────
 function AddDrillForm({ onSave, onClose }) {
-  const [form,setForm]=useState({title:'',category:CATEGORIES[0],age_groups:['U12'],duration:'',players:'',description:'',coach_notes:'',home_ready:false,diagram:'default'})
+  const [form,setForm]=useState({title:'',category:CATEGORIES[0],age_groups:['U12'],duration:'',players:'',description:'',coach_notes:'',progression:'',home_ready:false,diagram:'default'})
   const [saving,setSaving]=useState(false)
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
   const toggleAge=ag=>set('age_groups',form.age_groups.includes(ag)?form.age_groups.filter(a=>a!==ag):[...form.age_groups,ag])
@@ -293,6 +294,7 @@ function AddDrillForm({ onSave, onClose }) {
           </div>
           <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Description *</label><textarea value={form.description} onChange={e=>set('description',e.target.value)} rows={4} placeholder="Step-by-step instructions..." className={`${inputCls} resize-none`} onFocus={focusNavy} onBlur={blurGray}/></div>
           <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Coach Notes <span className="text-gray-400 font-normal">(private)</span></label><textarea value={form.coach_notes} onChange={e=>set('coach_notes',e.target.value)} rows={2} placeholder="Key coaching points..." className={`${inputCls} resize-none`} onFocus={focusNavy} onBlur={blurGray}/></div>
+          <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">⬆️ Progression <span className="text-gray-400 font-normal">(how to make it harder)</span></label><textarea value={form.progression||''} onChange={e=>set('progression',e.target.value)} rows={2} placeholder="e.g. Reduce space, add a defender, set a time limit..." className={`${inputCls} resize-none`} onFocus={focusNavy} onBlur={blurGray}/></div>
           <label className="flex items-center gap-3 cursor-pointer rounded-xl px-4 py-3 border" style={{background:N.light, borderColor:N.bg+'44'}}>
             <input type="checkbox" checked={form.home_ready} onChange={e=>set('home_ready',e.target.checked)} className="w-4 h-4"/>
             <span className="text-sm font-medium" style={{color:N.text}}>🏠 Available for home sessions</span>
@@ -949,13 +951,1015 @@ function ParentHomeView({ drills, homeSession }) {
   )
 }
 
+
+// ─── Session Status ───────────────────────────────────────────────────────────
+function SessionStatusManager({ sessionStatus, onSave }) {
+  const [form, setForm] = useState(sessionStatus)
+  const [saved, setSaved] = useState(false)
+  const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
+  const save = async () => { await onSave(form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
+  const inputCls = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+  const whatsappText = form.status==='cancelled'
+    ? `🚫 *Training CANCELLED*\n\nThis week's training session has been cancelled.\n\nWe'll be back next week — keep up the home skill drills in the meantime!\n\n— Coaches\n🔗 ${SITE_URL}`
+    : `✅ *Training Reminder*\n\n📅 This week's session is ON\n${form.time?`⏰ ${form.time}\n`:''}${form.location?`📍 ${form.location}\n`:''}\nDon't forget boots, shin pads and water!\n\n— Coaches\n🔗 ${SITE_URL}`
+
+  return (
+    <div className="space-y-4">
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <h2 className="font-bold text-gray-900 text-sm mb-3">🔔 Session Status</h2>
+        <div className="flex gap-2 mb-4">
+          {[{v:'on',label:'✅ Training ON'},{v:'cancelled',label:'🚫 Cancelled'}].map(o=>(
+            <button key={o.v} onClick={()=>set('status',o.v)}
+              className="flex-1 py-3 rounded-xl text-sm font-bold border-2 transition-all"
+              style={form.status===o.v?{background:o.v==='on'?'#16a34a':'#ef4444',color:'white',borderColor:o.v==='on'?'#16a34a':'#ef4444'}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+              {o.label}
+            </button>
+          ))}
+        </div>
+        {form.status==='on' && (
+          <div className="grid grid-cols-2 gap-3 mb-3">
+            <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Time</label>
+              <input value={form.time} onChange={e=>set('time',e.target.value)} placeholder="e.g. 6:00pm" className={inputCls} onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
+            <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Location</label>
+              <input value={form.location} onChange={e=>set('location',e.target.value)} placeholder="e.g. Clydach Park" className={inputCls} onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
+          </div>
+        )}
+        <div className="flex gap-2">
+          <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+            style={{background:saved?'#16a34a':N.bg}} onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}} onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
+            {saved?'✓ Saved!':'💾 Save Status'}
+          </button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(whatsappText)}`} target="_blank" rel="noreferrer"
+            className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm text-center transition-colors"
+            style={{background:'#16a34a'}}>
+            📲 Send to Parents
+          </a>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── Parent Session Status View ───────────────────────────────────────────────
+function ParentStatusBanner({ sessionStatus }) {
+  if (!sessionStatus.status || sessionStatus.status === 'on') return (
+    <div className="rounded-2xl p-4 mb-4 flex gap-3 items-center" style={{background:'#f0fdf4',border:'1px solid #bbf7d0'}}>
+      <span className="text-2xl">✅</span>
+      <div>
+        <p className="font-bold text-green-800 text-sm">Training is ON this week</p>
+        {(sessionStatus.time||sessionStatus.location) && (
+          <p className="text-green-700 text-xs mt-0.5">{[sessionStatus.time,sessionStatus.location].filter(Boolean).join(' · ')}</p>
+        )}
+      </div>
+    </div>
+  )
+  return (
+    <div className="rounded-2xl p-4 mb-4 flex gap-3 items-center" style={{background:'#fef2f2',border:'1px solid #fecaca'}}>
+      <span className="text-2xl">🚫</span>
+      <div>
+        <p className="font-bold text-red-800 text-sm">Training CANCELLED this week</p>
+        <p className="text-red-700 text-xs mt-0.5">Check back soon for updates from your coaches</p>
+      </div>
+    </div>
+  )
+}
+
+// ─── Match Day Notes ──────────────────────────────────────────────────────────
+function MatchDayNotes({ weekNum, matchNotes, onSave }) {
+  const note = matchNotes[weekNum] || { result:'', scorers:'', notes:'' }
+  const [form, setForm] = useState(note)
+  const [saved, setSaved] = useState(false)
+  useEffect(()=>{ setForm(matchNotes[weekNum]||{result:'',scorers:'',notes:''}); setSaved(false) },[weekNum,matchNotes])
+  const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
+  const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
+  const inputCls = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+  const focusNavy = e=>e.target.style.borderColor=N.bg
+  const blurGray = e=>e.target.style.borderColor='#d1d5db'
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+      <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Week {weekNum} — Match Notes</h3>
+      <div className="space-y-3">
+        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Result</label>
+          <input value={form.result} onChange={e=>set('result',e.target.value)} placeholder="e.g. Won 3-1 vs Swansea" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Scorers</label>
+          <input value={form.scorers} onChange={e=>set('scorers',e.target.value)} placeholder="e.g. J.Smith x2, T.Jones" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Coach Notes</label>
+          <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on, standout performances..." className={`${inputCls} resize-none`} onFocus={focusNavy} onBlur={blurGray}/></div>
+        <button onClick={save} className="w-full text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+          style={{background:saved?'#16a34a':N.bg}} onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}} onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
+          {saved?'✓ Saved!':'💾 Save Match Notes'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ─── Squad & Attendance ───────────────────────────────────────────────────────
+function SquadAttendance({ weekNum, squad, attendance, onToggle, onAdd, onRemove }) {
+  const [newName, setNewName] = useState('')
+  const [newNum, setNewNum] = useState('')
+  const [adding, setAdding] = useState(false)
+  const presentCount = squad.filter(p=>attendance[`${weekNum}-${p.id}`]).length
+  const inputCls = "border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-bold text-gray-900 text-sm">👥 Week {weekNum} — Attendance</h3>
+        <span className="text-xs font-semibold px-2 py-1 rounded-full text-white" style={{background:N.bg}}>{presentCount}/{squad.length}</span>
+      </div>
+      {squad.length===0 ? (
+        <p className="text-sm text-gray-400 text-center py-4">No players added yet — add your squad below</p>
+      ) : (
+        <div className="space-y-2 mb-3">
+          {squad.map(p=>{
+            const present = !!attendance[`${weekNum}-${p.id}`]
+            return (
+              <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl border transition-all"
+                style={{borderColor:present?'#16a34a':'#e5e7eb',background:present?'#f0fdf4':'white'}}>
+                {p.squad_num && <span className="text-xs font-black w-6 text-center" style={{color:N.bg}}>{p.squad_num}</span>}
+                <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
+                <button onClick={()=>onToggle(weekNum,p.id,present)}
+                  className="w-8 h-8 rounded-lg font-bold text-sm flex items-center justify-center transition-all"
+                  style={present?{background:'#16a34a',color:'white'}:{background:'#f3f4f6',color:'#9ca3af'}}>
+                  {present?'✓':'○'}
+                </button>
+                <button onClick={()=>onRemove(p.id)} className="text-red-300 hover:text-red-500 text-xs px-1">✕</button>
+              </div>
+            )
+          })}
+        </div>
+      )}
+      {!adding ? (
+        <button onClick={()=>setAdding(true)} className="w-full text-xs py-2 rounded-xl border font-semibold transition-colors"
+          style={{borderColor:N.bg+'44',color:N.text,background:N.light}}>+ Add Player</button>
+      ) : (
+        <div className="flex gap-2 mt-2">
+          <input value={newNum} onChange={e=>setNewNum(e.target.value)} placeholder="#" className={`${inputCls} w-12`}/>
+          <input value={newName} onChange={e=>setNewName(e.target.value)} placeholder="Player name / initials" className={`${inputCls} flex-1`}/>
+          <button onClick={()=>{if(newName.trim()){onAdd(newName.trim(),newNum.trim());setNewName('');setNewNum('');setAdding(false)}}}
+            className="text-white text-xs font-bold px-3 rounded-xl" style={{background:N.bg}}>Add</button>
+          <button onClick={()=>setAdding(false)} className="text-gray-400 text-xs px-2">✕</button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Player Development Notes ─────────────────────────────────────────────────
+function PlayerDevelopment({ squad, playerNotes, onSave }) {
+  const [selected, setSelected] = useState(null)
+  const [note, setNote] = useState('')
+  const [saved, setSaved] = useState(false)
+
+  const openPlayer = (p) => { setSelected(p); setNote(playerNotes[p.id]||''); setSaved(false) }
+  const save = async () => { await onSave(selected.id, note); setSaved(true); setTimeout(()=>setSaved(false),2000) }
+
+  if (squad.length===0) return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+      <p className="text-2xl mb-2">👤</p>
+      <p className="text-sm font-semibold text-gray-600">No players in squad yet</p>
+      <p className="text-xs text-gray-400 mt-1">Add players in the Attendance section first</p>
+    </div>
+  )
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+      <h3 className="font-bold text-gray-900 text-sm mb-3">📝 Player Development Notes</h3>
+      <p className="text-xs text-gray-400 mb-3">Private coaching notes — not visible to parents or players</p>
+      <div className="space-y-2 mb-4">
+        {squad.map(p=>{
+          const hasNote = !!(playerNotes[p.id]&&playerNotes[p.id].trim())
+          return (
+            <button key={p.id} onClick={()=>openPlayer(p)}
+              className="w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all hover:border-gray-300"
+              style={{borderColor:selected?.id===p.id?N.bg:'#e5e7eb',background:selected?.id===p.id?N.light:'white'}}>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>
+                {p.squad_num||p.name[0]}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-gray-900">{p.name}</p>
+                {hasNote && <p className="text-xs text-gray-400 truncate">{playerNotes[p.id]}</p>}
+              </div>
+              {hasNote && <span className="text-xs text-green-500 shrink-0">●</span>}
+            </button>
+          )
+        })}
+      </div>
+      {selected && (
+        <div className="border-t border-gray-100 pt-4">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Notes for {selected.name}</label>
+          <textarea value={note} onChange={e=>{setNote(e.target.value);setSaved(false)}} rows={4}
+            placeholder="e.g. Strong in the air but needs work on weak foot. Ready for more responsibility in midfield."
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none mb-2"
+            onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+          <button onClick={save} className="w-full text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+            style={{background:saved?'#16a34a':N.bg}} onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}} onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
+            {saved?'✓ Saved!':'💾 Save Notes'}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── FAW Quick Reference ──────────────────────────────────────────────────────
+const FAW_RULES = [
+  { icon:'⚽', title:'Format', rule:'9v9 on a 64x44 yard pitch (U12). 70 mins — 2x35 min halves. Goals 7x16ft. Ball size 4.' },
+  { icon:'🚩', title:'Offside', rule:'Standard offside applies. A player is not offside from a goal kick, throw-in or corner.' },
+  { icon:'↩️', title:'Retreat Line', rule:'Opposition must be 10 yards from the goalkeeper when they have the ball. Encourages build-up play.' },
+  { icon:'🧤', title:'Goalkeeper', rule:'GK cannot pick up a deliberate back pass from a teammate. Can handle the ball in the penalty area only.' },
+  { icon:'⏱️', title:'Playing Time', rule:'All squad members must play a minimum of 50% of total playing time. Rolling substitutes — players can re-enter.' },
+  { icon:'🔴', title:'Mercy Rule', rule:'If a team leads by 8 goals, the match is declared over. Remaining time played as a friendly.' },
+  { icon:'📊', title:'League Standing', rule:'Goal difference CANNOT be used in league standings at U12 or U13.' },
+  { icon:'🤕', title:'Heading (U12)', rule:'Heading is LOW PRIORITY at U12. Max 10 mins per session, max 4 headers per bout, self-serve only.' },
+  { icon:'🏆', title:'Competition', rule:'Season must start with non-competitive fixtures. Maximum 24 weeks of competitive football.' },
+  { icon:'🏟️', title:'Buffer Zone', rule:'2-metre buffer zone required from touchlines. No spectators behind goals. Coaches stay in technical area.' },
+  { icon:'🚭', title:'Match Day', rule:'Smoking and vaping banned from sideline. Coaches must not continuously shout instructions during matches.' },
+  { icon:'📋', title:'Team Roster', rule:'Team roster on COMET compulsory. Maximum 18 players per match day squad.' },
+  { icon:'👨‍🏫', title:'Coach Requirements', rule:'Minimum FAW Football Leaders Award required. Valid Enhanced DBS check mandatory. First Aid Award required.' },
+]
+
+function FAWReference() {
+  const [open, setOpen] = useState(null)
+  return (
+    <div>
+      <div className="rounded-2xl p-4 mb-4 flex gap-3 items-start" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
+        <span className="text-2xl">🏴󠁧󠁢󠁷󠁬󠁳󠁿</span>
+        <div>
+          <p className="font-bold text-sm" style={{color:N.text}}>FAW Quick Reference — U12 2025-26</p>
+          <p className="text-xs mt-0.5" style={{color:N.text+'bb'}}>Key rules at a glance. Tap any rule for full detail.</p>
+        </div>
+      </div>
+      <div className="space-y-2">
+        {FAW_RULES.map((r,i)=>(
+          <div key={i} onClick={()=>setOpen(open===i?null:i)}
+            className="bg-white border rounded-2xl overflow-hidden cursor-pointer transition-all"
+            style={{borderColor:open===i?N.bg:'#e5e7eb'}}>
+            <div className="flex items-center gap-3 px-4 py-3">
+              <span className="text-lg shrink-0">{r.icon}</span>
+              <span className="flex-1 text-sm font-semibold text-gray-900">{r.title}</span>
+              <span className="text-gray-400 text-xs">{open===i?'▲':'▼'}</span>
+            </div>
+            {open===i && (
+              <div className="px-4 pb-3 pt-0">
+                <p className="text-sm text-gray-600 leading-relaxed">{r.rule}</p>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Season Overview ──────────────────────────────────────────────────────────
+function SeasonOverview({ seasonStart, matchNotes, weekNum, onWeekSelect }) {
+  if (!seasonStart) return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+      <p className="text-2xl mb-2">📅</p>
+      <p className="text-sm font-semibold text-gray-600">No season start date set</p>
+      <p className="text-xs text-gray-400 mt-1">Set a season start date in the Planner tab to see the overview</p>
+    </div>
+  )
+
+  const weeks = Array.from({length:30},(_,i)=>i+1)
+  const getDate = (w) => {
+    const d = new Date(seasonStart)
+    d.setDate(d.getDate()+(w-1)*7)
+    return d
+  }
+  const formatShort = (d) => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+
+  return (
+    <div>
+      <div className="rounded-2xl p-4 mb-4 flex gap-3 items-start" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
+        <span className="text-2xl">📅</span>
+        <div>
+          <p className="font-bold text-sm" style={{color:N.text}}>Season Overview</p>
+          <p className="text-xs mt-0.5" style={{color:N.text+'bb'}}>30-week season. Tap a week to jump to it in the planner.</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+        {weeks.map(w=>{
+          const d = getDate(w)
+          const hasNote = !!(matchNotes[w]&&(matchNotes[w].result||matchNotes[w].notes))
+          const isCurrent = w===weekNum
+          const isPast = d < new Date()
+          return (
+            <button key={w} onClick={()=>onWeekSelect(w)}
+              className="rounded-xl p-2.5 text-center border-2 transition-all"
+              style={{
+                borderColor:isCurrent?N.bg:hasNote?'#16a34a':'#e5e7eb',
+                background:isCurrent?N.bg:hasNote?'#f0fdf4':isPast?'#f9fafb':'white',
+                color:isCurrent?'white':'inherit',
+                opacity:d>new Date(new Date().setDate(new Date().getDate()+84))?0.4:1
+              }}>
+              <div className="text-xs font-black" style={{color:isCurrent?'white':N.text}}>W{w}</div>
+              <div className="text-xs mt-0.5" style={{color:isCurrent?'rgba(255,255,255,0.8)':'#9ca3af',fontSize:'9px'}}>{formatShort(d)}</div>
+              {hasNote && !isCurrent && <div className="text-xs">⚽</div>}
+            </button>
+          )
+        })}
+      </div>
+      <p className="text-xs text-gray-400 text-center mt-3">⚽ = match notes logged · highlighted = current week</p>
+    </div>
+  )
+}
+
+
+// ─── Full Pitch Tactical Diagram ──────────────────────────────────────────────
+// Renders a proper coaching board style diagram when viewing a drill in detail
+function TacticalDiagram({ type, category }) {
+  const accent = (CAT_COLORS[category] || {}).accent || '#3b82f6'
+
+  // Shared drawing helpers
+  const vb = "0 0 320 220"
+  // Pitch background with markings
+  const Pitch = () => (
+    <>
+      <rect width="320" height="220" fill="#166534"/>
+      {/* Pitch border */}
+      <rect x="10" y="10" width="300" height="200" fill="none" stroke="#4ade80" strokeWidth="1.5" opacity="0.6"/>
+      {/* Centre line */}
+      <line x1="10" y1="110" x2="310" y2="110" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+      {/* Centre circle */}
+      <circle cx="160" cy="110" r="30" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+      <circle cx="160" cy="110" r="2" fill="#4ade80" opacity="0.4"/>
+    </>
+  )
+  // Player dot
+  const P = (x,y,col=accent,label='') => (
+    <g>
+      <circle cx={x} cy={y} r="9" fill={col} stroke="white" strokeWidth="1.5"/>
+      {label && <text x={x} y={y+4} textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">{label}</text>}
+    </g>
+  )
+  // Cone/marker
+  const Cone = (x,y) => <polygon points={`${x},${y-8} ${x-5},${y+4} ${x+5},${y+4}`} fill="#f59e0b" stroke="white" strokeWidth="1"/>
+  // Arrow
+  const Arrow = (x1,y1,x2,y2,col=accent,dash=false) => {
+    const id = `arr${x1}${y1}${x2}${y2}`.replace(/\./g,'')
+    return (
+      <>
+        <defs><marker id={id} markerWidth="8" markerHeight="8" refX="4" refY="3" orient="auto"><path d="M0,0 L8,3 L0,6 Z" fill={col}/></marker></defs>
+        <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={col} strokeWidth="2" strokeDasharray={dash?"6,3":"none"} markerEnd={`url(#${id})`} opacity="0.9"/>
+      </>
+    )
+  }
+  // Goal
+  const Goal = (x,y,horiz=true) => horiz
+    ? <rect x={x} y={y} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+    : <rect x={x} y={y} width="16" height="50" fill="none" stroke="white" strokeWidth="2"/>
+  // Zone/area box
+  const Zone = (x,y,w,h,col=accent) => <rect x={x} y={y} width={w} height={h} fill={col} opacity="0.12" stroke={col} strokeWidth="1" strokeDasharray="5,3"/>
+  // Label
+  const Label = (x,y,text,col='white') => <text x={x} y={y} fill={col} fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">{text}</text>
+
+  const diagrams = {
+    // ── PASSING ──────────────────────────────────────────────────────────────
+    rondo: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Zone x={90} y={60} w={140} h={100}/>
+        <Label x={160} y={55} text="RONDO AREA"/>
+        {[0,51,103,154,205,257,309].map((a,i) => {
+          const r=55, cx=160+r*Math.cos((a-90)*Math.PI/180), cy=110+r*Math.sin((a-90)*Math.PI/180)
+          return <g key={i}>{P(cx,cy,accent,String(i+1))}</g>
+        })}
+        {P(145,95,'#ef4444','D')}{P(175,125,'#ef4444','D')}
+        <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
+        <Label x={160} y={185} text="7 attackers keep ball from 2 defenders" col="#86efac"/>
+      </svg>
+    ),
+    wall: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {/* Wall on left */}
+        <rect x="10" y="60" width="12" height="100" fill="#94a3b8" opacity="0.8"/>
+        <Label x={16} y={55} text="WALL" col="#94a3b8"/>
+        {P(100,110,accent,'1')}{P(200,110,accent,'2')}
+        <circle cx="150" cy="110" r="7" fill="white" opacity="0.9"/>
+        {Arrow(100,108,28,100,accent)}{Arrow(28,120,95,112,accent,true)}
+        <Label x={160} y={185} text="Pass to wall → control rebound → repeat" col="#86efac"/>
+      </svg>
+    ),
+    triangle: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {Zone(90,55,140,110)}
+        {P(120,160,accent,'A')}{P(200,160,accent,'B')}{P(160,65,accent,'C')}
+        {P(160,115,'#ef4444','D')}
+        <line x1="120" y1="160" x2="200" y2="160" stroke={accent} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.5"/>
+        <line x1="200" y1="160" x2="160" y2="65" stroke={accent} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.5"/>
+        <line x1="160" y1="65" x2="120" y2="160" stroke={accent} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.5"/>
+        {Arrow(128,157,152,117,accent)}{Arrow(160,104,167,72,accent,true)}
+        <Label x={160} y={195} text="Pass and move to a different point each time" col="#86efac"/>
+      </svg>
+    ),
+    gates: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {[[70,80],[70,140],[120,65],[120,155],[170,75],[170,145],[230,85],[230,135]].map(([x,y],i) =>
+          <rect key={i} x={x-5} y={y-5} width="10" height="10" fill="#f59e0b" stroke="white" strokeWidth="1"/>
+        )}
+        {P(50,110,accent,'P')}
+        {Arrow(60,108,65,90,accent)}{Arrow(75,80,115,70,accent,true)}{Arrow(125,65,165,78,accent,true)}
+        <Label x={160} y={195} text="Pass accurately through as many gates as possible" col="#86efac"/>
+      </svg>
+    ),
+    '4goal': (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={10} y={92}/><Goal x={250} y={92}/>
+        <rect x="140" y="10" width="16" height="60" fill="none" stroke="white" strokeWidth="2"/>
+        <rect x="140" y="150" width="16" height="60" fill="none" stroke="white" strokeWidth="2"/>
+        {Zone(80,55,160,110)}
+        {P(110,85,accent)}{P(210,85,accent)}{P(110,135,'#ef4444')}{P(210,135,'#ef4444')}
+        <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
+        <Label x={160} y={195} text="Score by passing through any of the 4 goals" col="#86efac"/>
+      </svg>
+    ),
+    switch: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {P(40,155,accent,'A')}{P(130,110,accent,'B')}{P(270,65,accent,'C')}
+        {Arrow(50,152,120,113,accent)}{Arrow(142,108,258,68,accent)}
+        <Label x={160} y={50} text="SWITCH PLAY — 3 passes or fewer"/>
+        <Label x={160} y={195} text="Must switch ball across pitch before driving forward" col="#86efac"/>
+      </svg>
+    ),
+    lanes: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <line x1="117" y1="10" x2="117" y2="210" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="6,3"/>
+        <line x1="203" y1="10" x2="203" y2="210" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="6,3"/>
+        <Goal x={130} y={10}/>
+        <Label x={65} y={110} text="LANE 1"/><Label x={160} y={110} text="LANE 2"/><Label x={253} y={110} text="LANE 3"/>
+        {P(50,165,accent)}{P(140,140,accent)}{P(230,100,accent)}
+        {Arrow(60,163,130,143,accent)}{Arrow(152,138,222,103,accent)}
+        <Label x={160} y={195} text="Must pass into each lane before shooting" col="#86efac"/>
+      </svg>
+    ),
+    // ── TACKLING ─────────────────────────────────────────────────────────────
+    tackle: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {Zone(70,70,180,80)}
+        {P(110,110,accent,'A')}{P(210,110,'#ef4444','D')}
+        <circle cx="165" cy="110" r="7" fill="white" opacity="0.9"/>
+        {Arrow(120,110,158,110,accent)}
+        <Label x={160} y={65} text="SHADOW TACKLE ZONE"/>
+        <Label x={160} y={55} text="Attacker dribbles slowly, defender mirrors"/>
+        <Label x={160} y={195} text="Mirror movement — correct body shape first" col="#86efac"/>
+      </svg>
+    ),
+    jockey: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {Zone(120,30,80,160)}
+        {P(160,170,accent,'A')}{P(160,55,'#ef4444','D')}
+        <circle cx="160" cy="140" r="7" fill="white" opacity="0.9"/>
+        {Arrow(160,160,160,80,accent,true)}
+        {Arrow(160,80,160,65,'#ef4444')}
+        <Label x={160} y={25} text="END LINE"/>
+        <Label x={160} y={195} text="Attacker drives to end line — defender jockeys" col="#86efac"/>
+      </svg>
+    ),
+    '1v1box': (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {Zone(80,55,160,110)}
+        <Label x={160} y={50} text="8m × 8m BOX"/>
+        {P(130,100,accent,'A')}{P(190,120,'#ef4444','D')}
+        <circle cx="155" cy="110" r="7" fill="white" opacity="0.9"/>
+        {Arrow(140,102,148,108,accent)}
+        <Label x={160} y={185} text="Attacker tries to dribble out any side" col="#86efac"/>
+      </svg>
+    ),
+    press: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={170}/>
+        {P(100,55,accent,'A')}{P(160,45,accent,'A')}{P(220,55,accent,'A')}
+        {P(110,130,'#ef4444','P')}{P(160,125,'#ef4444','P')}{P(210,130,'#ef4444','P')}
+        <circle cx="160" cy="80" r="7" fill="white" opacity="0.9"/>
+        {Arrow(113,130,105,68,'#ef4444')}{Arrow(163,123,161,57,'#ef4444')}{Arrow(207,128,217,67,'#ef4444')}
+        <Label x={160} y={195} text="Press as a unit — win ball within 10 seconds" col="#86efac"/>
+      </svg>
+    ),
+    defshape: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={175}/>
+        {[[80,150],[127,145],[193,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
+        {[[110,105],[160,100],[210,105]].map(([x,y],i)=>P(x,y,'#8b5cf6',['CM','CM','CM'][i]))}
+        {[[80,55],[160,45],[240,55]].map(([x,y],i)=>P(x,y,'#ef4444',['A','A','A'][i]))}
+        <Label x={160} y={195} text="Maintain shape — shift as a unit when ball moves" col="#86efac"/>
+      </svg>
+    ),
+    recovery: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={175}/>
+        {P(80,50,accent,'A')}{P(240,50,'#ef4444','D')}
+        {Arrow(80,50,240,50,'white',true)}
+        <Label x={160} y={45} text="START LINE"/>
+        {P(80,155,accent,'A')}{P(240,155,'#ef4444','D')}
+        {Arrow(90,153,230,153,accent)}
+        <Label x={160} y={195} text="Both sprint 20m — defender recovers to delay" col="#86efac"/>
+      </svg>
+    ),
+    channel: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {Zone(110,20,100,180)}
+        {P(160,170,accent,'A')}{P(160,75,'#ef4444','D')}
+        <circle cx="160" cy="145" r="7" fill="white" opacity="0.9"/>
+        {Arrow(160,160,160,90,accent,true)}
+        {Arrow(165,75,200,100,'#ef4444')}
+        <Label x={160} y={15} text="← CHANNEL →"/>
+        <Label x={160} y={195} text="Defender guides attacker toward touchline" col="#86efac"/>
+      </svg>
+    ),
+    // ── ATTACKING ────────────────────────────────────────────────────────────
+    '3v2': (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        <Zone x={80} y={25} w={160} h={175}/>
+        {P(100,55,accent,'A')}{P(160,45,accent,'A')}{P(220,55,accent,'A')}
+        {P(130,120,'#ef4444','D')}{P(190,120,'#ef4444','D')}
+        <circle cx="150" cy="80" r="7" fill="white" opacity="0.9"/>
+        {Arrow(108,57,143,82,accent)}{Arrow(160,55,155,72,accent,true)}{Arrow(212,57,185,118,'#ef4444',true)}
+        <Label x={160} y={195} text="3 attackers vs 2 defenders — complete 3 passes first" col="#86efac"/>
+      </svg>
+    ),
+    cross: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        {/* Penalty area */}
+        <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        {P(280,110,accent,'W')}{P(145,55,accent,'A1')}{P(185,45,accent,'A2')}
+        {Arrow(272,108,190,50,accent)}{Arrow(145,66,145,30,accent,true)}{Arrow(185,56,185,30,accent,true)}
+        <Label x={160} y={195} text="Wide player crosses — near & far post runs" col="#86efac"/>
+      </svg>
+    ),
+    counter: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        {P(80,170,accent)}{P(140,175,accent)}{P(180,175,accent)}{P(240,170,accent)}
+        {P(130,100,'#ef4444','D')}{P(190,100,'#ef4444','D')}
+        {Arrow(80,160,78,25,accent,true)}{Arrow(140,165,140,30,accent,true)}{Arrow(180,165,180,30,accent,true)}{Arrow(240,160,242,25,accent,true)}
+        <Label x={160} y={195} text="4v2 counter attack — score within 10 seconds" col="#86efac"/>
+      </svg>
+    ),
+    overlap: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        {P(60,120,N.bg,'FB')}{P(60,60,accent,'W')}{P(180,80,accent,'CF')}
+        {Arrow(60,110,58,72,N.bg)}{Arrow(58,70,170,82,accent,true)}
+        {/* Overlap run arc */}
+        <path d="M65,120 Q30,90 65,58" fill="none" stroke={N.bg} strokeWidth="2" strokeDasharray="6,3"/>
+        <Label x={160} y={195} text="Full back overlaps winger — lay off into space" col="#86efac"/>
+      </svg>
+    ),
+    shootpress: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.3"/>
+        {P(160,120,accent,'A')}{P(160,175,'#ef4444','D')}
+        <circle cx="160" cy="120" r="7" fill="white" opacity="0.9"/>
+        {Arrow(160,111,160,35,accent)}{Arrow(160,165,160,132,'#ef4444')}
+        <Label x={265} y={120} text="2 sec" col="#f59e0b"/>
+        <Label x={160} y={195} text="Receive, decide: shoot/turn/lay off within 2 seconds" col="#86efac"/>
+      </svg>
+    ),
+    setpiece: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        {P(20,175,accent,'K')}{P(130,35,accent,'NP')}{P(185,25,accent,'FP')}{P(150,80,accent,'S')}{P(210,80,'#ef4444','D')}
+        {Arrow(29,172,123,42,accent)}{Arrow(130,46,148,72,accent,true)}{Arrow(185,36,185,30,accent,true)}
+        <Label x={160} y={195} text="Corner: near post, far post and short options" col="#86efac"/>
+      </svg>
+    ),
+    combo: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        {P(80,165,accent,'A')}{P(160,120,accent,'B')}{P(240,165,accent,'C')}
+        {Arrow(90,162,150,123,accent)}{Arrow(170,120,232,162,accent,true)}{Arrow(240,153,190,35,accent)}
+        <Label x={160} y={195} text="A-B-C combination — third man finishes" col="#86efac"/>
+      </svg>
+    ),
+    wideattack: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        {P(20,120,accent,'LW')}{P(300,120,accent,'RW')}{P(160,80,accent,'ST')}{P(120,155,accent,'LM')}{P(200,155,accent,'RM')}
+        {Arrow(20,110,18,35,accent,true)}{Arrow(300,110,298,35,accent,true)}
+        <Label x={160} y={195} text="Wingers push high and wide — create width" col="#86efac"/>
+      </svg>
+    ),
+    // ── S&C ──────────────────────────────────────────────────────────────────
+    weave: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {[50,85,120,155,190,225,260].map((x,i) => <Cone key={i} x={x} y={i%2===0?80:140}/>)}
+        {P(25,110,accent,'P')}
+        <path d="M35,110 Q52,80 70,110 Q88,140 105,110 Q122,80 140,110 Q158,140 175,110 Q192,80 210,110 Q227,140 244,110 Q262,80 280,110" fill="none" stroke={accent} strokeWidth="2.5" strokeDasharray="none"/>
+        <Label x={160} y={195} text="Dribble through cones — both feet, close control" col="#86efac"/>
+      </svg>
+    ),
+    ladder: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {/* Agility ladder */}
+        <line x1="120" y1="30" x2="120" y2="190" stroke={accent} strokeWidth="3" opacity="0.7"/>
+        <line x1="200" y1="30" x2="200" y2="190" stroke={accent} strokeWidth="3" opacity="0.7"/>
+        {[0,1,2,3,4,5,6,7].map(i=><line key={i} x1="120" y1={30+i*23} x2="200" y2={30+i*23} stroke={accent} strokeWidth="2" opacity="0.7"/>)}
+        {P(80,180,accent,'P')}
+        <path d="M88,178 Q100,160 110,150 Q120,140 130,128 Q140,116 150,104 Q160,92 170,80 Q180,68 190,56 Q200,44 210,32" fill="none" stroke="white" strokeWidth="2" strokeDasharray="4,2" opacity="0.8"/>
+        <Label x={160} y={210} text="Two feet in each box — precision before pace" col="#86efac"/>
+      </svg>
+    ),
+    shuttle: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <line x1="50" y1="30" x2="50" y2="190" stroke="#f59e0b" strokeWidth="2"/>
+        <line x1="120" y1="30" x2="120" y2="190" stroke="#f59e0b" strokeWidth="2"/>
+        <line x1="190" y1="30" x2="190" y2="190" stroke="#f59e0b" strokeWidth="2"/>
+        <line x1="260" y1="30" x2="260" y2="190" stroke="#f59e0b" strokeWidth="2"/>
+        <Label x={50} y={25} text="5m" col="#f59e0b"/>
+        <Label x={120} y={25} text="10m" col="#f59e0b"/>
+        <Label x={190} y={25} text="15m" col="#f59e0b"/>
+        {P(25,110,accent,'P')}
+        {Arrow(35,108,112,95,accent)}{Arrow(112,105,38,115,accent,true)}
+        <Label x={160} y={195} text="Sprint to each line and back — 6 reps" col="#86efac"/>
+      </svg>
+    ),
+    core: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {/* Person doing plank */}
+        <ellipse cx="160" cy="95" rx="15" ry="15" fill={accent} stroke="white" strokeWidth="1.5"/>
+        <line x1="160" y1="110" x2="160" y2="150" stroke={accent} strokeWidth="4"/>
+        <line x1="160" y1="125" x2="130" y2="120" stroke={accent} strokeWidth="3"/>
+        <line x1="160" y1="125" x2="190" y2="120" stroke={accent} strokeWidth="3"/>
+        <line x1="160" y1="150" x2="140" y2="175" stroke={accent} strokeWidth="3"/>
+        <line x1="160" y1="150" x2="180" y2="175" stroke={accent} strokeWidth="3"/>
+        {[['Plank',50,50],['Side Plank L',130,50],['Side Plank R',210,50],['Glute Bridge',50,170],['Dead Bug',210,170]].map(([t,x,y])=>(
+          <g key={t}><rect x={x-35} y={y-12} width="70" height="22" fill={N.bg} opacity="0.7" rx="4"/><text x={x} y={y+3} fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">{t}</text></g>
+        ))}
+        <Label x={160} y={195} text="40s on / 20s rest — 3 rounds, technique first" col="#86efac"/>
+      </svg>
+    ),
+    speedgates: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {/* T-shape speed gates */}
+        {[[160,50],[160,110],[160,170],[80,110],[240,110]].map(([x,y],i)=>(
+          <g key={i}>
+            <rect x={x-4} y={y-20} width="8" height="35" fill={accent} rx="2" stroke="white" strokeWidth="1"/>
+          </g>
+        ))}
+        {P(25,110,accent,'P')}
+        {Arrow(35,108,72,110,accent)}
+        <Label x={160} y={195} text="Timed runs through T-shape gate combinations" col="#86efac"/>
+      </svg>
+    ),
+    warmup: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {[['High Knees',80,60],['Heel Kicks',240,60],['Leg Swings',80,110],['Hip Circles',240,110],['Lunges',80,160],['Jog',240,160]].map(([t,x,y])=>(
+          <g key={t}>
+            <circle cx={x} cy={y} r="28" fill={N.bg} opacity="0.6" stroke={accent} strokeWidth="1.5"/>
+            <text x={x} y={y-4} fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">{t.split(' ')[0]}</text>
+            <text x={x} y={y+7} fill="white" fontSize="8" textAnchor="middle">{t.split(' ')[1]||''}</text>
+          </g>
+        ))}
+        <Label x={160} y={195} text="All dynamic — no static stretching" col="#86efac"/>
+      </svg>
+    ),
+    // ── TACTICAL / AGE GROUP ──────────────────────────────────────────────────
+    positions: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/><Goal x={130} y={194}/>
+        {P(160,185,accent,'GK')}
+        {[[80,150],[127,145],[193,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
+        {[[105,100],[160,95],[215,100]].map(([x,y],i)=>P(x,y,'#8b5cf6',['LM','CM','RM'][i]))}
+        {[[80,50],[160,40],[240,50]].map(([x,y],i)=>P(x,y,accent,['LW','ST','RW'][i]))}
+        <Label x={160} y={210} text="4-3-3 shape — zones of responsibility" col="#86efac"/>
+      </svg>
+    ),
+    '9v9': (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/><Goal x={130} y={194}/>
+        <rect x="95" y="10" width="130" height="60" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        <rect x="95" y="150" width="130" height="60" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        {P(160,185,accent,'GK')}
+        {[[80,150],[130,145],[190,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
+        {[[105,100],[160,95],[215,100]].map(([x,y],i)=>P(x,y,'#8b5cf6',['M','M','M'][i]))}
+        {[[120,50],[200,50]].map(([x,y],i)=>P(x,y,accent,['A','A'][i]))}
+        <Label x={160} y={210} text="9v9 shape — 64x44 yard pitch" col="#86efac"/>
+      </svg>
+    ),
+    offside: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        <Goal x={130} y={10}/>
+        <rect x="100" y="10" width="120" height="70" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        {/* Last defender line */}
+        <line x1="10" y1="90" x2="310" y2="90" stroke="#f59e0b" strokeWidth="2" strokeDasharray="8,4"/>
+        <Label x={160} y={85} text="LAST DEFENDER LINE" col="#f59e0b"/>
+        {P(100,70,accent,'A1')}{P(200,70,'#ef4444','A2')}{P(180,95,N.bg,'D')}
+        <Label x={100} y={115} text="✓ ONSIDE" col="#4ade80"/>
+        <Label x={200} y={115} text="✗ OFFSIDE" col="#ef4444"/>
+        <Label x={160} y={195} text="Level with last defender = onside" col="#86efac"/>
+      </svg>
+    ),
+    default: (
+      <svg viewBox={vb} className="w-full h-full">
+        <Pitch/>
+        {P(80,110,accent)}{P(160,80,accent)}{P(240,110,accent)}
+        {P(160,140,'#ef4444')}
+        <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
+        {Arrow(90,110,150,113,accent)}{Arrow(170,110,230,110,accent,true)}
+      </svg>
+    ),
+  }
+
+  return diagrams[type] || diagrams.default
+}
+
+// ─── Squad Positions ──────────────────────────────────────────────────────────
+const POSITIONS = ['GK','RB','CB','LB','RM','CM','LM','RW','ST','LW','CAM','CDM']
+
+function SquadPositions({ squad, onUpdatePlayer }) {
+  const [editPlayer, setEditPlayer] = useState(null)
+  const [form, setForm] = useState({preferred:'',secondary:''})
+
+  const open = (p) => { setEditPlayer(p); setForm({preferred:p.preferred||'',secondary:p.secondary||''}) }
+  const save = async () => {
+    await onUpdatePlayer(editPlayer.id, form)
+    setEditPlayer(null)
+  }
+
+  if (squad.length===0) return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+      <p className="text-2xl mb-2">🎽</p>
+      <p className="text-sm font-semibold text-gray-600">No players added yet</p>
+      <p className="text-xs text-gray-400 mt-1">Add players in the Attendance section first</p>
+    </div>
+  )
+
+  // Group players by preferred position
+  const grouped = {}
+  squad.forEach(p => {
+    const pos = p.preferred || 'Unassigned'
+    if (!grouped[pos]) grouped[pos] = []
+    grouped[pos].push(p)
+  })
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+      <h3 className="font-bold text-gray-900 text-sm mb-1">🎽 Squad Positions</h3>
+      <p className="text-xs text-gray-400 mb-4">Tap a player to set their preferred and secondary positions</p>
+
+      {/* Visual pitch with positions */}
+      <div className="rounded-xl overflow-hidden mb-4" style={{background:'#166534',aspectRatio:'4/3'}}>
+        <svg viewBox="0 0 320 240" className="w-full h-full">
+          <rect width="320" height="240" fill="#166534"/>
+          <rect x="10" y="10" width="300" height="220" fill="none" stroke="#4ade80" strokeWidth="1.5" opacity="0.5"/>
+          <line x1="10" y1="120" x2="310" y2="120" stroke="#4ade80" strokeWidth="1" opacity="0.3"/>
+          <circle cx="160" cy="120" r="30" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.3"/>
+          <rect x="115" y="10" width="90" height="50" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.3"/>
+          <rect x="115" y="180" width="90" height="50" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.3"/>
+          <rect x="135" y="10" width="50" height="18" fill="none" stroke="white" strokeWidth="2"/>
+          <rect x="135" y="212" width="50" height="18" fill="none" stroke="white" strokeWidth="2"/>
+          {/* Position zones */}
+          {[
+            ['GK',160,222],['RB',270,190],['CB',190,190],['LB',50,190],
+            ['CB',130,185],['CDM',160,155],['RM',285,120],['CM',200,120],
+            ['LM',35,120],['CM',120,120],['CAM',160,90],
+            ['RW',270,55],['ST',160,45],['LW',50,55]
+          ].map(([pos,x,y]) => {
+            const players = squad.filter(p=>p.preferred===pos)
+            return (
+              <g key={`${pos}${x}${y}`}>
+                <circle cx={x} cy={y} r="18" fill={players.length?N.bg:'rgba(255,255,255,0.1)'} stroke={players.length?"white":"rgba(255,255,255,0.3)"} strokeWidth="1"/>
+                <text x={x} y={y-4} textAnchor="middle" fill="white" fontSize="7" fontWeight="bold" opacity="0.9">{pos}</text>
+                {players.length>0 && <text x={x} y={y+7} textAnchor="middle" fill="white" fontSize="7">{players[0].name.split(' ')[0].substring(0,6)}</text>}
+                {players.length>1 && <text x={x} y={y+7} textAnchor="middle" fill="#fde68a" fontSize="6">+{players.length-1}</text>}
+              </g>
+            )
+          })}
+        </svg>
+      </div>
+
+      {/* Player list */}
+      <div className="space-y-2">
+        {squad.map(p => (
+          <button key={p.id} onClick={()=>open(p)}
+            className="w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all"
+            style={{borderColor:editPlayer?.id===p.id?N.bg:'#e5e7eb',background:editPlayer?.id===p.id?N.light:'white'}}>
+            <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>
+              {p.squad_num||p.name[0]}
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-gray-900">{p.name}</p>
+              <p className="text-xs text-gray-400">{p.preferred||'No position set'}{p.secondary?` / ${p.secondary}`:''}</p>
+            </div>
+            <span className="text-gray-300 text-xs">›</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Edit modal */}
+      {editPlayer && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-bold text-gray-900 mb-4">🎽 {editPlayer.name} — Positions</h3>
+            <div className="space-y-3 mb-4">
+              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Preferred Position</label>
+                <div className="flex flex-wrap gap-2">
+                  {POSITIONS.map(pos=>(
+                    <button key={pos} onClick={()=>setForm(f=>({...f,preferred:pos}))}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                      style={form.preferred===pos?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Secondary Position</label>
+                <div className="flex flex-wrap gap-2">
+                  {POSITIONS.map(pos=>(
+                    <button key={pos} onClick={()=>setForm(f=>({...f,secondary:f.secondary===pos?'':pos}))}
+                      className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                      style={form.secondary===pos?{background:'#8b5cf6',color:'white',borderColor:'#8b5cf6'}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                      {pos}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:N.bg}}>Save</button>
+              <button onClick={()=>setEditPlayer(null)} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl text-sm">Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─── Player Progression Tracker ───────────────────────────────────────────────
+function PlayerProgressTracker({ squad, drills, onSave, progressData }) {
+  const [selectedPlayer, setSelectedPlayer] = useState(null)
+  const [filter, setFilter] = useState('All')
+
+  const getDrillProgress = (playerId, drillId) => {
+    return progressData[`${playerId}-${drillId}`] || 0 // 0=not done, 1=introduced, 2=developing, 3=confident
+  }
+
+  const LEVELS = [
+    {v:0, label:'Not started', color:'#e5e7eb'},
+    {v:1, label:'Introduced', color:'#f59e0b'},
+    {v:2, label:'Developing', color:'#3b82f6'},
+    {v:3, label:'Confident', color:'#16a34a'},
+  ]
+
+  const filteredDrills = drills.filter(d =>
+    filter==='All' || d.category===filter
+  ).filter(d => d.category !== 'Age Group Changes' && d.category !== 'Strength & Conditioning')
+
+  if (squad.length===0) return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+      <p className="text-2xl mb-2">📈</p>
+      <p className="text-sm font-semibold text-gray-600">No players in squad yet</p>
+      <p className="text-xs text-gray-400 mt-1">Add players in the Attendance section first</p>
+    </div>
+  )
+
+  return (
+    <div className="space-y-4">
+      {/* Player selector */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <h3 className="font-bold text-gray-900 text-sm mb-3">📈 Player Progression Tracker</h3>
+        <p className="text-xs text-gray-400 mb-3">Track which drills each player has been coached on</p>
+        <div className="flex gap-2 flex-wrap mb-3">
+          {squad.map(p=>(
+            <button key={p.id} onClick={()=>setSelectedPlayer(selectedPlayer?.id===p.id?null:p)}
+              className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+              style={selectedPlayer?.id===p.id?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+              {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}
+            </button>
+          ))}
+        </div>
+        {/* Legend */}
+        <div className="flex gap-3 flex-wrap">
+          {LEVELS.map(l=>(
+            <div key={l.v} className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-full" style={{background:l.color}}/>
+              <span className="text-xs text-gray-500">{l.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {selectedPlayer && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold" style={{background:N.bg}}>
+              {selectedPlayer.squad_num||selectedPlayer.name[0]}
+            </div>
+            <div>
+              <p className="font-bold text-gray-900">{selectedPlayer.name}</p>
+              <p className="text-xs text-gray-400">{selectedPlayer.preferred||'No position'}</p>
+            </div>
+          </div>
+
+          {/* Category filter */}
+          <div className="flex gap-2 overflow-x-auto pb-2 mb-3">
+            {['All','Passing','Tackling','Attacking'].map(cat=>(
+              <button key={cat} onClick={()=>setFilter(cat)}
+                className="shrink-0 px-3 py-1 rounded-full text-xs font-semibold border transition-all"
+                style={filter===cat?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                {cat}
+              </button>
+            ))}
+          </div>
+
+          {/* Drills grid */}
+          <div className="space-y-2">
+            {filteredDrills.map(drill => {
+              const level = getDrillProgress(selectedPlayer.id, drill.id)
+              return (
+                <div key={drill.id} className="flex items-center gap-2 p-2 rounded-xl border" style={{borderColor:'#f3f4f6'}}>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 truncate">{drill.title}</p>
+                    <p className="text-xs text-gray-400">{drill.category}</p>
+                  </div>
+                  <div className="flex gap-1">
+                    {LEVELS.map(l=>(
+                      <button key={l.v} onClick={()=>onSave(selectedPlayer.id, drill.id, l.v)}
+                        className="w-7 h-7 rounded-full border-2 transition-all"
+                        style={{
+                          background:level===l.v?l.color:'white',
+                          borderColor:level===l.v?l.color:'#e5e7eb',
+                        }}
+                        title={l.label}/>
+                    ))}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Summary */}
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {LEVELS.slice(1).map(l=>{
+              const count = filteredDrills.filter(d=>getDrillProgress(selectedPlayer.id,d.id)===l.v).length
+              return (
+                <div key={l.v} className="text-center p-2 rounded-xl" style={{background:l.color+'22'}}>
+                  <div className="text-lg font-black" style={{color:l.color}}>{count}</div>
+                  <div className="text-xs text-gray-500">{l.label}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [role,setRole]=useState(null)
   const [view,setView]=useState('drills')
   const [drills,setDrills]=useState([])
   const [homeSession,setHomeSession]=useState({drill_ids:[],message:''})
-  const [seasonStart,setSeasonStartState]=useState('') // persisted to Supabase
+  const [seasonStart,setSeasonStartState]=useState('')
+  const [sessionStatus,setSessionStatusState]=useState({status:'on',location:'',time:''})
+  const [squad,setSquad]=useState([])
+  const [matchNotes,setMatchNotes]=useState({}) // { weekNum: { result, scorers, notes } }
+  const [playerNotes,setPlayerNotes]=useState({}) // { playerId: note }
+  const [progressData,setProgressData]=useState({}) // { 'playerId-drillId': level }
+  const [attendance,setAttendance]=useState({}) // { 'weekNum-playerId': bool }
   const [filterCat,setFilterCat]=useState('All')
   const [filterAge,setFilterAge]=useState('All')
   const [search,setSearch]=useState('')
@@ -971,6 +1975,49 @@ export default function App() {
     try {
       await supabase.from('season_settings').upsert({ id:1, season_start: dateStr||null })
     } catch(e) { console.error(e) }
+  }
+
+  const saveSessionStatus = async (s) => {
+    setSessionStatusState(s)
+    try { await supabase.from('season_settings').upsert({ id:1, session_status:s.status, session_location:s.location, session_time:s.time }) } catch(e){console.error(e)}
+  }
+  const saveMatchNote = async (weekNum, note) => {
+    setMatchNotes(prev=>({...prev,[weekNum]:note}))
+    try { await supabase.from('match_notes').upsert({week_num:weekNum,...note}) } catch(e){console.error(e)}
+  }
+  const savePlayerNote = async (playerId, note) => {
+    setPlayerNotes(prev=>({...prev,[playerId]:note}))
+    try { await supabase.from('player_notes').upsert({player_id:playerId,note}) } catch(e){console.error(e)}
+  }
+  const addSquadPlayer = async (name, num) => {
+    try {
+      const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single()
+      if(data) setSquad(prev=>[...prev,data])
+    } catch(e){console.error(e)}
+  }
+  const removeSquadPlayer = async (id) => {
+    setSquad(prev=>prev.filter(p=>p.id!==id))
+    try { await supabase.from('squad').delete().eq('id',id) } catch(e){console.error(e)}
+  }
+  const updatePlayerPosition = async (playerId, form) => {
+    setSquad(prev=>prev.map(p=>p.id===playerId?{...p,...form}:p))
+    try { await supabase.from('squad').update(form).eq('id',playerId) } catch(e){console.error(e)}
+  }
+  const saveProgress = async (playerId, drillId, level) => {
+    const key = `${playerId}-${drillId}`
+    setProgressData(prev=>({...prev,[key]:level}))
+    try {
+      if(level===0) {
+        await supabase.from('player_progress').delete().eq('player_id',playerId).eq('drill_id',drillId)
+      } else {
+        await supabase.from('player_progress').upsert({player_id:playerId,drill_id:drillId,level},{onConflict:'player_id,drill_id'})
+      }
+    } catch(e){console.error(e)}
+  }
+  const toggleAttendance = async (weekNum, playerId, current) => {
+    const key = `${weekNum}-${playerId}`
+    setAttendance(prev=>({...prev,[key]:!current}))
+    try { await supabase.from('attendance').upsert({week_num:weekNum,player_name:String(playerId),present:!current},{onConflict:'week_num,player_name'}) } catch(e){console.error(e)}
   }
 
   useEffect(()=>{
@@ -989,6 +2036,17 @@ export default function App() {
         if(hs) setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})
         const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single()
         if(ss&&ss.season_start) setSeasonStartState(ss.season_start)
+        if(ss) setSessionStatusState({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||''})
+        const{data:sq}=await supabase.from('squad').select('*').order('name')
+        if(sq) setSquad(sq)
+        const{data:mn}=await supabase.from('match_notes').select('*')
+        if(mn){const obj={};mn.forEach(r=>{obj[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||''}});setMatchNotes(obj)}
+        const{data:pn}=await supabase.from('player_notes').select('*')
+        if(pn){const obj={};pn.forEach(r=>{obj[r.player_id]=r.note||''});setPlayerNotes(obj)}
+        const{data:att}=await supabase.from('attendance').select('*')
+        if(att){const obj={};att.forEach(r=>{obj[`${r.week_num}-${r.player_name}`]=r.present});setAttendance(obj)}
+        const{data:pp}=await supabase.from('player_progress').select('*')
+        if(pp){const obj={};pp.forEach(r=>{obj[`${r.player_id}-${r.drill_id}`]=r.level});setProgressData(obj)}
       }catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       setLoading(false)
     }
@@ -1038,6 +2096,14 @@ export default function App() {
 
   const catCounts=CATEGORIES.reduce((acc,c)=>{acc[c]=drills.filter(d=>d.category===c).length;return acc},{})
   const publishedCount=(homeSession.drill_ids||[]).length
+  // Calculate current week for use across tabs
+  const calcWeek = (start) => {
+    if(!start) return 1
+    const d=new Date(start); const t=new Date(); t.setHours(0,0,0,0); d.setHours(0,0,0,0)
+    if(t<d) return 1
+    return Math.floor((t-d)/(1000*60*60*24*7))+1
+  }
+  const currentWeek = calcWeek(seasonStart)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -1063,20 +2129,37 @@ export default function App() {
           </div>
 
           {isCoach&&(
-            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-              {[
-                {id:'drills',  label:'📋 Drills'},
-                {id:'planner', label:'📅 Planner'},
-                {id:'home-manager', label:'🏠 Home', badge: publishedCount > 0 ? publishedCount : null},
-              ].map(tab=>(
-                <button key={tab.id} onClick={()=>setView(tab.id)}
-                  className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all relative"
-                  style={view===tab.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
-                  {tab.label}
-                  {tab.badge&&<span className="absolute -top-1 -right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-black" style={{background:N.bg,fontSize:'9px'}}>{tab.badge}</span>}
-                </button>
-              ))}
-            </div>
+            <>
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-1">
+                {[
+                  {id:'drills',   label:'📋 Drills'},
+                  {id:'planner',  label:'📅 Planner'},
+                  {id:'home-manager', label:'🏠 Home', badge: publishedCount > 0 ? publishedCount : null},
+                  {id:'status',   label:'🔔 Status'},
+                ].map(tab=>(
+                  <button key={tab.id} onClick={()=>setView(tab.id)}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all relative"
+                    style={view===tab.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                    {tab.label}
+                    {tab.badge&&<span className="absolute -top-1 -right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-black" style={{background:N.bg,fontSize:'9px'}}>{tab.badge}</span>}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                {[
+                  {id:'match',    label:'⚽ Match'},
+                  {id:'squad',    label:'👥 Squad'},
+                  {id:'faw',      label:'🏴󠁧󠁢󠁷󠁬󠁳󠁿 FAW'},
+                  {id:'season',   label:'📊 Season'},
+                ].map(tab=>(
+                  <button key={tab.id} onClick={()=>setView(tab.id)}
+                    className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                    style={view===tab.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+            </>
           )}
 
 
@@ -1086,7 +2169,28 @@ export default function App() {
       <main className="max-w-5xl mx-auto px-4 py-5">
         {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
-        {!isCoach&&<ParentHomeView drills={drills} homeSession={homeSession}/>}
+        {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
+        {isCoach&&view==='match'&&(
+          <div className="space-y-4">
+            <MatchDayNotes weekNum={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>
+          </div>
+        )}
+        {isCoach&&view==='squad'&&(
+          <div className="space-y-4">
+            <SquadAttendance weekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer}/>
+            <SquadPositions squad={squad} onUpdatePlayer={updatePlayerPosition}/>
+            <PlayerDevelopment squad={squad} playerNotes={playerNotes} onSave={savePlayerNote}/>
+            <PlayerProgressTracker squad={squad} drills={drills} progressData={progressData} onSave={saveProgress}/>
+          </div>
+        )}
+        {isCoach&&view==='faw'&&<FAWReference/>}
+        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} matchNotes={matchNotes} weekNum={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
+        {!isCoach&&(
+          <div>
+            <ParentStatusBanner sessionStatus={sessionStatus}/>
+            <ParentHomeView drills={drills} homeSession={homeSession}/>
+          </div>
+        )}
 
         {isCoach&&view==='drills'&&(
           <>
