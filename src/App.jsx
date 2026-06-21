@@ -396,7 +396,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
+function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek, onWeekChange }) {
   // Auto-calculate current week number based on today's date and season start
   const calcCurrentWeek = (start) => {
     if (!start) return 1
@@ -409,7 +409,19 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
     return Math.floor(diffDays / 7) + 1
   }
 
-  const [weekNum,setWeekNum]=useState(()=>calcCurrentWeek(seasonStart))
+  const [weekNum,setWeekNum]=useState(()=>initialWeek||calcCurrentWeek(seasonStart))
+
+  // When initialWeek changes (e.g. tapped from season overview), jump to it
+  useEffect(()=>{ if(initialWeek) setWeekNum(initialWeek) },[initialWeek])
+
+  // Notify parent when week changes so season overview stays in sync
+  const changeWeek = (fn) => {
+    setWeekNum(prev => {
+      const next = typeof fn === 'function' ? fn(prev) : fn
+      if(onWeekChange) onWeekChange(next)
+      return next
+    })
+  }
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({}) // { 'weekNum-ageFilter': { blockKey: drill } }
   const [swapTarget,setSwapTarget]=useState(null)
@@ -420,7 +432,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
 
   // When season start changes, jump to the correct current week
   useEffect(()=>{
-    setWeekNum(calcCurrentWeek(seasonStart))
+    changeWeek(calcCurrentWeek(seasonStart))
   },[seasonStart])
 
   // Load all session overrides from Supabase on mount
@@ -572,10 +584,10 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
 
             {/* Week nav */}
             <div className="flex items-center gap-1 mb-2">
-              <button onClick={()=>{setWeekNum(w=>Math.max(1,w-1));setEditingDate(false)}}
+              <button onClick={()=>{changeWeek(w=>Math.max(1,w-1));setEditingDate(false)}}
                 className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">‹</button>
               <div className="flex-1 text-center font-bold text-gray-900 text-xs">Week {weekNum}</div>
-              <button onClick={()=>{setWeekNum(w=>w+1);setEditingDate(false)}}
+              <button onClick={()=>{changeWeek(w=>w+1);setEditingDate(false)}}
                 className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">›</button>
             </div>
 
@@ -2063,6 +2075,9 @@ export default function App() {
   const [shareTarget,setShareTarget]=useState(null)
   const [loading,setLoading]=useState(true)
   const [dbError,setDbError]=useState(false)
+  const [matchWeek,setMatchWeek]=useState(1)
+  const [squadWeek,setSquadWeek]=useState(1)
+  const [plannerWeek,setPlannerWeek]=useState(1)
 
   // Save season start to Supabase and update local state
   const saveSeasonStart = async (dateStr) => {
@@ -2199,6 +2214,7 @@ export default function App() {
     return Math.floor((t-d)/(1000*60*60*24*7))+1
   }
   const currentWeek = calcWeek(seasonStart)
+  useEffect(()=>{ setMatchWeek(currentWeek); setSquadWeek(currentWeek); setPlannerWeek(currentWeek) },[currentWeek])
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -2262,24 +2278,51 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
-        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart}/>}
+        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart} initialWeek={plannerWeek} onWeekChange={setPlannerWeek}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&(
           <div className="space-y-4">
-            <MatchDayNotes weekNum={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>
+            {/* Week navigator */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
+              <button onClick={()=>setMatchWeek(w=>Math.max(1,w-1))}
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">‹</button>
+              <div className="flex-1 text-center">
+                <p className="font-bold text-gray-900 text-sm">Week {matchWeek}</p>
+                {matchNotes[matchWeek]?.opponent && <p className="text-xs text-gray-400">vs {matchNotes[matchWeek].opponent}</p>}
+              </div>
+              <button onClick={()=>setMatchWeek(w=>w+1)}
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">›</button>
+              <button onClick={()=>setMatchWeek(currentWeek)}
+                className="text-xs font-semibold px-2 py-1 rounded-lg"
+                style={{background:N.light, color:N.text}}>Today</button>
+            </div>
+            <MatchDayNotes weekNum={matchWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>
           </div>
         )}
         {isCoach&&view==='squad'&&(
           <div className="space-y-4">
-            <SquadAttendance weekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer}/>
+            {/* Week navigator for attendance */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
+              <button onClick={()=>setSquadWeek(w=>Math.max(1,w-1))}
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">‹</button>
+              <div className="flex-1 text-center">
+                <p className="font-bold text-gray-900 text-sm">Week {squadWeek} — Attendance</p>
+              </div>
+              <button onClick={()=>setSquadWeek(w=>w+1)}
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">›</button>
+              <button onClick={()=>setSquadWeek(currentWeek)}
+                className="text-xs font-semibold px-2 py-1 rounded-lg"
+                style={{background:N.light, color:N.text}}>Today</button>
+            </div>
+            <SquadAttendance weekNum={squadWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer}/>
             <SquadPositions squad={squad} onUpdatePlayer={updatePlayerPosition}/>
             <PlayerDevelopment squad={squad} playerNotes={playerNotes} onSave={savePlayerNote}/>
             <PlayerProgressTracker squad={squad} drills={drills} progressData={progressData} onSave={saveProgress}/>
           </div>
         )}
         {isCoach&&view==='faw'&&<FAWReference/>}
-        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} matchNotes={matchNotes} weekNum={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
+        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} matchNotes={matchNotes} weekNum={currentWeek} onWeekSelect={(w)=>{setPlannerWeek(w);setView('planner')}}/>}
         {!isCoach&&(
           <div>
             <ParentStatusBanner sessionStatus={sessionStatus}/>
