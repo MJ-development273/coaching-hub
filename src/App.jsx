@@ -409,17 +409,23 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
     return Math.floor(diffDays / 7) + 1
   }
 
-  // Component remounts on each tab switch, so initialWeek is always fresh
+  // ALL useState hooks must come before any useEffect — React rules of hooks
   const [weekNum,setWeekNum]=useState(()=>initialWeek||calcCurrentWeek(seasonStart))
   const [ageFilter,setAgeFilter]=useState('U12')
-  const [overrides,setOverrides]=useState({}) // { 'weekNum-ageFilter': { blockKey: drill } }
+  const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
   const [overridesLoaded,setOverridesLoaded]=useState(false)
+  const [dateOverrides,setDateOverrides]=useState({})
+  const [editingDate,setEditingDate]=useState(false)
+  const [tempDate,setTempDate]=useState('')
 
-  // Must be defined after all useState hooks
+  const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
+  const focusNavy=e=>e.target.style.borderColor=N.bg
+  const blurGray=e=>e.target.style.borderColor='#d1d5db'
+
   const changeWeek = (fn) => {
     setWeekNum(prev => {
       const next = typeof fn === 'function' ? fn(prev) : fn
@@ -428,7 +434,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
     })
   }
 
-  // When season start changes, jump to correct week (only if not coming from season overview)
+  // When season start changes, jump to correct week
   useEffect(()=>{
     if(!initialWeek) setWeekNum(calcCurrentWeek(seasonStart))
   },[seasonStart])
@@ -440,7 +446,6 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
         const { data, error } = await supabase.from('session_overrides').select('*')
         if (error) throw error
         if (data && data.length > 0) {
-          // Rebuild the overrides object { 'weekNum-ageFilter': { blockKey: drillId } }
           const rebuilt = {}
           data.forEach(row => {
             const key = `${row.week_num}-${row.age_filter}`
@@ -454,13 +459,6 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
     }
     loadOverrides()
   },[])
-  const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
-  const focusNavy=e=>e.target.style.borderColor=N.bg
-  const blurGray=e=>e.target.style.borderColor='#d1d5db'
-
-  const [dateOverrides,setDateOverrides]=useState({}) // { [weekNum]: 'YYYY-MM-DD' }
-  const [editingDate,setEditingDate]=useState(false)
-  const [tempDate,setTempDate]=useState('')
 
   // Calculate this week's date from season start + (weekNum-1) * 7 days
   const getAutoDate = (wNum) => {
