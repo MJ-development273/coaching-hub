@@ -1423,33 +1423,33 @@ function TacticalDiagram({ type, category }) {
     // ── PASSING ──────────────────────────────────────────────────────────────
     rondo: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Zone x={90} y={60} w={140} h={100}/>
-        <Label x={160} y={55} text="RONDO AREA"/>
+        {Pitch()}
+        {Zone(90,60,140,100)}
+        {Label(160,55,"RONDO AREA")}
         {[0,51,103,154,205,257,309].map((a,i) => {
           const r=55, cx=160+r*Math.cos((a-90)*Math.PI/180), cy=110+r*Math.sin((a-90)*Math.PI/180)
           return <g key={i}>{P(cx,cy,accent,String(i+1))}</g>
         })}
         {P(145,95,'#ef4444','D')}{P(175,125,'#ef4444','D')}
         <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
-        <Label x={160} y={185} text="7 attackers keep ball from 2 defenders" col="#86efac"/>
+        {Label(160,185,"7 attackers keep ball from 2 defenders","#86efac")}
       </svg>
     ),
     wall: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {/* Wall on left */}
         <rect x="10" y="60" width="12" height="100" fill="#94a3b8" opacity="0.8"/>
-        <Label x={16} y={55} text="WALL" col="#94a3b8"/>
+        {Label(16,55,"WALL","#94a3b8")}
         {P(100,110,accent,'1')}{P(200,110,accent,'2')}
         <circle cx="150" cy="110" r="7" fill="white" opacity="0.9"/>
         {Arrow(100,108,28,100,accent)}{Arrow(28,120,95,112,accent,true)}
-        <Label x={160} y={185} text="Pass to wall → control rebound → repeat" col="#86efac"/>
+        {Label(160,185,"Pass to wall → control rebound → repeat","#86efac")}
       </svg>
     ),
     triangle: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {Zone(90,55,140,110)}
         {P(120,160,accent,'A')}{P(200,160,accent,'B')}{P(160,65,accent,'C')}
         {P(160,115,'#ef4444','D')}
@@ -1457,259 +1457,259 @@ function TacticalDiagram({ type, category }) {
         <line x1="200" y1="160" x2="160" y2="65" stroke={accent} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.5"/>
         <line x1="160" y1="65" x2="120" y2="160" stroke={accent} strokeWidth="1.5" strokeDasharray="5,3" opacity="0.5"/>
         {Arrow(128,157,152,117,accent)}{Arrow(160,104,167,72,accent,true)}
-        <Label x={160} y={195} text="Pass and move to a different point each time" col="#86efac"/>
+        {Label(160,195,"Pass and move to a different point each time","#86efac")}
       </svg>
     ),
     gates: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {[[70,80],[70,140],[120,65],[120,155],[170,75],[170,145],[230,85],[230,135]].map(([x,y],i) =>
           <rect key={i} x={x-5} y={y-5} width="10" height="10" fill="#f59e0b" stroke="white" strokeWidth="1"/>
         )}
         {P(50,110,accent,'P')}
         {Arrow(60,108,65,90,accent)}{Arrow(75,80,115,70,accent,true)}{Arrow(125,65,165,78,accent,true)}
-        <Label x={160} y={195} text="Pass accurately through as many gates as possible" col="#86efac"/>
+        {Label(160,195,"Pass accurately through as many gates as possible","#86efac")}
       </svg>
     ),
     '4goal': (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={10} y={92}/><Goal x={250} y={92}/>
+        {Pitch()}
+        {Goal(10,92)}{Goal(250,92)}
         <rect x="140" y="10" width="16" height="60" fill="none" stroke="white" strokeWidth="2"/>
         <rect x="140" y="150" width="16" height="60" fill="none" stroke="white" strokeWidth="2"/>
         {Zone(80,55,160,110)}
         {P(110,85,accent)}{P(210,85,accent)}{P(110,135,'#ef4444')}{P(210,135,'#ef4444')}
         <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
-        <Label x={160} y={195} text="Score by passing through any of the 4 goals" col="#86efac"/>
+        {Label(160,195,"Score by passing through any of the 4 goals","#86efac")}
       </svg>
     ),
     switch: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {P(40,155,accent,'A')}{P(130,110,accent,'B')}{P(270,65,accent,'C')}
         {Arrow(50,152,120,113,accent)}{Arrow(142,108,258,68,accent)}
-        <Label x={160} y={50} text="SWITCH PLAY -- 3 passes or fewer"/>
-        <Label x={160} y={195} text="Must switch ball across pitch before driving forward" col="#86efac"/>
+        {Label(160,50,"SWITCH PLAY -- 3 passes or fewer")}
+        {Label(160,195,"Must switch ball across pitch before driving forward","#86efac")}
       </svg>
     ),
     lanes: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         <line x1="117" y1="10" x2="117" y2="210" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="6,3"/>
         <line x1="203" y1="10" x2="203" y2="210" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="6,3"/>
-        <Goal x={130} y={10}/>
-        <Label x={65} y={110} text="LANE 1"/><Label x={160} y={110} text="LANE 2"/><Label x={253} y={110} text="LANE 3"/>
+        {Goal(130,10)}
+        {Label(65,110,"LANE 1")}{Label(160,110,"LANE 2")}{Label(253,110,"LANE 3")}
         {P(50,165,accent)}{P(140,140,accent)}{P(230,100,accent)}
         {Arrow(60,163,130,143,accent)}{Arrow(152,138,222,103,accent)}
-        <Label x={160} y={195} text="Must pass into each lane before shooting" col="#86efac"/>
+        {Label(160,195,"Must pass into each lane before shooting","#86efac")}
       </svg>
     ),
     // ── TACKLING ─────────────────────────────────────────────────────────────
     tackle: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {Zone(70,70,180,80)}
         {P(110,110,accent,'A')}{P(210,110,'#ef4444','D')}
         <circle cx="165" cy="110" r="7" fill="white" opacity="0.9"/>
         {Arrow(120,110,158,110,accent)}
-        <Label x={160} y={65} text="SHADOW TACKLE ZONE"/>
-        <Label x={160} y={55} text="Attacker dribbles slowly, defender mirrors"/>
-        <Label x={160} y={195} text="Mirror movement -- correct body shape first" col="#86efac"/>
+        {Label(160,65,"SHADOW TACKLE ZONE")}
+        {Label(160,55,"Attacker dribbles slowly, defender mirrors")}
+        {Label(160,195,"Mirror movement -- correct body shape first","#86efac")}
       </svg>
     ),
     jockey: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {Zone(120,30,80,160)}
         {P(160,170,accent,'A')}{P(160,55,'#ef4444','D')}
         <circle cx="160" cy="140" r="7" fill="white" opacity="0.9"/>
         {Arrow(160,160,160,80,accent,true)}
         {Arrow(160,80,160,65,'#ef4444')}
-        <Label x={160} y={25} text="END LINE"/>
-        <Label x={160} y={195} text="Attacker drives to end line -- defender jockeys" col="#86efac"/>
+        {Label(160,25,"END LINE")}
+        {Label(160,195,"Attacker drives to end line -- defender jockeys","#86efac")}
       </svg>
     ),
     '1v1box': (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {Zone(80,55,160,110)}
-        <Label x={160} y={50} text="8m x 8m BOX"/>
+        {Label(160,50,"8m x 8m BOX")}
         {P(130,100,accent,'A')}{P(190,120,'#ef4444','D')}
         <circle cx="155" cy="110" r="7" fill="white" opacity="0.9"/>
         {Arrow(140,102,148,108,accent)}
-        <Label x={160} y={185} text="Attacker tries to dribble out any side" col="#86efac"/>
+        {Label(160,185,"Attacker tries to dribble out any side","#86efac")}
       </svg>
     ),
     press: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={170}/>
+        {Pitch()}
+        {Goal(130,170)}
         {P(100,55,accent,'A')}{P(160,45,accent,'A')}{P(220,55,accent,'A')}
         {P(110,130,'#ef4444','P')}{P(160,125,'#ef4444','P')}{P(210,130,'#ef4444','P')}
         <circle cx="160" cy="80" r="7" fill="white" opacity="0.9"/>
         {Arrow(113,130,105,68,'#ef4444')}{Arrow(163,123,161,57,'#ef4444')}{Arrow(207,128,217,67,'#ef4444')}
-        <Label x={160} y={195} text="Press as a unit -- win ball within 10 seconds" col="#86efac"/>
+        {Label(160,195,"Press as a unit -- win ball within 10 seconds","#86efac")}
       </svg>
     ),
     defshape: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={175}/>
+        {Pitch()}
+        {Goal(130,175)}
         {[[80,150],[127,145],[193,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
         {[[110,105],[160,100],[210,105]].map(([x,y],i)=>P(x,y,'#8b5cf6',['CM','CM','CM'][i]))}
         {[[80,55],[160,45],[240,55]].map(([x,y],i)=>P(x,y,'#ef4444',['A','A','A'][i]))}
-        <Label x={160} y={195} text="Maintain shape -- shift as a unit when ball moves" col="#86efac"/>
+        {Label(160,195,"Maintain shape -- shift as a unit when ball moves","#86efac")}
       </svg>
     ),
     recovery: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={175}/>
+        {Pitch()}
+        {Goal(130,175)}
         {P(80,50,accent,'A')}{P(240,50,'#ef4444','D')}
         {Arrow(80,50,240,50,'white',true)}
-        <Label x={160} y={45} text="START LINE"/>
+        {Label(160,45,"START LINE")}
         {P(80,155,accent,'A')}{P(240,155,'#ef4444','D')}
         {Arrow(90,153,230,153,accent)}
-        <Label x={160} y={195} text="Both sprint 20m -- defender recovers to delay" col="#86efac"/>
+        {Label(160,195,"Both sprint 20m -- defender recovers to delay","#86efac")}
       </svg>
     ),
     channel: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {Zone(110,20,100,180)}
         {P(160,170,accent,'A')}{P(160,75,'#ef4444','D')}
         <circle cx="160" cy="145" r="7" fill="white" opacity="0.9"/>
         {Arrow(160,160,160,90,accent,true)}
         {Arrow(165,75,200,100,'#ef4444')}
-        <Label x={160} y={15} text="← CHANNEL →"/>
-        <Label x={160} y={195} text="Defender guides attacker toward touchline" col="#86efac"/>
+        {Label(160,15,"← CHANNEL →")}
+        {Label(160,195,"Defender guides attacker toward touchline","#86efac")}
       </svg>
     ),
     // ── ATTACKING ────────────────────────────────────────────────────────────
     '3v2': (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
-        <Zone x={80} y={25} w={160} h={175}/>
+        {Pitch()}
+        {Goal(130,10)}
+        {Zone(80,25,160,175)}
         {P(100,55,accent,'A')}{P(160,45,accent,'A')}{P(220,55,accent,'A')}
         {P(130,120,'#ef4444','D')}{P(190,120,'#ef4444','D')}
         <circle cx="150" cy="80" r="7" fill="white" opacity="0.9"/>
         {Arrow(108,57,143,82,accent)}{Arrow(160,55,155,72,accent,true)}{Arrow(212,57,185,118,'#ef4444',true)}
-        <Label x={160} y={195} text="3 attackers vs 2 defenders -- complete 3 passes first" col="#86efac"/>
+        {Label(160,195,"3 attackers vs 2 defenders -- complete 3 passes first","#86efac")}
       </svg>
     ),
     cross: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         {/* Penalty area */}
         <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
         {P(280,110,accent,'W')}{P(145,55,accent,'A1')}{P(185,45,accent,'A2')}
         {Arrow(272,108,190,50,accent)}{Arrow(145,66,145,30,accent,true)}{Arrow(185,56,185,30,accent,true)}
-        <Label x={160} y={195} text="Wide player crosses -- near & far post runs" col="#86efac"/>
+        {Label(160,195,"Wide player crosses -- near & far post runs","#86efac")}
       </svg>
     ),
     counter: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         {P(80,170,accent)}{P(140,175,accent)}{P(180,175,accent)}{P(240,170,accent)}
         {P(130,100,'#ef4444','D')}{P(190,100,'#ef4444','D')}
         {Arrow(80,160,78,25,accent,true)}{Arrow(140,165,140,30,accent,true)}{Arrow(180,165,180,30,accent,true)}{Arrow(240,160,242,25,accent,true)}
-        <Label x={160} y={195} text="4v2 counter attack -- score within 10 seconds" col="#86efac"/>
+        {Label(160,195,"4v2 counter attack -- score within 10 seconds","#86efac")}
       </svg>
     ),
     overlap: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         {P(60,120,N.bg,'FB')}{P(60,60,accent,'W')}{P(180,80,accent,'CF')}
         {Arrow(60,110,58,72,N.bg)}{Arrow(58,70,170,82,accent,true)}
         {/* Overlap run arc */}
         <path d="M65,120 Q30,90 65,58" fill="none" stroke={N.bg} strokeWidth="2" strokeDasharray="6,3"/>
-        <Label x={160} y={195} text="Full back overlaps winger -- lay off into space" col="#86efac"/>
+        {Label(160,195,"Full back overlaps winger -- lay off into space","#86efac")}
       </svg>
     ),
     shootpress: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.3"/>
         {P(160,120,accent,'A')}{P(160,175,'#ef4444','D')}
         <circle cx="160" cy="120" r="7" fill="white" opacity="0.9"/>
         {Arrow(160,111,160,35,accent)}{Arrow(160,165,160,132,'#ef4444')}
-        <Label x={265} y={120} text="2 sec" col="#f59e0b"/>
-        <Label x={160} y={195} text="Receive, decide: shoot/turn/lay off within 2 seconds" col="#86efac"/>
+        {Label(265,120,"2 sec","#f59e0b")}
+        {Label(160,195,"Receive, decide: shoot/turn/lay off within 2 seconds","#86efac")}
       </svg>
     ),
     setpiece: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
         {P(20,175,accent,'K')}{P(130,35,accent,'NP')}{P(185,25,accent,'FP')}{P(150,80,accent,'S')}{P(210,80,'#ef4444','D')}
         {Arrow(29,172,123,42,accent)}{Arrow(130,46,148,72,accent,true)}{Arrow(185,36,185,30,accent,true)}
-        <Label x={160} y={195} text="Corner: near post, far post and short options" col="#86efac"/>
+        {Label(160,195,"Corner: near post, far post and short options","#86efac")}
       </svg>
     ),
     combo: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         {P(80,165,accent,'A')}{P(160,120,accent,'B')}{P(240,165,accent,'C')}
         {Arrow(90,162,150,123,accent)}{Arrow(170,120,232,162,accent,true)}{Arrow(240,153,190,35,accent)}
-        <Label x={160} y={195} text="A-B-C combination -- third man finishes" col="#86efac"/>
+        {Label(160,195,"A-B-C combination -- third man finishes","#86efac")}
       </svg>
     ),
     wideattack: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         {P(20,120,accent,'LW')}{P(300,120,accent,'RW')}{P(160,80,accent,'ST')}{P(120,155,accent,'LM')}{P(200,155,accent,'RM')}
         {Arrow(20,110,18,35,accent,true)}{Arrow(300,110,298,35,accent,true)}
-        <Label x={160} y={195} text="Wingers push high and wide -- create width" col="#86efac"/>
+        {Label(160,195,"Wingers push high and wide -- create width","#86efac")}
       </svg>
     ),
     // ── S&C ──────────────────────────────────────────────────────────────────
     weave: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        {[50,85,120,155,190,225,260].map((x,i) => <Cone key={i} x={x} y={i%2===0?80:140}/>)}
+        {Pitch()}
+        {[50,85,120,155,190,225,260].map((x,i) => <polygon key={i} points={`${x},${i%2===0?72:132} ${x-5},${i%2===0?89:149} ${x+5},${i%2===0?89:149}`} fill="#f59e0b" stroke="white" strokeWidth="1"/>)}
         {P(25,110,accent,'P')}
         <path d="M35,110 Q52,80 70,110 Q88,140 105,110 Q122,80 140,110 Q158,140 175,110 Q192,80 210,110 Q227,140 244,110 Q262,80 280,110" fill="none" stroke={accent} strokeWidth="2.5" strokeDasharray="none"/>
-        <Label x={160} y={195} text="Dribble through cones -- both feet, close control" col="#86efac"/>
+        {Label(160,195,"Dribble through cones -- both feet, close control","#86efac")}
       </svg>
     ),
     ladder: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {/* Agility ladder */}
         <line x1="120" y1="30" x2="120" y2="190" stroke={accent} strokeWidth="3" opacity="0.7"/>
         <line x1="200" y1="30" x2="200" y2="190" stroke={accent} strokeWidth="3" opacity="0.7"/>
         {[0,1,2,3,4,5,6,7].map(i=><line key={i} x1="120" y1={30+i*23} x2="200" y2={30+i*23} stroke={accent} strokeWidth="2" opacity="0.7"/>)}
         {P(80,180,accent,'P')}
         <path d="M88,178 Q100,160 110,150 Q120,140 130,128 Q140,116 150,104 Q160,92 170,80 Q180,68 190,56 Q200,44 210,32" fill="none" stroke="white" strokeWidth="2" strokeDasharray="4,2" opacity="0.8"/>
-        <Label x={160} y={210} text="Two feet in each box -- precision before pace" col="#86efac"/>
+        {Label(160,210,"Two feet in each box -- precision before pace","#86efac")}
       </svg>
     ),
     shuttle: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         <line x1="50" y1="30" x2="50" y2="190" stroke="#f59e0b" strokeWidth="2"/>
         <line x1="120" y1="30" x2="120" y2="190" stroke="#f59e0b" strokeWidth="2"/>
         <line x1="190" y1="30" x2="190" y2="190" stroke="#f59e0b" strokeWidth="2"/>
         <line x1="260" y1="30" x2="260" y2="190" stroke="#f59e0b" strokeWidth="2"/>
-        <Label x={50} y={25} text="5m" col="#f59e0b"/>
-        <Label x={120} y={25} text="10m" col="#f59e0b"/>
-        <Label x={190} y={25} text="15m" col="#f59e0b"/>
+        {Label(50,25,"5m","#f59e0b")}
+        {Label(120,25,"10m","#f59e0b")}
+        {Label(190,25,"15m","#f59e0b")}
         {P(25,110,accent,'P')}
         {Arrow(35,108,112,95,accent)}{Arrow(112,105,38,115,accent,true)}
-        <Label x={160} y={195} text="Sprint to each line and back -- 6 reps" col="#86efac"/>
+        {Label(160,195,"Sprint to each line and back -- 6 reps","#86efac")}
       </svg>
     ),
     core: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {/* Person doing plank */}
         <ellipse cx="160" cy="95" rx="15" ry="15" fill={accent} stroke="white" strokeWidth="1.5"/>
         <line x1="160" y1="110" x2="160" y2="150" stroke={accent} strokeWidth="4"/>
@@ -1720,12 +1720,12 @@ function TacticalDiagram({ type, category }) {
         {[['Plank',50,50],['Side Plank L',130,50],['Side Plank R',210,50],['Glute Bridge',50,170],['Dead Bug',210,170]].map(([t,x,y])=>(
           <g key={t}><rect x={x-35} y={y-12} width="70" height="22" fill={N.bg} opacity="0.7" rx="4"/><text x={x} y={y+3} fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">{t}</text></g>
         ))}
-        <Label x={160} y={195} text="40s on / 20s rest -- 3 rounds, technique first" col="#86efac"/>
+        {Label(160,195,"40s on / 20s rest -- 3 rounds, technique first","#86efac")}
       </svg>
     ),
     speedgates: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {/* T-shape speed gates */}
         {[[160,50],[160,110],[160,170],[80,110],[240,110]].map(([x,y],i)=>(
           <g key={i}>
@@ -1734,12 +1734,12 @@ function TacticalDiagram({ type, category }) {
         ))}
         {P(25,110,accent,'P')}
         {Arrow(35,108,72,110,accent)}
-        <Label x={160} y={195} text="Timed runs through T-shape gate combinations" col="#86efac"/>
+        {Label(160,195,"Timed runs through T-shape gate combinations","#86efac")}
       </svg>
     ),
     warmup: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {[['High Knees',80,60],['Heel Kicks',240,60],['Leg Swings',80,110],['Hip Circles',240,110],['Lunges',80,160],['Jog',240,160]].map(([t,x,y])=>(
           <g key={t}>
             <circle cx={x} cy={y} r="28" fill={N.bg} opacity="0.6" stroke={accent} strokeWidth="1.5"/>
@@ -1747,51 +1747,51 @@ function TacticalDiagram({ type, category }) {
             <text x={x} y={y+7} fill="white" fontSize="8" textAnchor="middle">{t.split(' ')[1]||''}</text>
           </g>
         ))}
-        <Label x={160} y={195} text="All dynamic -- no static stretching" col="#86efac"/>
+        {Label(160,195,"All dynamic -- no static stretching","#86efac")}
       </svg>
     ),
     // ── TACTICAL / AGE GROUP ──────────────────────────────────────────────────
     positions: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/><Goal x={130} y={194}/>
+        {Pitch()}
+        {Goal(130,10)}{Goal(130,194)}
         {P(160,185,accent,'GK')}
         {[[80,150],[127,145],[193,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
         {[[105,100],[160,95],[215,100]].map(([x,y],i)=>P(x,y,'#8b5cf6',['LM','CM','RM'][i]))}
         {[[80,50],[160,40],[240,50]].map(([x,y],i)=>P(x,y,accent,['LW','ST','RW'][i]))}
-        <Label x={160} y={210} text="4-3-3 shape -- zones of responsibility" col="#86efac"/>
+        {Label(160,210,"4-3-3 shape -- zones of responsibility","#86efac")}
       </svg>
     ),
     '9v9': (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/><Goal x={130} y={194}/>
+        {Pitch()}
+        {Goal(130,10)}{Goal(130,194)}
         <rect x="95" y="10" width="130" height="60" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
         <rect x="95" y="150" width="130" height="60" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
         {P(160,185,accent,'GK')}
         {[[80,150],[130,145],[190,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
         {[[105,100],[160,95],[215,100]].map(([x,y],i)=>P(x,y,'#8b5cf6',['M','M','M'][i]))}
         {[[120,50],[200,50]].map(([x,y],i)=>P(x,y,accent,['A','A'][i]))}
-        <Label x={160} y={210} text="9v9 shape -- 64x44 yard pitch" col="#86efac"/>
+        {Label(160,210,"9v9 shape -- 64x44 yard pitch","#86efac")}
       </svg>
     ),
     offside: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
-        <Goal x={130} y={10}/>
+        {Pitch()}
+        {Goal(130,10)}
         <rect x="100" y="10" width="120" height="70" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
         {/* Last defender line */}
         <line x1="10" y1="90" x2="310" y2="90" stroke="#f59e0b" strokeWidth="2" strokeDasharray="8,4"/>
-        <Label x={160} y={85} text="LAST DEFENDER LINE" col="#f59e0b"/>
+        {Label(160,85,"LAST DEFENDER LINE","#f59e0b")}
         {P(100,70,accent,'A1')}{P(200,70,'#ef4444','A2')}{P(180,95,N.bg,'D')}
-        <Label x={100} y={115} text="✓ ONSIDE" col="#4ade80"/>
-        <Label x={200} y={115} text="✗ OFFSIDE" col="#ef4444"/>
-        <Label x={160} y={195} text="Level with last defender = onside" col="#86efac"/>
+        {Label(100,115,"✓ ONSIDE","#4ade80")}
+        {Label(200,115,"✗ OFFSIDE","#ef4444")}
+        {Label(160,195,"Level with last defender = onside","#86efac")}
       </svg>
     ),
     default: (
       <svg viewBox={vb} className="w-full h-full">
-        <Pitch/>
+        {Pitch()}
         {P(80,110,accent)}{P(160,80,accent)}{P(240,110,accent)}
         {P(160,140,'#ef4444')}
         <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
