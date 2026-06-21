@@ -121,7 +121,7 @@ function AuthScreen({ onAuth }) {
           <p className="text-sm text-gray-500">Coaching Hub</p>
         </div>
 
-        {/* Landing — two buttons */}
+        {/* Landing -- two buttons */}
         {screen === 'home' && (
           <div className="px-8 pb-8 space-y-3">
             <button onClick={()=>setScreen('coach')}
@@ -145,12 +145,12 @@ function AuthScreen({ onAuth }) {
           <div className="px-8 pb-8">
             <button onClick={()=>{setScreen('home');setPin('');setErr('')}}
               className="flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 mb-4 mx-auto transition-colors">
-              ‹ Back
+              &lsaquo; Back
             </button>
             <p className="text-sm font-semibold text-gray-700 mb-3">Enter your coach PIN</p>
             <input type="password" value={pin} onChange={e=>setPin(e.target.value)}
               onKeyDown={e=>e.key==='Enter'&&check()}
-              placeholder="••••" maxLength={6} autoFocus
+              placeholder="****" maxLength={6} autoFocus
               className="w-full border-2 border-gray-300 rounded-xl px-4 py-3 text-center text-2xl tracking-widest font-bold focus:outline-none mb-3"
               onFocus={e=>e.target.style.borderColor=N.bg}
               onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
@@ -198,8 +198,8 @@ function DrillDetail({ drill, onClose, isCoach }) {
         </div>
         <div className="mb-4"><h4 className="text-sm font-semibold text-gray-800 mb-1">How to run this drill</h4><p className="text-sm text-gray-600 leading-relaxed">{drill.description}</p></div>
         {isCoach && drill.coach_notes && <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4"><h4 className="text-sm font-semibold text-amber-800 mb-1">📋 Coach Notes</h4><p className="text-sm text-amber-700 leading-relaxed">{drill.coach_notes}</p></div>}
-        {isCoach && drill.progression && <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4"><h4 className="text-sm font-semibold text-purple-800 mb-1">⬆️ Progression — Make it Harder</h4><p className="text-sm text-purple-700 leading-relaxed">{drill.progression}</p></div>}
-        {!isCoach && <div className="rounded-xl p-4" style={{background:N.light,border:`1px solid ${N.bg}22`}}><h4 className="text-sm font-semibold mb-1" style={{color:N.text}}>💡 Tips for practising at home</h4><p className="text-sm leading-relaxed" style={{color:N.text}}>Find a safe open space — a garden or park works great. Plastic bottles or jumpers can substitute for cones. Start slow and focus on getting the technique right before trying to go fast.</p></div>}
+        {isCoach && drill.progression && <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 mb-4"><h4 className="text-sm font-semibold text-purple-800 mb-1">⬆️ Progression -- Make it Harder</h4><p className="text-sm text-purple-700 leading-relaxed">{drill.progression}</p></div>}
+        {!isCoach && <div className="rounded-xl p-4" style={{background:N.light,border:`1px solid ${N.bg}22`}}><h4 className="text-sm font-semibold mb-1" style={{color:N.text}}>💡 Tips for practising at home</h4><p className="text-sm leading-relaxed" style={{color:N.text}}>Find a safe open space -- a garden or park works great. Plastic bottles or jumpers can substitute for cones. Start slow and focus on getting the technique right before trying to go fast.</p></div>}
       </div>
     </Modal>
   )
@@ -302,7 +302,7 @@ function AddDrillForm({ onSave, onClose }) {
           <div className="flex gap-3 pt-1">
             <button onClick={save} disabled={saving} onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
               className="flex-1 text-white font-bold py-3 rounded-xl transition-colors disabled:opacity-50"
-              style={navyBtn}>{saving?'Saving…':'Save Drill'}</button>
+              style={navyBtn}>{saving?'Saving...':'Save Drill'}</button>
             <button onClick={onClose} className="flex-1 border border-gray-300 text-gray-600 hover:bg-gray-50 font-semibold py-3 rounded-xl transition-colors">Cancel</button>
           </div>
         </div>
@@ -315,8 +315,8 @@ function AddDrillForm({ onSave, onClose }) {
 function ShareDrillModal({ drill, onClose }) {
   const [target,setTarget]=useState('coaches')
   const text=target==='coaches'
-    ?`⚽ *Training Drill — ${drill.title}*\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration} | 👥 ${drill.players}\n\n${drill.description}${drill.coach_notes?`\n\n📋 *Coach Notes:* ${drill.coach_notes}`:''}\n\n— Clydach Juniors\n🔗 ${SITE_URL}`
-    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Coaches\n🔗 ${SITE_URL}`
+    ?`⚽ *Training Drill -- ${drill.title}*\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration} | 👥 ${drill.players}\n\n${drill.description}${drill.coach_notes?`\n\n📋 *Coach Notes:* ${drill.coach_notes}`:''}\n\n-- Clydach Juniors\n🔗 ${SITE_URL}`
+    :`⚽ *Home Practice -- ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly -- bottles or jumpers for cones!\n\n-- Coaches\n🔗 ${SITE_URL}`
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
@@ -352,7 +352,7 @@ const SESSION_BLOCKS = [
   { key:'smallgame',label:'Small Sided Game',           time:'15 min', icon:'⚽', cat:null,                      fixed:true  },
 ]
 
-// Normalise age_groups — Supabase may return as array OR as string "{U12,U13}"
+// Normalise age_groups -- Supabase may return as array OR as string "{U12,U13}"
 function parseAges(age_groups) {
   if (!age_groups) return []
   if (Array.isArray(age_groups)) return age_groups
@@ -370,14 +370,14 @@ function pickDrill(drills, cat, weekNum, ageFilter) {
 
 function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter, onClose }) {
   const dateStr = sessionDate || `Week ${weekNum}`
-  const lines = [`⚽ *Clydach Juniors — Training Session*\n📅 ${dateStr}${ageFilter!=='All'?' | '+ageFilter:''}\n`]
-  lines.push(`🏃 *10 min — Warm-Up & Age Group Topic*\n${session.warmup ? session.warmup.title : 'Dynamic warm-up + coaching topic'}`)
-  lines.push(`🎯 *10 min — Passing*\n${session.passing ? session.passing.title+'\n'+session.passing.description : 'Passing drill TBC'}`)
-  lines.push(`🛡️ *10 min — Tackling / Defending*\n${session.tackling ? session.tackling.title+'\n'+session.tackling.description : 'Tackling drill TBC'}`)
-  lines.push(`⚡ *10 min — Attacking*\n${session.attack ? session.attack.title+'\n'+session.attack.description : 'Attacking drill TBC'}`)
-  lines.push(`⚽ *15 min — Small Sided Game*\nApply today's theme in a free small sided game. Keep teams even, rotate regularly.`)
+  const lines = [`⚽ *Clydach Juniors -- Training Session*\n📅 ${dateStr}${ageFilter!=='All'?' | '+ageFilter:''}\n`]
+  lines.push(`🏃 *10 min -- Warm-Up & Age Group Topic*\n${session.warmup ? session.warmup.title : 'Dynamic warm-up + coaching topic'}`)
+  lines.push(`🎯 *10 min -- Passing*\n${session.passing ? session.passing.title+'\n'+session.passing.description : 'Passing drill TBC'}`)
+  lines.push(`🛡️ *10 min -- Tackling / Defending*\n${session.tackling ? session.tackling.title+'\n'+session.tackling.description : 'Tackling drill TBC'}`)
+  lines.push(`⚡ *10 min -- Attacking*\n${session.attack ? session.attack.title+'\n'+session.attack.description : 'Attacking drill TBC'}`)
+  lines.push(`⚽ *15 min -- Small Sided Game*\nApply today's theme in a free small sided game. Keep teams even, rotate regularly.`)
   if (sessionNotes) lines.push(`📝 *Notes:* ${sessionNotes}`)
-  lines.push(`— Coaches\n🔗 ${SITE_URL}`)
+  lines.push(`-- Coaches\n🔗 ${SITE_URL}`)
   const text = lines.join('\n\n')
   return (
     <Modal onClose={onClose}>
@@ -409,7 +409,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
     return Math.floor(diffDays / 7) + 1
   }
 
-  // ALL useState hooks must come before any useEffect — React rules of hooks
+  // ALL useState hooks must come before any useEffect -- React rules of hooks
   const [weekNum,setWeekNum]=useState(()=>initialWeek||calcCurrentWeek(seasonStart))
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
@@ -502,7 +502,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
     setEditingDate(false)
   }
 
-  // Build auto session — resolve stored drill IDs back to drill objects
+  // Build auto session -- resolve stored drill IDs back to drill objects
   const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
   const session = {}
   SESSION_BLOCKS.forEach(b => {
@@ -572,7 +572,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
 
-        {/* Week + Date + Age Group — all in one compact row */}
+        {/* Week + Date + Age Group -- all in one compact row */}
         <div className="grid grid-cols-2 gap-3 mb-3">
 
           {/* Week navigator with integrated date */}
@@ -581,13 +581,13 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
             {/* Week nav */}
             <div className="flex items-center gap-1 mb-2">
               <button onClick={()=>{changeWeek(w=>Math.max(1,w-1));setEditingDate(false)}}
-                className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">‹</button>
+                className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">&#8249;</button>
               <div className="flex-1 text-center font-bold text-gray-900 text-xs">Week {weekNum}</div>
               <button onClick={()=>{changeWeek(w=>w+1);setEditingDate(false)}}
-                className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">›</button>
+                className="w-7 h-7 rounded-lg border border-gray-300 bg-white text-gray-600 font-bold text-sm hover:bg-gray-50 flex items-center justify-center">&#8250;</button>
             </div>
 
-            {/* No season start yet — show picker + confirm button */}
+            {/* No season start yet -- show picker + confirm button */}
             {!seasonStart && !editingDate && (
               <div>
                 <p className="text-xs text-gray-400 text-center mb-1">Set Week 1 start date</p>
@@ -603,7 +603,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
               </div>
             )}
 
-            {/* Season start set — show current week date */}
+            {/* Season start set -- show current week date */}
             {seasonStart && !editingDate && (
               <div>
                 <div className="border border-gray-200 rounded-lg px-2 py-1.5 text-xs bg-white font-semibold text-center mb-1"
@@ -634,7 +634,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
               </div>
             )}
 
-            {/* Override mode — pick new date + push/reset */}
+            {/* Override mode -- pick new date + push/reset */}
             {editingDate && (
               <div>
                 <input type="date" value={tempDate} onChange={e=>setTempDate(e.target.value)}
@@ -702,7 +702,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
               </div>
               <div className="p-4">
                 <p className="text-sm font-semibold text-gray-900 mb-1">Free Small Sided Game</p>
-                <p className="text-xs text-gray-500 leading-relaxed">Apply the session's theme in a free small sided game. Keep teams even, rotate regularly, and let the players express themselves. Avoid heavy coaching — observe and note what to work on next week.</p>
+                <p className="text-xs text-gray-500 leading-relaxed">Apply the session's theme in a free small sided game. Keep teams even, rotate regularly, and let the players express themselves. Avoid heavy coaching -- observe and note what to work on next week.</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Equal playing time</span>
                   <span className="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded-full">Apply today's theme</span>
@@ -783,7 +783,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
                   <div className="h-20"><DrillDiagram type={d.diagram} category={d.category}/></div>
                   <div className="p-2">
                     <p className="text-xs font-semibold text-gray-900 leading-tight">{d.title}</p>
-                    <p className="text-xs text-gray-400">⏱ {d.duration} · 👥 {d.players}</p>
+                    <p className="text-xs text-gray-400">⏱ {d.duration} . 👥 {d.players}</p>
                   </div>
                   {d.id===session[swapTarget]?.id && <div className="text-white text-xs font-bold text-center py-1" style={{background:N.bg}}>✓ Current</div>}
                 </div>
@@ -817,10 +817,10 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
   }
   const selectedDrills=drills.filter(d=>selected.includes(d.id))
   const shareText=()=>{
-    const lines=[`🏠 *This Week's Home Skill Drills — Clydach Juniors*\n`]
+    const lines=[`🏠 *This Week's Home Skill Drills -- Clydach Juniors*\n`]
     if(message) lines.push(`${message}\n`)
     selectedDrills.forEach((d,i)=>lines.push(`*Drill ${i+1}: ${d.title}*\n⏱ ${d.duration} | 👥 ${d.players}\n\n${d.description}`))
-    lines.push(`\nGive these a go before next training! 💪\n— Coaches\n🔗 ${SITE_URL}`)
+    lines.push(`\nGive these a go before next training! 💪\n-- Coaches\n🔗 ${SITE_URL}`)
     return lines.join('\n\n')
   }
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
@@ -852,7 +852,7 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
         <div className="border-2 border-dashed rounded-2xl p-6 text-center mb-4" style={{borderColor:N.bg+'44'}}>
           <p className="text-2xl mb-2">🏠</p>
           <p className="text-sm font-semibold text-gray-600">No drills selected yet</p>
-          <p className="text-xs text-gray-400 mt-1">Pick up to 2 drills below — parents won't see anything until you publish</p>
+          <p className="text-xs text-gray-400 mt-1">Pick up to 2 drills below -- parents won't see anything until you publish</p>
         </div>
       )}
       <div className="flex gap-3 mb-6">
@@ -861,7 +861,7 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
           style={saved?{background:N.light,color:N.text,border:`2px solid ${N.bg}44`}:navyBtn}
           onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}}
           onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
-          {saved?(selected.length===0?'✓ Cleared!':'✓ Published!'):saving?'Publishing…':selected.length===0?'🗑️ Clear Parent View':'🚀 Publish to Parents'}
+          {saved?(selected.length===0?'✓ Cleared!':'✓ Published!'):saving?'Publishing...':selected.length===0?'🗑️ Clear Parent View':'🚀 Publish to Parents'}
         </button>
         {selectedDrills.length>0&&(
           <a href={`https://wa.me/?text=${encodeURIComponent(shareText())}`} target="_blank" rel="noreferrer"
@@ -889,7 +889,7 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
                   <div className="flex-1 min-w-0 cursor-pointer" onClick={()=>setDetailDrill(drill)}>
                     <p className="font-semibold text-gray-900 text-sm leading-tight">{drill.title}</p>
                     <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${cc.pill||'bg-gray-100 text-gray-600'}`}>{drill.category}</span>
-                    <p className="text-xs text-gray-400 mt-0.5">⏱ {drill.duration} · 👥 {drill.players}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">⏱ {drill.duration} . 👥 {drill.players}</p>
                   </div>
                   <button onClick={()=>toggle(drill.id)}
                     className="shrink-0 w-10 h-10 rounded-xl font-bold text-lg flex items-center justify-center transition-all text-white"
@@ -917,7 +917,7 @@ function ParentHomeView({ drills, homeSession }) {
     <div className="text-center py-20 px-4">
       <div className="text-5xl mb-4">⚽</div>
       <h2 className="text-lg font-bold text-gray-700 mb-2">No drills set this week</h2>
-      <p className="text-sm text-gray-400">Your coaches haven't published this week's home session yet — check back soon!</p>
+      <p className="text-sm text-gray-400">Your coaches haven't published this week's home session yet -- check back soon!</p>
     </div>
   )
   return (
@@ -948,7 +948,7 @@ function ParentHomeView({ drills, homeSession }) {
               <p className="text-sm text-gray-600 leading-relaxed mb-3">{drill.description}</p>
               <div className="rounded-xl p-3" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
                 <p className="text-xs font-semibold mb-1" style={{color:N.text}}>💡 Tips for home</p>
-                <p className="text-xs leading-relaxed" style={{color:N.text+'cc'}}>A garden or park works perfectly. Plastic bottles or jumpers make great cones. Start slow — technique first, then speed.</p>
+                <p className="text-xs leading-relaxed" style={{color:N.text+'cc'}}>A garden or park works perfectly. Plastic bottles or jumpers make great cones. Start slow -- technique first, then speed.</p>
               </div>
             </div>
           </div>
@@ -968,8 +968,8 @@ function SessionStatusManager({ sessionStatus, onSave }) {
   const save = async () => { await onSave(form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const inputCls = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const whatsappText = form.status==='cancelled'
-    ? `🚫 *Training CANCELLED*\n\nThis week's training session has been cancelled.\n\nWe'll be back next week — keep up the home skill drills in the meantime!\n\n— Coaches\n🔗 ${SITE_URL}`
-    : `✅ *Training Reminder*\n\n📅 This week's session is ON\n${form.time?`⏰ ${form.time}\n`:''}${form.location?`📍 ${form.location}\n`:''}\nDon't forget boots, shin pads and water!\n\n— Coaches\n🔗 ${SITE_URL}`
+    ? `🚫 *Training CANCELLED*\n\nThis week's training session has been cancelled.\n\nWe'll be back next week -- keep up the home skill drills in the meantime!\n\n-- Coaches\n🔗 ${SITE_URL}`
+    : `✅ *Training Reminder*\n\n📅 This week's session is ON\n${form.time?`⏰ ${form.time}\n`:''}${form.location?`📍 ${form.location}\n`:''}\nDon't forget boots, shin pads and water!\n\n-- Coaches\n🔗 ${SITE_URL}`
 
   return (
     <div className="space-y-4">
@@ -1032,7 +1032,7 @@ function ParentStatusBanner({ sessionStatus }) {
       <div>
         <p className="font-bold text-green-800 text-sm">Training is ON this week</p>
         {(sessionStatus.time||sessionStatus.location) && (
-          <p className="text-green-700 text-xs mt-0.5">{[sessionStatus.time,sessionStatus.location].filter(Boolean).join(' · ')}</p>
+          <p className="text-green-700 text-xs mt-0.5">{[sessionStatus.time,sessionStatus.location].filter(Boolean).join(' . ')}</p>
         )}
       </div>
     </div>
@@ -1062,7 +1062,7 @@ function MatchDayNotes({ weekNum, matchNotes, onSave }) {
   const focusNavy = e=>e.target.style.borderColor=N.bg
   const blurGray = e=>e.target.style.borderColor='#d1d5db'
 
-  const fixtureText = `⚽ *Clydach Juniors — Match Day*
+  const fixtureText = `⚽ *Clydach Juniors -- Match Day*
 
 ${form.opponent?`🆚 vs ${form.opponent}
 `:''}${form.match_time?`⏰ ${form.match_time}
@@ -1070,10 +1070,10 @@ ${form.opponent?`🆚 vs ${form.opponent}
 `:''}
 Don't forget boots, shin pads and water!
 
-— Coaches
+-- Coaches
 🔗 ${SITE_URL}`
 
-  const resultText = `⚽ *Match Result — Clydach Juniors*
+  const resultText = `⚽ *Match Result -- Clydach Juniors*
 
 ${form.opponent?`🆚 vs ${form.opponent}
 `:''}${form.result?`📊 ${form.result}
@@ -1081,12 +1081,12 @@ ${form.opponent?`🆚 vs ${form.opponent}
 `:''}
 Well done to everyone who played today!
 
-— Coaches
+-- Coaches
 🔗 ${SITE_URL}`
 
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
-      <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Week {weekNum} — Match</h3>
+      <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Week {weekNum} -- Match</h3>
 
       {/* Tab switcher */}
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
@@ -1100,7 +1100,7 @@ Well done to everyone who played today!
       </div>
 
       <div className="space-y-3">
-        {/* Fixture details — shown on both tabs */}
+        {/* Fixture details -- shown on both tabs */}
         <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Opponent</label>
           <input value={form.opponent} onChange={e=>set('opponent',e.target.value)} placeholder="e.g. Swansea City Juniors" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
 
@@ -1169,11 +1169,11 @@ function SquadAttendance({ weekNum, squad, attendance, onToggle, onAdd, onRemove
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-gray-900 text-sm">👥 Week {weekNum} — Attendance</h3>
+        <h3 className="font-bold text-gray-900 text-sm">👥 Week {weekNum} -- Attendance</h3>
         <span className="text-xs font-semibold px-2 py-1 rounded-full text-white" style={{background:N.bg}}>{presentCount}/{squad.length}</span>
       </div>
       {squad.length===0 ? (
-        <p className="text-sm text-gray-400 text-center py-4">No players added yet — add your squad below</p>
+        <p className="text-sm text-gray-400 text-center py-4">No players added yet -- add your squad below</p>
       ) : (
         <div className="space-y-2 mb-3">
           {squad.map(p=>{
@@ -1230,7 +1230,7 @@ function PlayerDevelopment({ squad, playerNotes, onSave }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
       <h3 className="font-bold text-gray-900 text-sm mb-3">📝 Player Development Notes</h3>
-      <p className="text-xs text-gray-400 mb-3">Private coaching notes — not visible to parents or players</p>
+      <p className="text-xs text-gray-400 mb-3">Private coaching notes -- not visible to parents or players</p>
       <div className="space-y-2 mb-4">
         {squad.map(p=>{
           const hasNote = !!(playerNotes[p.id]&&playerNotes[p.id].trim())
@@ -1269,11 +1269,11 @@ function PlayerDevelopment({ squad, playerNotes, onSave }) {
 
 // ─── FAW Quick Reference ──────────────────────────────────────────────────────
 const FAW_RULES = [
-  { icon:'⚽', title:'Format', rule:'9v9 on a 64x44 yard pitch (U12). 70 mins — 2x35 min halves. Goals 7x16ft. Ball size 4.' },
+  { icon:'⚽', title:'Format', rule:'9v9 on a 64x44 yard pitch (U12). 70 mins -- 2x35 min halves. Goals 7x16ft. Ball size 4.' },
   { icon:'🚩', title:'Offside', rule:'Standard offside applies. A player is not offside from a goal kick, throw-in or corner.' },
   { icon:'↩️', title:'Retreat Line', rule:'Opposition must be 10 yards from the goalkeeper when they have the ball. Encourages build-up play.' },
   { icon:'🧤', title:'Goalkeeper', rule:'GK cannot pick up a deliberate back pass from a teammate. Can handle the ball in the penalty area only.' },
-  { icon:'⏱️', title:'Playing Time', rule:'All squad members must play a minimum of 50% of total playing time. Rolling substitutes — players can re-enter.' },
+  { icon:'⏱️', title:'Playing Time', rule:'All squad members must play a minimum of 50% of total playing time. Rolling substitutes -- players can re-enter.' },
   { icon:'🔴', title:'Mercy Rule', rule:'If a team leads by 8 goals, the match is declared over. Remaining time played as a friendly.' },
   { icon:'📊', title:'League Standing', rule:'Goal difference CANNOT be used in league standings at U12 or U13.' },
   { icon:'🤕', title:'Heading (U12)', rule:'Heading is LOW PRIORITY at U12. Max 10 mins per session, max 4 headers per bout, self-serve only.' },
@@ -1291,7 +1291,7 @@ function FAWReference() {
       <div className="rounded-2xl p-4 mb-4 flex gap-3 items-start" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
         <span className="text-2xl">🏴</span>
         <div>
-          <p className="font-bold text-sm" style={{color:N.text}}>FAW Quick Reference — U12 2025-26</p>
+          <p className="font-bold text-sm" style={{color:N.text}}>FAW Quick Reference -- U12 2025-26</p>
           <p className="text-xs mt-0.5" style={{color:N.text+'bb'}}>Key rules at a glance. Tap any rule for full detail.</p>
         </div>
       </div>
@@ -1366,7 +1366,7 @@ function SeasonOverview({ seasonStart, matchNotes, weekNum, onWeekSelect }) {
           )
         })}
       </div>
-      <p className="text-xs text-gray-400 text-center mt-3">⚽ = match notes logged · highlighted = current week</p>
+      <p className="text-xs text-gray-400 text-center mt-3">⚽ = match notes logged . highlighted = current week</p>
     </div>
   )
 }
@@ -1489,7 +1489,7 @@ function TacticalDiagram({ type, category }) {
         <Pitch/>
         {P(40,155,accent,'A')}{P(130,110,accent,'B')}{P(270,65,accent,'C')}
         {Arrow(50,152,120,113,accent)}{Arrow(142,108,258,68,accent)}
-        <Label x={160} y={50} text="SWITCH PLAY — 3 passes or fewer"/>
+        <Label x={160} y={50} text="SWITCH PLAY -- 3 passes or fewer"/>
         <Label x={160} y={195} text="Must switch ball across pitch before driving forward" col="#86efac"/>
       </svg>
     ),
@@ -1515,7 +1515,7 @@ function TacticalDiagram({ type, category }) {
         {Arrow(120,110,158,110,accent)}
         <Label x={160} y={65} text="SHADOW TACKLE ZONE"/>
         <Label x={160} y={55} text="Attacker dribbles slowly, defender mirrors"/>
-        <Label x={160} y={195} text="Mirror movement — correct body shape first" col="#86efac"/>
+        <Label x={160} y={195} text="Mirror movement -- correct body shape first" col="#86efac"/>
       </svg>
     ),
     jockey: (
@@ -1527,14 +1527,14 @@ function TacticalDiagram({ type, category }) {
         {Arrow(160,160,160,80,accent,true)}
         {Arrow(160,80,160,65,'#ef4444')}
         <Label x={160} y={25} text="END LINE"/>
-        <Label x={160} y={195} text="Attacker drives to end line — defender jockeys" col="#86efac"/>
+        <Label x={160} y={195} text="Attacker drives to end line -- defender jockeys" col="#86efac"/>
       </svg>
     ),
     '1v1box': (
       <svg viewBox={vb} className="w-full h-full">
         <Pitch/>
         {Zone(80,55,160,110)}
-        <Label x={160} y={50} text="8m × 8m BOX"/>
+        <Label x={160} y={50} text="8m x 8m BOX"/>
         {P(130,100,accent,'A')}{P(190,120,'#ef4444','D')}
         <circle cx="155" cy="110" r="7" fill="white" opacity="0.9"/>
         {Arrow(140,102,148,108,accent)}
@@ -1549,7 +1549,7 @@ function TacticalDiagram({ type, category }) {
         {P(110,130,'#ef4444','P')}{P(160,125,'#ef4444','P')}{P(210,130,'#ef4444','P')}
         <circle cx="160" cy="80" r="7" fill="white" opacity="0.9"/>
         {Arrow(113,130,105,68,'#ef4444')}{Arrow(163,123,161,57,'#ef4444')}{Arrow(207,128,217,67,'#ef4444')}
-        <Label x={160} y={195} text="Press as a unit — win ball within 10 seconds" col="#86efac"/>
+        <Label x={160} y={195} text="Press as a unit -- win ball within 10 seconds" col="#86efac"/>
       </svg>
     ),
     defshape: (
@@ -1559,7 +1559,7 @@ function TacticalDiagram({ type, category }) {
         {[[80,150],[127,145],[193,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
         {[[110,105],[160,100],[210,105]].map(([x,y],i)=>P(x,y,'#8b5cf6',['CM','CM','CM'][i]))}
         {[[80,55],[160,45],[240,55]].map(([x,y],i)=>P(x,y,'#ef4444',['A','A','A'][i]))}
-        <Label x={160} y={195} text="Maintain shape — shift as a unit when ball moves" col="#86efac"/>
+        <Label x={160} y={195} text="Maintain shape -- shift as a unit when ball moves" col="#86efac"/>
       </svg>
     ),
     recovery: (
@@ -1571,7 +1571,7 @@ function TacticalDiagram({ type, category }) {
         <Label x={160} y={45} text="START LINE"/>
         {P(80,155,accent,'A')}{P(240,155,'#ef4444','D')}
         {Arrow(90,153,230,153,accent)}
-        <Label x={160} y={195} text="Both sprint 20m — defender recovers to delay" col="#86efac"/>
+        <Label x={160} y={195} text="Both sprint 20m -- defender recovers to delay" col="#86efac"/>
       </svg>
     ),
     channel: (
@@ -1596,7 +1596,7 @@ function TacticalDiagram({ type, category }) {
         {P(130,120,'#ef4444','D')}{P(190,120,'#ef4444','D')}
         <circle cx="150" cy="80" r="7" fill="white" opacity="0.9"/>
         {Arrow(108,57,143,82,accent)}{Arrow(160,55,155,72,accent,true)}{Arrow(212,57,185,118,'#ef4444',true)}
-        <Label x={160} y={195} text="3 attackers vs 2 defenders — complete 3 passes first" col="#86efac"/>
+        <Label x={160} y={195} text="3 attackers vs 2 defenders -- complete 3 passes first" col="#86efac"/>
       </svg>
     ),
     cross: (
@@ -1607,7 +1607,7 @@ function TacticalDiagram({ type, category }) {
         <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
         {P(280,110,accent,'W')}{P(145,55,accent,'A1')}{P(185,45,accent,'A2')}
         {Arrow(272,108,190,50,accent)}{Arrow(145,66,145,30,accent,true)}{Arrow(185,56,185,30,accent,true)}
-        <Label x={160} y={195} text="Wide player crosses — near & far post runs" col="#86efac"/>
+        <Label x={160} y={195} text="Wide player crosses -- near & far post runs" col="#86efac"/>
       </svg>
     ),
     counter: (
@@ -1617,7 +1617,7 @@ function TacticalDiagram({ type, category }) {
         {P(80,170,accent)}{P(140,175,accent)}{P(180,175,accent)}{P(240,170,accent)}
         {P(130,100,'#ef4444','D')}{P(190,100,'#ef4444','D')}
         {Arrow(80,160,78,25,accent,true)}{Arrow(140,165,140,30,accent,true)}{Arrow(180,165,180,30,accent,true)}{Arrow(240,160,242,25,accent,true)}
-        <Label x={160} y={195} text="4v2 counter attack — score within 10 seconds" col="#86efac"/>
+        <Label x={160} y={195} text="4v2 counter attack -- score within 10 seconds" col="#86efac"/>
       </svg>
     ),
     overlap: (
@@ -1628,7 +1628,7 @@ function TacticalDiagram({ type, category }) {
         {Arrow(60,110,58,72,N.bg)}{Arrow(58,70,170,82,accent,true)}
         {/* Overlap run arc */}
         <path d="M65,120 Q30,90 65,58" fill="none" stroke={N.bg} strokeWidth="2" strokeDasharray="6,3"/>
-        <Label x={160} y={195} text="Full back overlaps winger — lay off into space" col="#86efac"/>
+        <Label x={160} y={195} text="Full back overlaps winger -- lay off into space" col="#86efac"/>
       </svg>
     ),
     shootpress: (
@@ -1659,7 +1659,7 @@ function TacticalDiagram({ type, category }) {
         <Goal x={130} y={10}/>
         {P(80,165,accent,'A')}{P(160,120,accent,'B')}{P(240,165,accent,'C')}
         {Arrow(90,162,150,123,accent)}{Arrow(170,120,232,162,accent,true)}{Arrow(240,153,190,35,accent)}
-        <Label x={160} y={195} text="A-B-C combination — third man finishes" col="#86efac"/>
+        <Label x={160} y={195} text="A-B-C combination -- third man finishes" col="#86efac"/>
       </svg>
     ),
     wideattack: (
@@ -1668,7 +1668,7 @@ function TacticalDiagram({ type, category }) {
         <Goal x={130} y={10}/>
         {P(20,120,accent,'LW')}{P(300,120,accent,'RW')}{P(160,80,accent,'ST')}{P(120,155,accent,'LM')}{P(200,155,accent,'RM')}
         {Arrow(20,110,18,35,accent,true)}{Arrow(300,110,298,35,accent,true)}
-        <Label x={160} y={195} text="Wingers push high and wide — create width" col="#86efac"/>
+        <Label x={160} y={195} text="Wingers push high and wide -- create width" col="#86efac"/>
       </svg>
     ),
     // ── S&C ──────────────────────────────────────────────────────────────────
@@ -1678,7 +1678,7 @@ function TacticalDiagram({ type, category }) {
         {[50,85,120,155,190,225,260].map((x,i) => <Cone key={i} x={x} y={i%2===0?80:140}/>)}
         {P(25,110,accent,'P')}
         <path d="M35,110 Q52,80 70,110 Q88,140 105,110 Q122,80 140,110 Q158,140 175,110 Q192,80 210,110 Q227,140 244,110 Q262,80 280,110" fill="none" stroke={accent} strokeWidth="2.5" strokeDasharray="none"/>
-        <Label x={160} y={195} text="Dribble through cones — both feet, close control" col="#86efac"/>
+        <Label x={160} y={195} text="Dribble through cones -- both feet, close control" col="#86efac"/>
       </svg>
     ),
     ladder: (
@@ -1690,7 +1690,7 @@ function TacticalDiagram({ type, category }) {
         {[0,1,2,3,4,5,6,7].map(i=><line key={i} x1="120" y1={30+i*23} x2="200" y2={30+i*23} stroke={accent} strokeWidth="2" opacity="0.7"/>)}
         {P(80,180,accent,'P')}
         <path d="M88,178 Q100,160 110,150 Q120,140 130,128 Q140,116 150,104 Q160,92 170,80 Q180,68 190,56 Q200,44 210,32" fill="none" stroke="white" strokeWidth="2" strokeDasharray="4,2" opacity="0.8"/>
-        <Label x={160} y={210} text="Two feet in each box — precision before pace" col="#86efac"/>
+        <Label x={160} y={210} text="Two feet in each box -- precision before pace" col="#86efac"/>
       </svg>
     ),
     shuttle: (
@@ -1705,7 +1705,7 @@ function TacticalDiagram({ type, category }) {
         <Label x={190} y={25} text="15m" col="#f59e0b"/>
         {P(25,110,accent,'P')}
         {Arrow(35,108,112,95,accent)}{Arrow(112,105,38,115,accent,true)}
-        <Label x={160} y={195} text="Sprint to each line and back — 6 reps" col="#86efac"/>
+        <Label x={160} y={195} text="Sprint to each line and back -- 6 reps" col="#86efac"/>
       </svg>
     ),
     core: (
@@ -1721,7 +1721,7 @@ function TacticalDiagram({ type, category }) {
         {[['Plank',50,50],['Side Plank L',130,50],['Side Plank R',210,50],['Glute Bridge',50,170],['Dead Bug',210,170]].map(([t,x,y])=>(
           <g key={t}><rect x={x-35} y={y-12} width="70" height="22" fill={N.bg} opacity="0.7" rx="4"/><text x={x} y={y+3} fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">{t}</text></g>
         ))}
-        <Label x={160} y={195} text="40s on / 20s rest — 3 rounds, technique first" col="#86efac"/>
+        <Label x={160} y={195} text="40s on / 20s rest -- 3 rounds, technique first" col="#86efac"/>
       </svg>
     ),
     speedgates: (
@@ -1748,7 +1748,7 @@ function TacticalDiagram({ type, category }) {
             <text x={x} y={y+7} fill="white" fontSize="8" textAnchor="middle">{t.split(' ')[1]||''}</text>
           </g>
         ))}
-        <Label x={160} y={195} text="All dynamic — no static stretching" col="#86efac"/>
+        <Label x={160} y={195} text="All dynamic -- no static stretching" col="#86efac"/>
       </svg>
     ),
     // ── TACTICAL / AGE GROUP ──────────────────────────────────────────────────
@@ -1760,7 +1760,7 @@ function TacticalDiagram({ type, category }) {
         {[[80,150],[127,145],[193,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
         {[[105,100],[160,95],[215,100]].map(([x,y],i)=>P(x,y,'#8b5cf6',['LM','CM','RM'][i]))}
         {[[80,50],[160,40],[240,50]].map(([x,y],i)=>P(x,y,accent,['LW','ST','RW'][i]))}
-        <Label x={160} y={210} text="4-3-3 shape — zones of responsibility" col="#86efac"/>
+        <Label x={160} y={210} text="4-3-3 shape -- zones of responsibility" col="#86efac"/>
       </svg>
     ),
     '9v9': (
@@ -1773,7 +1773,7 @@ function TacticalDiagram({ type, category }) {
         {[[80,150],[130,145],[190,145],[240,150]].map(([x,y],i)=>P(x,y,N.bg,['LB','CB','CB','RB'][i]))}
         {[[105,100],[160,95],[215,100]].map(([x,y],i)=>P(x,y,'#8b5cf6',['M','M','M'][i]))}
         {[[120,50],[200,50]].map(([x,y],i)=>P(x,y,accent,['A','A'][i]))}
-        <Label x={160} y={210} text="9v9 shape — 64x44 yard pitch" col="#86efac"/>
+        <Label x={160} y={210} text="9v9 shape -- 64x44 yard pitch" col="#86efac"/>
       </svg>
     ),
     offside: (
@@ -1882,7 +1882,7 @@ function SquadPositions({ squad, onUpdatePlayer }) {
               <p className="text-sm font-semibold text-gray-900">{p.name}</p>
               <p className="text-xs text-gray-400">{p.preferred||'No position set'}{p.secondary?` / ${p.secondary}`:''}</p>
             </div>
-            <span className="text-gray-300 text-xs">›</span>
+            <span className="text-gray-300 text-xs">&#8250;</span>
           </button>
         ))}
       </div>
@@ -1891,7 +1891,7 @@ function SquadPositions({ squad, onUpdatePlayer }) {
       {editPlayer && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}}>
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-            <h3 className="font-bold text-gray-900 mb-4">🎽 {editPlayer.name} — Positions</h3>
+            <h3 className="font-bold text-gray-900 mb-4">🎽 {editPlayer.name} -- Positions</h3>
             <div className="space-y-3 mb-4">
               <div>
                 <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Preferred Position</label>
@@ -2159,7 +2159,7 @@ export default function App() {
     load()
   },[])
 
-  // Only listen for custom drills added by coaches — prevents seed inserts doubling up
+  // Only listen for custom drills added by coaches -- prevents seed inserts doubling up
   useEffect(()=>{
     const ch=supabase.channel('drills-rt')
       .on('postgres_changes',{event:'INSERT',schema:'public',table:'drills'},p=>{
@@ -2191,7 +2191,7 @@ export default function App() {
   const isCoach=role==='coach'
 
   if(!role) return <AuthScreen onAuth={r=>{setRole(r);if(r==='parent')setView('home');else setView('drills')}}/>
-  if(loading) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-3"><div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl animate-pulse" style={{background:N.bg}}>⚽</div><p className="text-sm font-semibold" style={{color:N.text}}>Loading…</p></div>
+  if(loading) return <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 gap-3"><div className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl animate-pulse" style={{background:N.bg}}>⚽</div><p className="text-sm font-semibold" style={{color:N.text}}>Loading...</p></div>
 
   const filtered=drills.filter(d=>{
     if(filterCat!=='All'&&d.category!==filterCat) return false
@@ -2214,7 +2214,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {dbError&&<div className="px-4 py-2 text-center text-xs font-medium" style={{background:'#fef3c7',color:'#92400e'}}>⚠️ Offline mode — add Supabase keys in src/supabase.js</div>}
+      {dbError&&<div className="px-4 py-2 text-center text-xs font-medium" style={{background:'#fef3c7',color:'#92400e'}}>⚠️ Offline mode -- add Supabase keys in src/supabase.js</div>}
 
       <header className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-3">
@@ -2282,13 +2282,13 @@ export default function App() {
             {/* Week navigator */}
             <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
               <button onClick={()=>setMatchWeek(w=>Math.max(1,w-1))}
-                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">‹</button>
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">&#8249;</button>
               <div className="flex-1 text-center">
                 <p className="font-bold text-gray-900 text-sm">Week {matchWeek}</p>
                 {matchNotes[matchWeek]?.opponent && <p className="text-xs text-gray-400">vs {matchNotes[matchWeek].opponent}</p>}
               </div>
               <button onClick={()=>setMatchWeek(w=>w+1)}
-                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">›</button>
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">&#8250;</button>
               <button onClick={()=>setMatchWeek(currentWeek)}
                 className="text-xs font-semibold px-2 py-1 rounded-lg"
                 style={{background:N.light, color:N.text}}>Today</button>
@@ -2301,12 +2301,12 @@ export default function App() {
             {/* Week navigator for attendance */}
             <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
               <button onClick={()=>setSquadWeek(w=>Math.max(1,w-1))}
-                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">‹</button>
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">&#8249;</button>
               <div className="flex-1 text-center">
-                <p className="font-bold text-gray-900 text-sm">Week {squadWeek} — Attendance</p>
+                <p className="font-bold text-gray-900 text-sm">Week {squadWeek} -- Attendance</p>
               </div>
               <button onClick={()=>setSquadWeek(w=>w+1)}
-                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">›</button>
+                className="w-9 h-9 rounded-xl border border-gray-300 text-gray-600 font-bold hover:bg-gray-50 flex items-center justify-center">&#8250;</button>
               <button onClick={()=>setSquadWeek(currentWeek)}
                 className="text-xs font-semibold px-2 py-1 rounded-lg"
                 style={{background:N.light, color:N.text}}>Today</button>
@@ -2358,7 +2358,7 @@ export default function App() {
             </div>
 
             <div className="space-y-2 mb-5">
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search drills…"
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search drills..."
                 className="w-full border border-gray-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none bg-white"
                 onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
               <div className="flex gap-2 overflow-x-auto pb-1">
