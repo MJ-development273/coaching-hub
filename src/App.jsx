@@ -1289,7 +1289,7 @@ function FAWReference() {
   return (
     <div>
       <div className="rounded-2xl p-4 mb-4 flex gap-3 items-start" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
-        <span className="text-2xl">🏴󠁧󠁢󠁷󠁬󠁳󠁿</span>
+        <span className="text-2xl">🏴</span>
         <div>
           <p className="font-bold text-sm" style={{color:N.text}}>FAW Quick Reference — U12 2025-26</p>
           <p className="text-xs mt-0.5" style={{color:N.text+'bb'}}>Key rules at a glance. Tap any rule for full detail.</p>
@@ -2256,7 +2256,7 @@ export default function App() {
                 {[
                   {id:'match',    label:'⚽ Match'},
                   {id:'squad',    label:'👥 Squad'},
-                  {id:'faw',      label:'🏴󠁧󠁢󠁷󠁬󠁳󠁿 FAW'},
+                  {id:'faw',      label:'🏴 FAW'},
                   {id:'season',   label:'📊 Season'},
                 ].map(tab=>(
                   <button key={tab.id} onClick={()=>setView(tab.id)}
