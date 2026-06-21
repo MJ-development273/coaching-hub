@@ -2126,32 +2126,27 @@ export default function App() {
 
   useEffect(()=>{
     async function load(){
+      // Load drills first - fallback to seed data if anything fails
       try{
         const{data,error}=await supabase.from('drills').select('*').order('id')
         if(error) throw error
         if(!data||data.length===0){
-          const{error:ie}=await supabase.from('drills').upsert(SEED_DRILLS,{onConflict:'id'})
-          if(ie) throw ie
+          await supabase.from('drills').upsert(SEED_DRILLS,{onConflict:'id'})
           setDrills(SEED_DRILLS)
         } else {
           setDrills(data)
         }
-        const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single()
-        if(hs) setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})
-        const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single()
-        if(ss&&ss.season_start) setSeasonStartState(ss.season_start)
-        if(ss) setSessionStatusState({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})
-        const{data:sq}=await supabase.from('squad').select('*').order('name')
-        if(sq) setSquad(sq)
-        const{data:mn}=await supabase.from('match_notes').select('*')
-        if(mn){const obj={};mn.forEach(r=>{obj[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',show_parents:r.show_parents||false}});setMatchNotes(obj)}
-        const{data:pn}=await supabase.from('player_notes').select('*')
-        if(pn){const obj={};pn.forEach(r=>{obj[r.player_id]=r.note||''});setPlayerNotes(obj)}
-        const{data:att}=await supabase.from('attendance').select('*')
-        if(att){const obj={};att.forEach(r=>{obj[`${r.week_num}-${r.player_name}`]=r.present});setAttendance(obj)}
-        const{data:pp}=await supabase.from('player_progress').select('*')
-        if(pp){const obj={};pp.forEach(r=>{obj[`${r.player_id}-${r.drill_id}`]=r.level});setProgressData(obj)}
-      }catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
+      }catch(e){console.error('drills load error:',e);setDbError(true);setDrills(SEED_DRILLS)}
+
+      // Load each table independently so one missing table can't block the app
+      try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){console.error('home_session:',e)}
+      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStartState(ss.season_start);setSessionStatusState({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){console.error('season_settings:',e)}
+      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq)setSquad(sq)}catch(e){console.error('squad:',e)}
+      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const obj={};mn.forEach(r=>{obj[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',show_parents:r.show_parents||false}});setMatchNotes(obj)}}catch(e){console.error('match_notes:',e)}
+      try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const obj={};pn.forEach(r=>{obj[r.player_id]=r.note||''});setPlayerNotes(obj)}}catch(e){console.error('player_notes:',e)}
+      try{const{data:att}=await supabase.from('attendance').select('*');if(att){const obj={};att.forEach(r=>{obj[`${r.week_num}-${r.player_name}`]=r.present});setAttendance(obj)}}catch(e){console.error('attendance:',e)}
+      try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const obj={};pp.forEach(r=>{obj[`${r.player_id}-${r.drill_id}`]=r.level});setProgressData(obj)}}catch(e){console.error('player_progress:',e)}
+
       setLoading(false)
     }
     load()
