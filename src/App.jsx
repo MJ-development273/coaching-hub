@@ -411,14 +411,6 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
 
   // Component remounts on each tab switch, so initialWeek is always fresh
   const [weekNum,setWeekNum]=useState(()=>initialWeek||calcCurrentWeek(seasonStart))
-
-  const changeWeek = (fn) => {
-    setWeekNum(prev => {
-      const next = typeof fn === 'function' ? fn(prev) : fn
-      if(onWeekChange) onWeekChange(next)
-      return next
-    })
-  }
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({}) // { 'weekNum-ageFilter': { blockKey: drill } }
   const [swapTarget,setSwapTarget]=useState(null)
@@ -427,10 +419,18 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, initialWeek
   const [detailDrill,setDetailDrill]=useState(null)
   const [overridesLoaded,setOverridesLoaded]=useState(false)
 
-  // When season start changes, jump to the correct current week
-  // Only fires if no initialWeek was passed (i.e. not navigating from season overview)
+  // Must be defined after all useState hooks
+  const changeWeek = (fn) => {
+    setWeekNum(prev => {
+      const next = typeof fn === 'function' ? fn(prev) : fn
+      if(onWeekChange) onWeekChange(next)
+      return next
+    })
+  }
+
+  // When season start changes, jump to correct week (only if not coming from season overview)
   useEffect(()=>{
-    if(!initialWeek) changeWeek(calcCurrentWeek(seasonStart))
+    if(!initialWeek) setWeekNum(calcCurrentWeek(seasonStart))
   },[seasonStart])
 
   // Load all session overrides from Supabase on mount
