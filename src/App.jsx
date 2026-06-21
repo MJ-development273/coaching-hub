@@ -984,6 +984,21 @@ function SessionStatusManager({ sessionStatus, onSave }) {
               <input value={form.location} onChange={e=>set('location',e.target.value)} placeholder="e.g. Clydach Park" className={inputCls} onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
           </div>
         )}
+        {/* Show to parents toggle */}
+        <div className="flex items-center justify-between p-3 rounded-xl mb-3"
+          style={{background:form.show_parents?N.light:'#f9fafb',border:`1px solid ${form.show_parents?N.bg+'44':'#e5e7eb'}`}}>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">Show status to parents</p>
+            <p className="text-xs text-gray-400 mt-0.5">{form.show_parents?'Visible on parent view':'Hidden from parent view'}</p>
+          </div>
+          <button onClick={()=>set('show_parents',!form.show_parents)}
+            className="w-12 h-6 rounded-full transition-all relative shrink-0 ml-3"
+            style={{background:form.show_parents?N.bg:'#d1d5db'}}>
+            <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow"
+              style={{left:form.show_parents?'26px':'2px'}}/>
+          </button>
+        </div>
+
         <div className="flex gap-2">
           <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
             style={{background:saved?'#16a34a':N.bg}} onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}} onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
@@ -1002,6 +1017,7 @@ function SessionStatusManager({ sessionStatus, onSave }) {
 
 // ─── Parent Session Status View ───────────────────────────────────────────────
 function ParentStatusBanner({ sessionStatus }) {
+  if (!sessionStatus.show_parents) return null
   if (!sessionStatus.status || sessionStatus.status === 'on') return (
     <div className="rounded-2xl p-4 mb-4 flex gap-3 items-center" style={{background:'#f0fdf4',border:'1px solid #bbf7d0'}}>
       <span className="text-2xl">✅</span>
@@ -1026,30 +1042,109 @@ function ParentStatusBanner({ sessionStatus }) {
 
 // ─── Match Day Notes ──────────────────────────────────────────────────────────
 function MatchDayNotes({ weekNum, matchNotes, onSave }) {
-  const note = matchNotes[weekNum] || { result:'', scorers:'', notes:'' }
+  const empty = { result:'', scorers:'', notes:'', opponent:'', venue:'', match_time:'', show_parents:false }
+  const note = matchNotes[weekNum] || empty
   const [form, setForm] = useState(note)
   const [saved, setSaved] = useState(false)
-  useEffect(()=>{ setForm(matchNotes[weekNum]||{result:'',scorers:'',notes:''}); setSaved(false) },[weekNum,matchNotes])
+  const [tab, setTab] = useState('fixture') // 'fixture' | 'result'
+  useEffect(()=>{ setForm(matchNotes[weekNum]||empty); setSaved(false) },[weekNum,matchNotes])
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const inputCls = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const focusNavy = e=>e.target.style.borderColor=N.bg
   const blurGray = e=>e.target.style.borderColor='#d1d5db'
 
+  const fixtureText = `⚽ *Clydach Juniors — Match Day*
+
+${form.opponent?`🆚 vs ${form.opponent}
+`:''}${form.match_time?`⏰ ${form.match_time}
+`:''}${form.venue?`📍 ${form.venue}
+`:''}
+Don't forget boots, shin pads and water!
+
+— Coaches
+🔗 ${SITE_URL}`
+
+  const resultText = `⚽ *Match Result — Clydach Juniors*
+
+${form.opponent?`🆚 vs ${form.opponent}
+`:''}${form.result?`📊 ${form.result}
+`:''}${form.scorers?`⚽ Scorers: ${form.scorers}
+`:''}
+Well done to everyone who played today!
+
+— Coaches
+🔗 ${SITE_URL}`
+
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
-      <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Week {weekNum} — Match Notes</h3>
+      <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Week {weekNum} — Match</h3>
+
+      {/* Tab switcher */}
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
+        {[{id:'fixture',label:'📋 Fixture'},{id:'result',label:'📊 Result'}].map(t=>(
+          <button key={t.id} onClick={()=>setTab(t.id)}
+            className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+            style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
       <div className="space-y-3">
-        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Result</label>
-          <input value={form.result} onChange={e=>set('result',e.target.value)} placeholder="e.g. Won 3-1 vs Swansea" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
-        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Scorers</label>
-          <input value={form.scorers} onChange={e=>set('scorers',e.target.value)} placeholder="e.g. J.Smith x2, T.Jones" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
-        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Coach Notes</label>
-          <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on, standout performances..." className={`${inputCls} resize-none`} onFocus={focusNavy} onBlur={blurGray}/></div>
-        <button onClick={save} className="w-full text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
-          style={{background:saved?'#16a34a':N.bg}} onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}} onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
-          {saved?'✓ Saved!':'💾 Save Match Notes'}
-        </button>
+        {/* Fixture details — shown on both tabs */}
+        <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Opponent</label>
+          <input value={form.opponent} onChange={e=>set('opponent',e.target.value)} placeholder="e.g. Swansea City Juniors" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+
+        {tab==='fixture' && (
+          <>
+            <div className="grid grid-cols-2 gap-3">
+              <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Time</label>
+                <input value={form.match_time} onChange={e=>set('match_time',e.target.value)} placeholder="e.g. 10:00am" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+              <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Venue</label>
+                <input value={form.venue} onChange={e=>set('venue',e.target.value)} placeholder="e.g. Clydach Park" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+            </div>
+
+            {/* Show to parents toggle */}
+            <div className="flex items-center justify-between p-3 rounded-xl"
+              style={{background:form.show_parents?N.light:'#f9fafb',border:`1px solid ${form.show_parents?N.bg+'44':'#e5e7eb'}`}}>
+              <div>
+                <p className="text-sm font-semibold text-gray-800">Show fixture to parents</p>
+                <p className="text-xs text-gray-400 mt-0.5">{form.show_parents?'Visible on parent view':'Hidden from parent view'}</p>
+              </div>
+              <button onClick={()=>set('show_parents',!form.show_parents)}
+                className="w-12 h-6 rounded-full transition-all relative shrink-0 ml-3"
+                style={{background:form.show_parents?N.bg:'#d1d5db'}}>
+                <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow"
+                  style={{left:form.show_parents?'26px':'2px'}}/>
+              </button>
+            </div>
+          </>
+        )}
+
+        {tab==='result' && (
+          <>
+            <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Result</label>
+              <input value={form.result} onChange={e=>set('result',e.target.value)} placeholder="e.g. Won 3-1" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+            <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Scorers</label>
+              <input value={form.scorers} onChange={e=>set('scorers',e.target.value)} placeholder="e.g. J.Smith x2, T.Jones" className={inputCls} onFocus={focusNavy} onBlur={blurGray}/></div>
+            <div><label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Coach Notes</label>
+              <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on, standout performances..." className={`${inputCls} resize-none`} onFocus={focusNavy} onBlur={blurGray}/></div>
+          </>
+        )}
+
+        <div className="flex gap-2">
+          <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm transition-colors"
+            style={{background:saved?'#16a34a':N.bg}} onMouseEnter={e=>{if(!saved)e.currentTarget.style.background=N.hover}} onMouseLeave={e=>{if(!saved)e.currentTarget.style.background=N.bg}}>
+            {saved?'✓ Saved!':'💾 Save'}
+          </button>
+          <a href={`https://wa.me/?text=${encodeURIComponent(tab==='fixture'?fixtureText:resultText)}`}
+            target="_blank" rel="noreferrer"
+            className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm text-center"
+            style={{background:'#16a34a'}}>
+            📲 {tab==='fixture'?'Share Fixture':'Share Result'}
+          </a>
+        </div>
       </div>
     </div>
   )
@@ -1979,7 +2074,7 @@ export default function App() {
 
   const saveSessionStatus = async (s) => {
     setSessionStatusState(s)
-    try { await supabase.from('season_settings').upsert({ id:1, session_status:s.status, session_location:s.location, session_time:s.time }) } catch(e){console.error(e)}
+    try { await supabase.from('season_settings').upsert({ id:1, session_status:s.status, session_location:s.location, session_time:s.time, show_status_to_parents:s.show_parents||false }) } catch(e){console.error(e)}
   }
   const saveMatchNote = async (weekNum, note) => {
     setMatchNotes(prev=>({...prev,[weekNum]:note}))
@@ -2036,11 +2131,11 @@ export default function App() {
         if(hs) setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})
         const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single()
         if(ss&&ss.season_start) setSeasonStartState(ss.season_start)
-        if(ss) setSessionStatusState({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||''})
+        if(ss) setSessionStatusState({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})
         const{data:sq}=await supabase.from('squad').select('*').order('name')
         if(sq) setSquad(sq)
         const{data:mn}=await supabase.from('match_notes').select('*')
-        if(mn){const obj={};mn.forEach(r=>{obj[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||''}});setMatchNotes(obj)}
+        if(mn){const obj={};mn.forEach(r=>{obj[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',show_parents:r.show_parents||false}});setMatchNotes(obj)}
         const{data:pn}=await supabase.from('player_notes').select('*')
         if(pn){const obj={};pn.forEach(r=>{obj[r.player_id]=r.note||''});setPlayerNotes(obj)}
         const{data:att}=await supabase.from('attendance').select('*')
@@ -2188,6 +2283,22 @@ export default function App() {
         {!isCoach&&(
           <div>
             <ParentStatusBanner sessionStatus={sessionStatus}/>
+            {/* Show upcoming fixture if set and enabled */}
+            {(()=>{
+              const upcomingWeek = Object.keys(matchNotes).find(w=>matchNotes[w]?.show_parents&&matchNotes[w]?.opponent)
+              const fixture = upcomingWeek ? matchNotes[upcomingWeek] : null
+              if(!fixture) return null
+              return (
+                <div className="rounded-2xl p-4 mb-4" style={{background:'#eff6ff',border:'1px solid #bfdbfe'}}>
+                  <p className="font-bold text-blue-800 text-sm mb-2">⚽ Upcoming Match</p>
+                  <p className="text-blue-900 font-semibold text-sm">vs {fixture.opponent}</p>
+                  <div className="flex gap-3 mt-1">
+                    {fixture.match_time&&<p className="text-blue-700 text-xs">⏰ {fixture.match_time}</p>}
+                    {fixture.venue&&<p className="text-blue-700 text-xs">📍 {fixture.venue}</p>}
+                  </div>
+                </div>
+              )
+            })()}
             <ParentHomeView drills={drills} homeSession={homeSession}/>
           </div>
         )}
