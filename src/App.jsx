@@ -2273,13 +2273,45 @@ export default function App() {
 
       <main className="max-w-5xl mx-auto px-4 py-5">
         {isCoach&&view==='drills'&&(
-          <div>
-            {showAdd&&<AddDrillForm onAdd={addDrill} onClose={()=>setShowAdd(false)}/>}
-            <DrillFilter filterCat={filterCat} setFilterCat={setFilterCat} filterAge={filterAge} setFilterAge={setFilterAge} search={search} setSearch={setSearch} catCounts={catCounts}/>
-            <DrillGrid drills={filteredDrills} onSelect={setSelected} isCoach={isCoach}/>
-            {selected&&<DrillDetail drill={selected} onClose={()=>setSelected(null)} isCoach={isCoach} onShare={setShareTarget}/>}
+          <>
+            {showAdd&&<AddDrillForm onSave={addDrill} onClose={()=>setShowAdd(false)}/>}
+            {/* Category filter pills */}
+            <div className="flex gap-2 overflow-x-auto pb-2 mb-3 scrollbar-hide">
+              {['All',...CATEGORIES].map(cat=>(
+                <button key={cat} onClick={()=>setFilterCat(cat)}
+                  className="shrink-0 px-3 py-1.5 rounded-full text-xs font-semibold border transition-all"
+                  style={filterCat===cat?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                  {cat}{cat!=='All'&&catCounts[cat]?` (${catCounts[cat]})` : ''}
+                </button>
+              ))}
+            </div>
+            {/* Age filter + search */}
+            <div className="flex gap-2 mb-4">
+              <select value={filterAge} onChange={e=>setFilterAge(e.target.value)}
+                className="border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none bg-white"
+                onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}>
+                <option value="All">All Ages</option>
+                {AGE_GROUPS.map(ag=><option key={ag}>{ag}</option>)}
+              </select>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search drills..."
+                className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
+                onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+            </div>
+            {/* Drill grid */}
+            {(() => {
+              const filtered = drills.filter(d => {
+                const matchCat = filterCat==='All' || d.category===filterCat
+                const matchAge = filterAge==='All' || parseAges(d.age_groups).includes(filterAge)
+                const matchSearch = !search || d.title.toLowerCase().includes(search.toLowerCase())
+                return matchCat && matchAge && matchSearch
+              })
+              return filtered.length===0
+                ? <div className="text-center py-16"><div className="text-5xl mb-3">⚽</div><p className="font-bold text-gray-600">No drills found</p></div>
+                : <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">{filtered.map(drill=><DrillCard key={drill.id} drill={drill} onClick={setSelected} onShare={setShareTarget} isCoach={true}/>)}</div>
+            })()}
+            {selected&&<DrillDetail drill={selected} onClose={()=>setSelected(null)} isCoach={isCoach}/>}
             {shareTarget&&<ShareDrillModal drill={shareTarget} onClose={()=>setShareTarget(null)}/>}
-          </div>
+          </>
         )}
         {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
