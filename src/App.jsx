@@ -1092,8 +1092,8 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
       )}
       <div className="flex gap-3 mb-6">
         <button onClick={publish} disabled={saving||selected.length===0}
-          className="flex-1 font-bold py-3 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2"
-          style={saved?{background:N.light,color:N.text,border:`2px solid ${N.bg}44`}:selected.length===0?{background:'#f3f4f6',color:'#9ca3af'}:navyBtn}
+          className="flex-1 font-bold py-3 rounded-2xl transition-colors text-sm flex items-center justify-center gap-2 text-white"
+          style={saved?{background:'#16a34a',color:'white'}:selected.length===0?{background:'#f3f4f6',color:'#9ca3af'}:navyBtn}
           onMouseEnter={e=>{if(!saved&&selected.length>0)e.currentTarget.style.background=N.hover}}
           onMouseLeave={e=>{if(!saved&&selected.length>0)e.currentTarget.style.background=N.bg}}>
           {saved?'✓ Published!':saving?'Publishing…':'🚀 Publish to Parents'}
