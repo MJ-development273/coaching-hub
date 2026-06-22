@@ -1040,9 +1040,16 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
   const [saving,setSaving]=useState(false)
   const [saved,setSaved]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
+
+  // Re-sync local state if another coach clears/updates via Supabase RT
+  useEffect(()=>{
+    setSelected(homeSession.drill_ids||[])
+    setMessage(homeSession.message||'')
+  },[homeSession])
+
   const toggle=(id)=>{setSelected(prev=>prev.includes(id)?prev.filter(x=>x!==id):prev.length>=2?[...prev.slice(1),id]:[...prev,id]);setSaved(false)}
   const publish=async()=>{setSaving(true);await onSave({drill_ids:selected,message});setSaving(false);setSaved(true);setTimeout(()=>setSaved(false),3000)}
-  const clearAll=async()=>{setSelected([]);await onSave({drill_ids:[],message:''});setMessage('')}
+  const clearAll=async()=>{setSelected([]);setMessage('');await onSave({drill_ids:[],message:''})}
   const selectedDrills=drills.filter(d=>selected.includes(d.id))
   const shareText=()=>{
     const lines=[`🏠 *This Week's Home Practice — Clydach Juniors*\n`]
@@ -1695,7 +1702,24 @@ export default function App() {
   },[])
 
   useEffect(()=>{
-    const ch=supabase.channel('home-rt').on('postgres_changes',{event:'*',schema:'public',table:'home_session'},p=>{if(p.new)setHomeSession({drill_ids:p.new.drill_ids||[],message:p.new.message||''})}).subscribe()
+    // Real-time listeners for live updates across coach/parent sessions
+    const ch=supabase.channel('app-rt')
+      .on('postgres_changes',{event:'*',schema:'public',table:'home_session'},p=>{
+        if(p.new) setHomeSession({drill_ids:p.new.drill_ids||[],message:p.new.message||''})
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'season_settings'},p=>{
+        if(p.new){
+          if(p.new.season_start) setSeasonStart(p.new.season_start)
+          setSessionStatus({status:p.new.session_status||'on',location:p.new.session_location||'',time:p.new.session_time||'',show_parents:p.new.show_status_to_parents||false})
+        }
+      })
+      .on('postgres_changes',{event:'*',schema:'public',table:'match_notes'},p=>{
+        if(p.new){
+          const r=p.new
+          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}}))
+        }
+      })
+      .subscribe()
     return()=>supabase.removeChannel(ch)
   },[])
 
