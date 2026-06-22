@@ -63,13 +63,13 @@ function AuthScreen({ onAuth }) {
           <div className="space-y-3">
             <button onClick={()=>setScreen('pin')} onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
               className="w-full text-white font-bold py-3 rounded-xl transition-colors" style={navyBtn}>
-              👨‍🏫 Coach Login
+              🏃 Coach Login
             </button>
             <button onClick={()=>onAuth('parent')} className="w-full border-2 font-semibold py-3 rounded-xl transition-colors"
               style={{borderColor:N.bg, color:N.text}}
               onMouseEnter={e=>{e.currentTarget.style.background=N.light}}
               onMouseLeave={e=>{e.currentTarget.style.background='white'}}>
-              👪 Player / Parent
+              👤 Player / Parent
             </button>
           </div>
         ) : (
@@ -681,7 +681,7 @@ function ShareDrillModal({ drill, onClose }) {
             <button key={t} onClick={()=>setTarget(t)}
               className="flex-1 py-2 rounded-xl text-sm font-semibold border transition-all"
               style={target===t?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#d1d5db'}}>
-              {t==='coaches'?'👨‍🏫 Coaches':'👪 Parents'}
+              {t==='coaches'?'🏃 Coaches':'👤 Parents'}
             </button>
           ))}
         </div>
@@ -762,13 +762,14 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const [detailDrill,setDetailDrill]=useState(null)
   const [editingDate,setEditingDate]=useState(false)
   const [tempDate,setTempDate]=useState('')
+  const [showPreSeason,setShowPreSeason]=useState(null) // null=auto, true=forced on, false=forced off
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
 
   // Build auto session
   // Detect if current week falls in pre-season window
-  const isPreSeason = (() => {
+  const isPreSeasonAuto = (() => {
     if (!preSeasonStart) return false
     const today = new Date(); today.setHours(0,0,0,0)
     const pre = new Date(preSeasonStart); pre.setHours(0,0,0,0)
@@ -778,6 +779,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
     if (comp && today >= comp) return false
     return true
   })()
+  const isPreSeason = showPreSeason !== null ? showPreSeason : isPreSeasonAuto
 
   const activeBlocks = isPreSeason ? PRE_SEASON_BLOCKS : SESSION_BLOCKS
   const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
@@ -858,6 +860,21 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
       </div>
 
       {/* Session timeline */}
+      {/* Session type toggle - only show if preSeasonStart is set */}
+      {preSeasonStart && (
+        <div className="flex gap-2 mb-3">
+          <button onClick={()=>setShowPreSeason(false)}
+            className="flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all"
+            style={!isPreSeason?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#6b7280',borderColor:'#e5e7eb'}}>
+            📅 Season Session
+          </button>
+          <button onClick={()=>setShowPreSeason(true)}
+            className="flex-1 py-2 rounded-xl text-xs font-bold border-2 transition-all"
+            style={isPreSeason?{background:'#ea580c',color:'white',borderColor:'#ea580c'}:{background:'white',color:'#6b7280',borderColor:'#e5e7eb'}}>
+            🌱 Pre-Season
+          </button>
+        </div>
+      )}
       {isPreSeason && (
         <div className="rounded-2xl p-3 mb-3 flex items-center gap-3" style={{background:'#fff7ed',border:'1px solid #fed7aa'}}>
           <span className="text-xl">🌱</span>
@@ -1487,7 +1504,7 @@ const FAW_RULES = [
   {icon:'🏟️',title:'Buffer Zone',rule:'2-metre buffer zone required from touchlines. No spectators behind goals.'},
   {icon:'🚭',title:'Match Day',rule:'Smoking and vaping banned from sideline. No continuous shouting of instructions.'},
   {icon:'📋',title:'Team Roster',rule:'Team roster on COMET compulsory. Maximum 18 players per match day squad.'},
-  {icon:'👨‍🏫',title:'Coach Requirements',rule:'Minimum FAW Football Leaders Award required. Valid Enhanced DBS check mandatory.'},
+  {icon:'📋',title:'Coach Requirements',rule:'Minimum FAW Football Leaders Award required. Valid Enhanced DBS check mandatory.'},
 ]
 function FAWReference() {
   const [open, setOpen] = useState(null)
