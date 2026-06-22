@@ -743,7 +743,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, preSeasonStart, onPreSeasonStartChange, dateOverrides, onDateOverride, onDateClear }) {
+function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, dateOverrides, onDateOverride, onDateClear }) {
   const [weekNum,setWeekNum]=useState(1)
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
@@ -974,53 +974,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, preSeasonSt
       {shareOpen && <SharePlanModal session={session} weekNum={weekNum} sessionDate={dateOverrides[weekNum]||''} sessionNotes={sessionNotes} ageFilter={ageFilter} onClose={()=>setShareOpen(false)}/>}
       {detailDrill && <DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
 
-      {/* Season & Pre-Season Dates */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-4 space-y-4">
-        <h3 className="font-bold text-gray-900 text-sm">📅 Season Dates</h3>
 
-        <div>
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Pre-Season Start</label>
-          <p className="text-xs text-gray-400 mb-2">First pre-season training session date.</p>
-          {preSeasonStart ? (
-            <div className="flex items-center gap-2">
-              <span className="flex-1 text-sm font-semibold text-gray-800 bg-orange-50 rounded-xl px-3 py-2 border border-orange-200">
-                {new Date(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
-              </span>
-              <button onClick={()=>onPreSeasonStartChange('')}
-                className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
-            </div>
-          ) : (
-            <input type="date" onChange={e=>{ if(e.target.value) onPreSeasonStartChange(e.target.value) }}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
-          )}
-        </div>
-
-        <div>
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Competitive Season Start</label>
-          <p className="text-xs text-gray-400 mb-2">Sets Week 1. App auto-advances each Monday.</p>
-          {seasonStart ? (
-            <div className="flex items-center gap-2">
-              <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
-                {new Date(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
-              </span>
-              <button onClick={()=>onSeasonStartChange('')}
-                className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
-            </div>
-          ) : (
-            <input type="date" onChange={e=>{ if(e.target.value) onSeasonStartChange(e.target.value) }}
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
-          )}
-        </div>
-
-        {preSeasonStart && seasonStart && (
-          <div className="rounded-xl p-3 text-xs" style={{background:N.light}}>
-            <p className="font-semibold" style={{color:N.text}}>Pre-season: {new Date(preSeasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})} -- {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
-            <p style={{color:N.text+'aa'}} className="mt-0.5">Competitive season: Week 1 from {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
-          </div>
-        )}
-      </div>
     </div>
   )
 }
@@ -1524,38 +1478,85 @@ function FAWReference() {
 }
 
 // ─── Season Overview ───────────────────────────────────────────────────────────
-function SeasonOverview({ seasonStart, matchNotes, currentWeek, onWeekSelect }) {
-  if (!seasonStart) return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
-      <p className="text-2xl mb-2">📅</p>
-      <p className="text-sm font-semibold text-gray-600">No season start date set</p>
-      <p className="text-xs text-gray-400 mt-1">Set a season start date in the Planner tab</p>
-    </div>
-  )
-  const weeks = Array.from({length:30},(_,i)=>i+1)
-  const getDate = w => { const d=new Date(seasonStart); d.setDate(d.getDate()+(w-1)*7); return d }
-  const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect }) {
   return (
-    <div>
-      <div className="rounded-2xl p-4 mb-4" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
-        <p className="font-bold text-sm" style={{color:N.text}}>Season Overview - 30 weeks</p>
-        <p className="text-xs mt-0.5" style={{color:N.text+'bb'}}>Tap a week to view match notes. ⚽ = notes logged.</p>
+    <div className="space-y-4">
+      {/* Season Dates */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-4">
+        <h3 className="font-bold text-gray-900 text-sm">📅 Season Dates</h3>
+        <div>
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Pre-Season Start</label>
+          {preSeasonStart ? (
+            <div className="flex items-center gap-2">
+              <span className="flex-1 text-sm font-semibold text-gray-800 bg-orange-50 rounded-xl px-3 py-2 border border-orange-200">
+                {new Date(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+              </span>
+              <button onClick={()=>onPreSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
+            </div>
+          ) : (
+            <input type="date" onChange={e=>{ if(e.target.value) onPreSeasonStartChange(e.target.value) }}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+          )}
+        </div>
+        <div>
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Competitive Season Start</label>
+          <p className="text-xs text-gray-400 mb-2">Sets Week 1. Auto-advances each Monday.</p>
+          {seasonStart ? (
+            <div className="flex items-center gap-2">
+              <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
+                {new Date(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+              </span>
+              <button onClick={()=>onSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
+            </div>
+          ) : (
+            <input type="date" onChange={e=>{ if(e.target.value) onSeasonStartChange(e.target.value) }}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+          )}
+        </div>
+        {preSeasonStart && seasonStart && (
+          <div className="rounded-xl p-3 text-xs" style={{background:N.light}}>
+            <p className="font-semibold" style={{color:N.text}}>Pre-season: {new Date(preSeasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})} -- {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
+            <p style={{color:N.text+'aa'}} className="mt-0.5">Competitive season: Week 1 from {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
+          </div>
+        )}
       </div>
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
-        {weeks.map(w=>{
-          const d=getDate(w)
-          const hasNote=!!(matchNotes[w]&&(matchNotes[w].result||matchNotes[w].opponent))
-          const isCurrent=w===currentWeek
-          return (
-            <button key={w} onClick={()=>onWeekSelect(w)} className="rounded-xl p-2.5 text-center border-2 transition-all"
-              style={{borderColor:isCurrent?N.bg:hasNote?'#16a34a':'#e5e7eb',background:isCurrent?N.bg:hasNote?'#f0fdf4':'white',color:isCurrent?'white':'inherit'}}>
-              <div className="text-xs font-black" style={{color:isCurrent?'white':N.text}}>W{w}</div>
-              <div className="mt-0.5" style={{color:isCurrent?'rgba(255,255,255,0.8)':'#9ca3af',fontSize:'9px'}}>{fmt(d)}</div>
-              {hasNote&&!isCurrent&&<div className="text-xs">{matchNotes[w]?.match_type==='Friendly'||matchNotes[w]?.match_type==='Pre-Season Friendly'?'🤝':'⚽'}</div>}
-            </button>
-          )
-        })}
+
+      {!seasonStart ? (
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+          <p className="text-2xl mb-2">📅</p>
+          <p className="text-sm font-semibold text-gray-600">Set a competitive season start date above to see the overview</p>
+        </div>
+      ) : (()=>{
+        const weeks = Array.from({length:30},(_,i)=>i+1)
+        const getDate = w => { const d=new Date(seasonStart); d.setDate(d.getDate()+(w-1)*7); return d }
+        const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})
+        return (
+        <>
+        <div className="rounded-2xl p-3 mb-2 flex gap-2 items-center" style={{background:N.light,border:`1px solid ${N.bg}33`}}>
+          <p className="text-xs font-semibold" style={{color:N.text}}>30-week season overview. Tap any week to open the planner.</p>
+        </div>
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <p className="text-xs font-semibold text-gray-500 mb-3">Tap a week to go to the planner. ⚽ = match logged. 🤝 = friendly.</p>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+          {weeks.map(w=>{
+            const d=getDate(w)
+            const hasNote=!!(matchNotes[w]&&(matchNotes[w].result||matchNotes[w].opponent))
+            const isCurrent=w===currentWeek
+            return (
+              <button key={w} onClick={()=>onWeekSelect(w)} className="rounded-xl p-2.5 text-center border-2 transition-all"
+                style={{borderColor:isCurrent?N.bg:hasNote?'#16a34a':'#e5e7eb',background:isCurrent?N.bg:hasNote?'#f0fdf4':'white',color:isCurrent?'white':'inherit'}}>
+                <div className="text-xs font-black" style={{color:isCurrent?'white':N.text}}>W{w}</div>
+                <div className="mt-0.5" style={{color:isCurrent?'rgba(255,255,255,0.8)':'#9ca3af',fontSize:'9px'}}>{fmt(d)}</div>
+                {hasNote&&!isCurrent&&<div className="text-xs">{matchNotes[w]?.match_type==='Friendly'||matchNotes[w]?.match_type==='Pre-Season Friendly'?'🤝':'⚽'}</div>}
+              </button>
+            )
+          })}
+        </div>
       </div>
+        </> )
+      })()}
     </div>
   )
 }
@@ -1728,13 +1729,13 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
-        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart} preSeasonStart={preSeasonStart} onPreSeasonStartChange={savePreSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})}/>}
+        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>}
         {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
-        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
+        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
         {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession}/>}
 
         {isCoach&&view==='drills'&&(
