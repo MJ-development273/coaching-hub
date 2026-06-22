@@ -699,6 +699,15 @@ function ShareDrillModal({ drill, onClose }) {
 
 // ─── Training Planner ─────────────────────────────────────────────────────────
 // Session structure: 10min warm-up + age group intro | 10min passing | 10min tackling | 10min attacking | 15min small game
+// Pre-season session focuses on fitness base, passing foundations, age group intro and GK
+const PRE_SEASON_BLOCKS = [
+  { key:'ps_warmup',   label:'Warm-Up & Fitness Base',        time:'15 min', icon:'🏃', cat:'Strength & Conditioning', fixed:false, desc:'Extended warm-up with conditioning focus — agility ladders, shuttle runs, dynamic stretching. Build fitness base before competitive season.' },
+  { key:'ps_passing',  label:'Passing Foundations',           time:'15 min', icon:'🎯', cat:'Passing',                 fixed:false, desc:'Core passing technique — accuracy, weight of pass, movement off the ball. Keep it simple and repetitive to build muscle memory.' },
+  { key:'ps_agegroup', label:'Age Group Changes & Shape',     time:'15 min', icon:'📋', cat:'Age Group Changes',       fixed:false, desc:'Walk through new age group rules, pitch size changes and positional responsibilities. Use cones to mark the new pitch dimensions.' },
+  { key:'ps_gk',       label:'Goalkeeper Pre-Season',         time:'15 min', icon:'🧤', cat:'Goalkeeping',             fixed:false, desc:'GK-specific fitness and technique work. Handling, footwork, angle play and distribution. Runs alongside the age group session.' },
+  { key:'ps_game',     label:'Friendly Small Sided Game',     time:'20 min', icon:'⚽', cat:null,                      fixed:true,  desc:'Low-pressure game to apply session work. Focus on effort and fun — no heavy coaching during the game itself.' },
+]
+
 const SESSION_BLOCKS = [
   { key:'warmup',   label:'Warm-Up & Age Group Topic', time:'10 min', icon:'🏃', cat:'Strength & Conditioning', fixed:false },
   { key:'passing',  label:'Passing Drill',              time:'10 min', icon:'🎯', cat:'Passing',                 fixed:false },
@@ -743,7 +752,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, dateOverrides, onDateOverride, onDateClear }) {
+function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartChange, dateOverrides, onDateOverride, onDateClear }) {
   const [weekNum,setWeekNum]=useState(1)
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
@@ -758,9 +767,22 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, dateOverrid
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
 
   // Build auto session
+  // Detect if current week falls in pre-season window
+  const isPreSeason = (() => {
+    if (!preSeasonStart) return false
+    const today = new Date(); today.setHours(0,0,0,0)
+    const pre = new Date(preSeasonStart); pre.setHours(0,0,0,0)
+    const comp = seasonStart ? new Date(seasonStart) : null
+    if (comp) comp.setHours(0,0,0,0)
+    if (today < pre) return false
+    if (comp && today >= comp) return false
+    return true
+  })()
+
+  const activeBlocks = isPreSeason ? PRE_SEASON_BLOCKS : SESSION_BLOCKS
   const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
   const session = {}
-  SESSION_BLOCKS.forEach(b => {
+  activeBlocks.forEach(b => {
     if (b.fixed) return
     session[b.key] = weekOverrides[b.key] || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
   })
@@ -771,14 +793,14 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, dateOverrid
     setSwapTarget(null)
   }
 
-  const swapBlock = SESSION_BLOCKS.find(b => b.key === swapTarget)
+  const swapBlock = activeBlocks.find(b => b.key === swapTarget)
 
   return (
     <div>
       {/* Controls */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="font-bold text-gray-900 text-sm">📅 1-Hour Session Planner</h2>
+          <h2 className="font-bold text-gray-900 text-sm">📅 {isPreSeason ? 'Pre-Season Session' : '1-Hour Session Planner'}</h2>
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -836,8 +858,17 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, dateOverrid
       </div>
 
       {/* Session timeline */}
+      {isPreSeason && (
+        <div className="rounded-2xl p-3 mb-3 flex items-center gap-3" style={{background:'#fff7ed',border:'1px solid #fed7aa'}}>
+          <span className="text-xl">🌱</span>
+          <div>
+            <p className="font-bold text-orange-800 text-sm">Pre-Season Training</p>
+            <p className="text-orange-700 text-xs">Fitness base, passing foundations, age group changes and GK work</p>
+          </div>
+        </div>
+      )}
       <div className="space-y-2 mb-4">
-        {SESSION_BLOCKS.map((block, i) => {
+        {activeBlocks.map((block, i) => {
           const drill = session[block.key]
           const isOverridden = !!(weekOverrides[block.key])
           const timeOffset = [0,10,20,30,40][i]
@@ -857,6 +888,11 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, dateOverrid
                   {!block.fixed&&<button onClick={()=>setSwapTarget(block.key)} className="text-xs font-semibold underline underline-offset-2" style={{color:'#0891b2'}}>swap</button>}
                 </div>
               </div>
+              {block.desc && isPreSeason && !drill && (
+                <div className="px-4 pb-3 pt-0">
+                  <p className="text-xs text-gray-500 italic">{block.desc}</p>
+                </div>
+              )}
               {drill ? (
                 <div className="flex gap-3 p-3">
                   <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
@@ -1731,7 +1767,7 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
-        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})}/>}
+        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>}
