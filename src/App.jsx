@@ -749,7 +749,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
-  const [sessionDate,setSessionDate]=useState('')
+  const [dateOverrides,setDateOverrides]=useState({}) // { weekNum: 'YYYY-MM-DD' }
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
   const [editingDate,setEditingDate]=useState(false)
@@ -802,6 +802,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
         {/* Session date - auto from season start or manual override */}
         {(()=>{
           const autoDate = seasonStart ? (()=>{ const d=new Date(seasonStart); d.setDate(d.getDate()+(weekNum-1)*7); return d.toISOString().split('T')[0] })() : ''
+          const sessionDate = dateOverrides[weekNum] || ''
           const displayDate = sessionDate || autoDate
           const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : ''
           return (
@@ -811,7 +812,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
                 <div className="flex gap-2">
                   <input type="date" defaultValue={displayDate} onChange={e=>setTempDate(e.target.value)}
                     className={inputCls+' flex-1'} onFocus={focusNavy} onBlur={blurGray} autoFocus/>
-                  <button onClick={()=>{if(tempDate)setSessionDate(tempDate);setEditingDate(false);setTempDate('')}}
+                  <button onClick={()=>{if(tempDate)setDateOverrides(prev=>({...prev,[weekNum]:tempDate}));setEditingDate(false);setTempDate('')}}
                     className="text-white text-xs font-bold px-3 rounded-xl" style={{background:N.bg}}>Set</button>
                   <button onClick={()=>{setEditingDate(false);setTempDate('')}}
                     className="text-xs border border-gray-300 rounded-xl px-2 text-gray-500">Cancel</button>
@@ -823,7 +824,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
                   </span>
                   <button onClick={()=>{setEditingDate(true);setTempDate(displayDate||'')}}
                     className="text-xs border border-gray-300 rounded-xl px-3 py-2 text-gray-600">Change</button>
-                  {sessionDate && <button onClick={()=>setSessionDate('')}
+                  {sessionDate && <button onClick={()=>setDateOverrides(prev=>{const n={...prev};delete n[weekNum];return n})}
                     className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Remove</button>}
                 </div>
               )}
@@ -970,7 +971,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
           </div>
         </Modal>
       )}
-      {shareOpen && <SharePlanModal session={session} weekNum={weekNum} sessionDate={sessionDate} sessionNotes={sessionNotes} ageFilter={ageFilter} onClose={()=>setShareOpen(false)}/>}
+      {shareOpen && <SharePlanModal session={session} weekNum={weekNum} sessionDate={dateOverrides[weekNum]||''} sessionNotes={sessionNotes} ageFilter={ageFilter} onClose={()=>setShareOpen(false)}/>}
       {detailDrill && <DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
     </div>
   )
@@ -1547,7 +1548,7 @@ export default function App() {
 
   useEffect(()=>{
     async function load(){
-      try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;if(!data||data.length===0){await supabase.from('drills').upsert(SEED_DRILLS,{onConflict:'id'});setDrills(SEED_DRILLS)}else{setDrills(data)}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
+      try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq)setSquad(sq)}catch(e){}
