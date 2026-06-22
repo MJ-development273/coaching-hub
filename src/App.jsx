@@ -743,13 +743,12 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
+function TrainingPlanner({ drills, seasonStart, onSeasonStartChange, preSeasonStart, onPreSeasonStartChange, dateOverrides, onDateOverride, onDateClear }) {
   const [weekNum,setWeekNum]=useState(1)
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
   const [sessionNotes,setSessionNotes]=useState('')
-  const [dateOverrides,setDateOverrides]=useState({}) // { weekNum: 'YYYY-MM-DD' }
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
   const [editingDate,setEditingDate]=useState(false)
@@ -802,8 +801,8 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
         {/* Session date - auto from season start or manual override */}
         {(()=>{
           const autoDate = seasonStart ? (()=>{ const d=new Date(seasonStart); d.setDate(d.getDate()+(weekNum-1)*7); return d.toISOString().split('T')[0] })() : ''
-          const sessionDate = dateOverrides[weekNum] || ''
-          const displayDate = sessionDate || autoDate
+          const hasOverride = !!(dateOverrides && dateOverrides[weekNum])
+          const displayDate = (dateOverrides && dateOverrides[weekNum]) || autoDate
           const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : ''
           return (
             <div className="space-y-2">
@@ -812,7 +811,7 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
                 <div className="flex gap-2">
                   <input type="date" defaultValue={displayDate} onChange={e=>setTempDate(e.target.value)}
                     className={inputCls+' flex-1'} onFocus={focusNavy} onBlur={blurGray} autoFocus/>
-                  <button onClick={()=>{if(tempDate)setDateOverrides(prev=>({...prev,[weekNum]:tempDate}));setEditingDate(false);setTempDate('')}}
+                  <button onClick={()=>{if(tempDate&&onDateOverride)onDateOverride(weekNum,tempDate);setEditingDate(false);setTempDate('')}}
                     className="text-white text-xs font-bold px-3 rounded-xl" style={{background:N.bg}}>Set</button>
                   <button onClick={()=>{setEditingDate(false);setTempDate('')}}
                     className="text-xs border border-gray-300 rounded-xl px-2 text-gray-500">Cancel</button>
@@ -821,10 +820,11 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
                 <div className="flex items-center gap-2">
                   <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
                     {displayDate ? fmt(displayDate) : 'No date set'}
+                    {hasOverride && <span className="text-xs text-blue-500 ml-2">custom</span>}
                   </span>
                   <button onClick={()=>{setEditingDate(true);setTempDate(displayDate||'')}}
                     className="text-xs border border-gray-300 rounded-xl px-3 py-2 text-gray-600">Change</button>
-                  {sessionDate && <button onClick={()=>setDateOverrides(prev=>{const n={...prev};delete n[weekNum];return n})}
+                  {hasOverride && <button onClick={()=>onDateClear&&onDateClear(weekNum)}
                     className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Remove</button>}
                 </div>
               )}
@@ -973,6 +973,54 @@ function TrainingPlanner({ drills, seasonStart, onSeasonStartChange }) {
       )}
       {shareOpen && <SharePlanModal session={session} weekNum={weekNum} sessionDate={dateOverrides[weekNum]||''} sessionNotes={sessionNotes} ageFilter={ageFilter} onClose={()=>setShareOpen(false)}/>}
       {detailDrill && <DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
+
+      {/* Season & Pre-Season Dates */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-4 space-y-4">
+        <h3 className="font-bold text-gray-900 text-sm">📅 Season Dates</h3>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Pre-Season Start</label>
+          <p className="text-xs text-gray-400 mb-2">First pre-season training session date.</p>
+          {preSeasonStart ? (
+            <div className="flex items-center gap-2">
+              <span className="flex-1 text-sm font-semibold text-gray-800 bg-orange-50 rounded-xl px-3 py-2 border border-orange-200">
+                {new Date(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+              </span>
+              <button onClick={()=>onPreSeasonStartChange('')}
+                className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
+            </div>
+          ) : (
+            <input type="date" onChange={e=>{ if(e.target.value) onPreSeasonStartChange(e.target.value) }}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+          )}
+        </div>
+
+        <div>
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Competitive Season Start</label>
+          <p className="text-xs text-gray-400 mb-2">Sets Week 1. App auto-advances each Monday.</p>
+          {seasonStart ? (
+            <div className="flex items-center gap-2">
+              <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
+                {new Date(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+              </span>
+              <button onClick={()=>onSeasonStartChange('')}
+                className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
+            </div>
+          ) : (
+            <input type="date" onChange={e=>{ if(e.target.value) onSeasonStartChange(e.target.value) }}
+              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+              onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+          )}
+        </div>
+
+        {preSeasonStart && seasonStart && (
+          <div className="rounded-xl p-3 text-xs" style={{background:N.light}}>
+            <p className="font-semibold" style={{color:N.text}}>Pre-season: {new Date(preSeasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})} -- {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
+            <p style={{color:N.text+'aa'}} className="mt-0.5">Competitive season: Week 1 from {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -1195,15 +1243,15 @@ function SessionStatusManager({ sessionStatus, onSave }) {
 // ─── Match Day Notes ───────────────────────────────────────────────────────────
 function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave }) {
   const note = matchNotes[weekNum] || {}
-  const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',show_parents:false})
+  const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_type:'League',show_parents:false})
   const [tab, setTab] = useState('fixture')
   const [saved, setSaved] = useState(false)
-  useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
+  useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const ic = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const fn = e=>e.target.style.borderColor=N.bg, fb = e=>e.target.style.borderColor='#d1d5db'
-  const fixtureWa = `Clydach Juniors Match Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaches`
+  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaches`
   const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaches`
   return (
     <div className="space-y-4">
@@ -1220,6 +1268,20 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
           ))}
         </div>
         <div className="space-y-3">
+          {/* Match type */}
+          <div>
+            <label className="text-xs font-semibold text-gray-600 block mb-2">Match Type</label>
+            <div className="flex gap-2 flex-wrap">
+              {['League','Cup','Friendly','Pre-Season Friendly'].map(t=>(
+                <button key={t} onClick={()=>set('match_type',t)}
+                  className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                  style={form.match_type===t?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                  {t}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div><label className="text-xs font-semibold text-gray-600 block mb-1">Opponent</label>
             <input value={form.opponent} onChange={e=>set('opponent',e.target.value)} placeholder="e.g. Swansea Juniors" className={ic} onFocus={fn} onBlur={fb}/></div>
           {tab==='fixture'&&<>
@@ -1489,7 +1551,7 @@ function SeasonOverview({ seasonStart, matchNotes, currentWeek, onWeekSelect }) 
               style={{borderColor:isCurrent?N.bg:hasNote?'#16a34a':'#e5e7eb',background:isCurrent?N.bg:hasNote?'#f0fdf4':'white',color:isCurrent?'white':'inherit'}}>
               <div className="text-xs font-black" style={{color:isCurrent?'white':N.text}}>W{w}</div>
               <div className="mt-0.5" style={{color:isCurrent?'rgba(255,255,255,0.8)':'#9ca3af',fontSize:'9px'}}>{fmt(d)}</div>
-              {hasNote&&!isCurrent&&<div className="text-xs">⚽</div>}
+              {hasNote&&!isCurrent&&<div className="text-xs">{matchNotes[w]?.match_type==='Friendly'||matchNotes[w]?.match_type==='Pre-Season Friendly'?'🤝':'⚽'}</div>}
             </button>
           )
         })}
@@ -1529,6 +1591,8 @@ export default function App() {
   const [drills,setDrills]=useState([])
   const [homeSession,setHomeSession]=useState({drill_ids:[],message:''})
   const [seasonStart,setSeasonStart]=useState('')
+  const [preSeasonStart,setPreSeasonStart]=useState('')
+  const [dateOverrides,setDateOverrides]=useState({})
   const [sessionStatus,setSessionStatus]=useState({status:'on',location:'',time:'',show_parents:false})
   const [squad,setSquad]=useState([])
   const [matchNotes,setMatchNotes]=useState({})
@@ -1550,9 +1614,9 @@ export default function App() {
     async function load(){
       try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
-      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
+      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq)setSquad(sq)}catch(e){}
-      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
+      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
@@ -1591,6 +1655,7 @@ export default function App() {
   }
 
   const saveSeasonStart=async(d)=>{setSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,season_start:d||null})}catch(e){}}
+  const savePreSeasonStart=async(d)=>{setPreSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,pre_season_start:d||null})}catch(e){}}
   const saveSessionStatus=async(s)=>{setSessionStatus(s);try{await supabase.from('season_settings').upsert({id:1,session_status:s.status,session_location:s.location,session_time:s.time,show_status_to_parents:s.show_parents||false})}catch(e){}}
   const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{await supabase.from('match_notes').upsert({week_num:wk,...note})}catch(e){}}
   const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note})}catch(e){}}
@@ -1663,7 +1728,7 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
-        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart}/>}
+        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} onSeasonStartChange={saveSeasonStart} preSeasonStart={preSeasonStart} onPreSeasonStartChange={savePreSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>}
