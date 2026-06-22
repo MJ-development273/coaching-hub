@@ -1494,9 +1494,10 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
               <button onClick={()=>onPreSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
             </div>
           ) : (
-            <input type="date" onChange={e=>{ if(e.target.value) onPreSeasonStartChange(e.target.value) }}
+            <input type="date"
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              onFocus={e=>e.target.style.borderColor='#f97316'} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+              onFocus={e=>e.target.style.borderColor='#f97316'}
+              onBlur={e=>{e.target.style.borderColor='#d1d5db'; if(e.target.value) onPreSeasonStartChange(e.target.value)}}/>
           )}
         </div>
         <div>
@@ -1510,9 +1511,10 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
               <button onClick={()=>onSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
             </div>
           ) : (
-            <input type="date" onChange={e=>{ if(e.target.value) onSeasonStartChange(e.target.value) }}
+            <input type="date"
               className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+              onFocus={e=>e.target.style.borderColor=N.bg}
+              onBlur={e=>{e.target.style.borderColor='#d1d5db'; if(e.target.value) onSeasonStartChange(e.target.value)}}/>
           )}
         </div>
         {preSeasonStart && seasonStart && (
