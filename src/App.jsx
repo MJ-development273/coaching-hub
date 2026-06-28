@@ -1607,13 +1607,13 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           <div className="space-y-3">
             {/* View toggle */}
             <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-              <button onClick={()=>setSkillView('by-player')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
-                style={skillView==='by-player'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
-                By Player
-              </button>
               <button onClick={()=>setSkillView('by-skill')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
                 style={skillView==='by-skill'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
                 Grid View
+              </button>
+              <button onClick={()=>setSkillView('by-player')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                style={skillView==='by-player'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                By Player
               </button>
             </div>
 
