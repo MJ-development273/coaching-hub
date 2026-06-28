@@ -5,6 +5,7 @@ import { SEED_DRILLS } from './drills'
 // ─── Theme ────────────────────────────────────────────────────────────────────
 // Primary navy: #1e3a5f  Hover navy: #152d4a  Light navy bg: #eef1f7
 const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', text:'#1e3a5f' }
+const SITE_URL = 'https://coaching-hub-virid.vercel.app'
 
 const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Goalkeeping', 'Age Group Changes']
 const AGE_GROUPS = ['U12', 'U13', 'U14', 'U15']
@@ -671,7 +672,7 @@ function ShareDrillModal({ drill, onClose }) {
   const [target,setTarget]=useState('coaches')
   const text=target==='coaches'
     ?`⚽ *Training Drill — ${drill.title}*\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration} | 👥 ${drill.players}\n\n${drill.description}${drill.coach_notes?`\n\n📋 *Coach Notes:* ${drill.coach_notes}`:''}\n\n— Clydach Juniors`
-    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Clydach Juniors Coaching Team`
+    :`⚽ *Home Practice — ${drill.title}*\n\nHere's a drill for your child to try at home this week!\n\n📋 ${drill.category} | ${(drill.age_groups||[]).join(', ')}\n⏱ ${drill.duration}\n\n${drill.description}\n\n💡 A garden or park works perfectly — bottles or jumpers for cones!\n\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`
   return (
     <Modal onClose={onClose}>
       <div className="p-6">
@@ -1217,8 +1218,8 @@ function SessionStatusManager({ sessionStatus, onSave }) {
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
   const save = async () => { await onSave(form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const waText = form.status==='cancelled'
-    ? `Clydach Juniors - Training CANCELLED this week. We will be back next week! - Coaching Team`
-    : `Clydach Juniors - Training is ON this week${form.time?' at '+form.time:''}${form.location?' at '+form.location:''}. See you there! - Coaching Team`
+    ? `Clydach Juniors - Training CANCELLED this week. We will be back next week! - Coaching Team\n🔗 ${SITE_URL}`
+    : `Clydach Juniors - Training is ON this week${form.time?' at '+form.time:''}${form.location?' at '+form.location:''}. See you there! - Coaching Team\n🔗 ${SITE_URL}`
   return (
     <div className="space-y-4">
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
@@ -1266,8 +1267,8 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const ic = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const fn = e=>e.target.style.borderColor=N.bg, fb = e=>e.target.style.borderColor='#d1d5db'
-  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaching Team`
-  const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaching Team`
+  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaching Team\n🔗 ${SITE_URL}`
+  const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaching Team\n🔗 ${SITE_URL}`
   return (
     <div className="space-y-4">
       <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
@@ -2121,6 +2122,7 @@ export default function App() {
   const [shareTarget,setShareTarget]=useState(null)
   const [loading,setLoading]=useState(true)
   const [dbError,setDbError]=useState(false)
+  const [showUrlModal,setShowUrlModal]=useState(false)
 
   useEffect(()=>{
     async function load(){
@@ -2228,7 +2230,7 @@ export default function App() {
         <div className="max-w-5xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg" style={{background:N.bg}}>⚽</div>
+              <button onClick={()=>setShowUrlModal(true)} className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-lg transition-opacity hover:opacity-80" style={{background:N.bg}} title="Share app link">⚽</button>
               <div>
                 <h1 className="font-black text-gray-900 text-sm leading-tight">Clydach Juniors</h1>
                 <p className="text-xs text-gray-400">{isCoach?'Coach View':'Parent View'}</p>
@@ -2263,6 +2265,34 @@ export default function App() {
             </>
           )}
         </div>
+      {showUrlModal&&(
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+            <h3 className="font-bold text-gray-900 mb-1">🔗 Share App Link</h3>
+            <p className="text-xs text-gray-400 mb-4">Copy the link below to share with coaches or parents, or add it to your home screen.</p>
+            <div className="flex items-center gap-2 bg-gray-50 rounded-xl px-3 py-2.5 mb-4 border border-gray-200">
+              <span className="flex-1 text-sm text-gray-700 font-mono break-all">{SITE_URL}</span>
+            </div>
+            <div className="space-y-2">
+              <button onClick={()=>{navigator.clipboard.writeText(SITE_URL).then(()=>{setShowUrlModal(false)}).catch(()=>{})}}
+                className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:N.bg}}>
+                📋 Copy Link
+              </button>
+              <a href={`https://wa.me/?text=${encodeURIComponent('Clydach Juniors coaching hub -- tap to open:\n'+SITE_URL)}`}
+                target="_blank" rel="noreferrer"
+                onClick={()=>setShowUrlModal(false)}
+                className="w-full text-white font-bold py-2.5 rounded-xl text-sm flex items-center justify-center" style={{background:'#16a34a'}}>
+                📲 Share via WhatsApp
+              </a>
+              <button onClick={()=>setShowUrlModal(false)}
+                className="w-full border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl text-sm">
+                Close
+              </button>
+            </div>
+            <p className="text-xs text-gray-400 mt-3 text-center">To save to home screen: tap Share in Safari then "Add to Home Screen"</p>
+          </div>
+        </div>
+      )}
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
