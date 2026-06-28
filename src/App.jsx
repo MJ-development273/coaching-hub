@@ -1337,10 +1337,13 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [skillView, setSkillView] = useState('by-player')
   const [selectedSkill, setSelectedSkill] = useState(null)
   const [teamFormat, setTeamFormat] = useState('9v9')
+  const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
   const [editPlayer, setEditPlayer] = useState(null)
+  const [editName, setEditName] = useState('')
+  const [editNum, setEditNum] = useState('')
   const [notePlayer, setNotePlayer] = useState(null)
   const [noteText, setNoteText] = useState('')
   const [noteSaved, setNoteSaved] = useState(false)
@@ -1415,7 +1418,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           {squad.length===0?<p className="text-sm text-gray-400 text-center py-4">Add players in Attendance tab first</p>:(
             <div className="space-y-2">
               {squad.map(p=>(
-                <button key={p.id} onClick={()=>{setEditPlayer(p);setPosForm({preferred:p.preferred||'',secondary:p.secondary||''})}} className="w-full flex items-center gap-3 p-3 rounded-xl border text-left" style={{borderColor:editPlayer?.id===p.id?N.bg:'#e5e7eb',background:editPlayer?.id===p.id?N.light:'white'}}>
+                <button key={p.id} onClick={()=>{setEditPlayer(p);setEditName(p.name);setEditNum(p.squad_num||'');setPosForm({preferred:p.preferred||'',secondary:p.secondary||''})}} className="w-full flex items-center gap-3 p-3 rounded-xl border text-left" style={{borderColor:editPlayer?.id===p.id?N.bg:'#e5e7eb',background:editPlayer?.id===p.id?N.light:'white'}}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
                   <div className="flex-1"><p className="text-sm font-semibold text-gray-900">{p.name}</p>
                     <p className="text-xs text-gray-400">{p.preferred||'No position set'}{p.secondary?' / '+p.secondary:''}</p></div>
@@ -1427,17 +1430,35 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           {editPlayer&&(
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}}>
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
-                <h3 className="font-bold text-gray-900 mb-4">🎽 {editPlayer.name}</h3>
+                <h3 className="font-bold text-gray-900 mb-4">✏️ Edit Player</h3>
                 <div className="space-y-3 mb-4">
+                  {/* Name and number */}
+                  <div className="flex gap-2">
+                    <div><label className="text-xs font-semibold text-gray-600 block mb-1">Squad #</label>
+                      <input value={editNum} onChange={e=>setEditNum(e.target.value)} placeholder="#" className="border border-gray-300 rounded-xl px-3 py-2 text-sm w-16 focus:outline-none" onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
+                    <div className="flex-1"><label className="text-xs font-semibold text-gray-600 block mb-1">Name</label>
+                      <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Player name" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none" onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
+                  </div>
+                  {/* Preferred position */}
                   <div><label className="text-xs font-semibold text-gray-600 block mb-2">Preferred Position</label>
                     <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,preferred:pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.preferred===pos?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div></div>
+                  {/* Secondary position */}
                   <div><label className="text-xs font-semibold text-gray-600 block mb-2">Secondary Position</label>
                     <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,secondary:f.secondary===pos?'':pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.secondary===pos?{background:'#8b5cf6',color:'white',borderColor:'#8b5cf6'}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div></div>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={()=>{onUpdatePos(editPlayer.id,posForm);setEditPlayer(null)}} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:N.bg}}>Save</button>
+                  <button onClick={()=>{
+                    onUpdatePos(editPlayer.id,{...posForm,name:editName.trim()||editPlayer.name,squad_num:editNum.trim()})
+                    setEditPlayer(null)
+                  }} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:N.bg}}>Save</button>
                   <button onClick={()=>setEditPlayer(null)} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl text-sm">Cancel</button>
                 </div>
+                {/* Remove player */}
+                <button onClick={()=>{
+                  if(window.confirm(`Remove ${editPlayer.name} from the squad?`)){onRemove(editPlayer.id);setEditPlayer(null)}
+                }} className="w-full mt-3 text-red-400 border border-red-200 font-semibold py-2 rounded-xl text-sm hover:bg-red-50">
+                  🗑️ Remove from Squad
+                </button>
               </div>
             </div>
           )}
@@ -1531,37 +1552,37 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
       {/* ── Skills Development Tab ── */}
       {tab==='skills'&&(()=>{
         const OUTFIELD_SKILLS = [
-          {key:'passing',     label:'Passing',      icon:'🎯', desc:'Accuracy, weight, decision-making'},
-          {key:'dribbling',   label:'Dribbling',    icon:'⚡', desc:'Close control, change of direction, speed'},
-          {key:'firsttouch',  label:'First Touch',  icon:'🦶', desc:'Control under pressure, both feet'},
-          {key:'shooting',    label:'Shooting',     icon:'🥅', desc:'Technique, power, placement, composure'},
-          {key:'tackling',    label:'Tackling',     icon:'🛡️', desc:'Timing, body position, recovery'},
-          {key:'heading',     label:'Heading',      icon:'🤕', desc:'Timing, direction (low priority U12)'},
-          {key:'positioning', label:'Positioning',  icon:'📍', desc:'Reading the game, shape, movement off ball'},
-          {key:'workrate',    label:'Work Rate',    icon:'💪', desc:'Pressing, tracking back, effort levels'},
-          {key:'teamwork',    label:'Teamwork',     icon:'🤝', desc:'Communication, supporting teammates, attitude'},
-          {key:'conditioning',label:'Conditioning', icon:'🏃', desc:'Fitness, stamina, speed, agility'},
+          {key:'passing',     label:'Pass',    icon:'🎯'},
+          {key:'dribbling',   label:'Drib',    icon:'⚡'},
+          {key:'firsttouch',  label:'Touch',   icon:'🦶'},
+          {key:'shooting',    label:'Shot',    icon:'🥅'},
+          {key:'tackling',    label:'Tackle',  icon:'🛡️'},
+          {key:'heading',     label:'Head',    icon:'🤕'},
+          {key:'positioning', label:'Pos',     icon:'📍'},
+          {key:'workrate',    label:'Work',    icon:'💪'},
+          {key:'teamwork',    label:'Team',    icon:'🤝'},
+          {key:'conditioning',label:'Fit',     icon:'🏃'},
         ]
         const GK_SKILLS = [
-          {key:'gk_catching',  label:'Catching',         icon:'🧤', desc:'Handling crosses, shots, high balls'},
-          {key:'gk_throwing',  label:'Throwing',         icon:'🤾', desc:'Distribution accuracy -- roll, overarm, javelin'},
-          {key:'gk_goalkick',  label:'Goal Kick',        icon:'👟', desc:'Accuracy and distance of goal kicks'},
-          {key:'gk_kicking',   label:'Kicking from Hand',icon:'🦵', desc:'Drop-kick and volley distribution'},
-          {key:'gk_punching',  label:'Punching',         icon:'👊', desc:'Timing and power when claiming is not possible'},
-          {key:'gk_diving',    label:'Diving',           icon:'🌊', desc:'Technique -- lead hand, body position, recovery'},
-          {key:'gk_positioning',label:'GK Positioning',  icon:'📍', desc:'Angle play, set position, reading the game'},
-          {key:'gk_footwork',  label:'Footwork',         icon:'🏃', desc:'Speed across goal, set position, agility'},
+          {key:'gk_catching',  label:'Catch',  icon:'🧤'},
+          {key:'gk_throwing',  label:'Throw',  icon:'🤾'},
+          {key:'gk_goalkick',  label:'GKick',  icon:'👟'},
+          {key:'gk_kicking',   label:'Kick',   icon:'🦵'},
+          {key:'gk_punching',  label:'Punch',  icon:'👊'},
+          {key:'gk_diving',    label:'Dive',   icon:'🌊'},
+          {key:'gk_positioning',label:'Pos',   icon:'📍'},
+          {key:'gk_footwork',  label:'Feet',   icon:'🏃'},
         ]
         const LEVELS = [
           {v:0,label:'Not Assessed',color:'#e5e7eb'},
-          {v:1,label:'Needs Work', color:'#ef4444'},
-          {v:2,label:'Developing', color:'#f59e0b'},
-          {v:3,label:'Good',       color:'#3b82f6'},
-          {v:4,label:'Excellent',  color:'#16a34a'},
+          {v:1,label:'Needs Work',  color:'#ef4444'},
+          {v:2,label:'Developing',  color:'#f59e0b'},
+          {v:3,label:'Good',        color:'#3b82f6'},
+          {v:4,label:'Excellent',   color:'#16a34a'},
         ]
-        const getLevelColor = (pid,key) => LEVELS[(skillsData[pid+'-'+key]||0)].color
-        const getLevelLabel = (pid,key) => LEVELS[(skillsData[pid+'-'+key]||0)].label
 
+        const skillSet = skillView==='by-skill' && selectedSkill?.key?.startsWith('gk_') ? 'gk' : (skillView==='by-skill' ? 'outfield' : 'outfield')
+        const activeSkills = skillView==='gk' || (skillView==='by-skill' && selectedSkill?.key?.startsWith('gk_')) ? GK_SKILLS : OUTFIELD_SKILLS
         return (
           <div className="space-y-3">
             {/* View toggle */}
@@ -1572,7 +1593,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               </button>
               <button onClick={()=>setSkillView('by-skill')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
                 style={skillView==='by-skill'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
-                By Skill
+                Grid View
               </button>
             </div>
 
@@ -1609,47 +1630,30 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                         </div>
                         <div>
                           <p className="font-bold text-gray-900">{skillPlayer.name}</p>
-                          <p className="text-xs text-gray-400">{isGK?'Goalkeeper -- outfield + GK skills shown':skillPlayer.preferred||'No position set'}</p>
+                          <p className="text-xs text-gray-400">{isGK?'Goalkeeper -- outfield + GK skills':skillPlayer.preferred||'No position'}</p>
                         </div>
                       </div>
-                      {/* Legend */}
                       <div className="flex gap-2 flex-wrap mb-3">
-                        {LEVELS.map(l=>(
-                          <div key={l.v} className="flex items-center gap-1">
-                            <div className="w-3 h-3 rounded-full shrink-0" style={{background:l.color}}/>
-                            <span className="text-xs text-gray-500">{l.label}</span>
-                          </div>
-                        ))}
+                        {LEVELS.map(l=><div key={l.v} className="flex items-center gap-1"><div className="w-3 h-3 rounded-full" style={{background:l.color}}/><span className="text-xs text-gray-500">{l.label}</span></div>)}
                       </div>
-                      {/* Outfield skills */}
                       <div className="space-y-2.5 mb-3">
                         {OUTFIELD_SKILLS.map(skill=>{
                           const level=skillsData[skillPlayer.id+'-'+skill.key]||0
                           return (
                             <div key={skill.key} className="flex items-center gap-2">
                               <span className="text-sm w-5 shrink-0">{skill.icon}</span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-xs font-semibold text-gray-900">{skill.label}</p>
-                              </div>
+                              <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-gray-900">{skill.label}</p></div>
                               <div className="flex gap-1 shrink-0">
-                                {LEVELS.map(l=>(
-                                  <button key={l.v} onClick={()=>onSaveSkill(skillPlayer.id,skill.key,l.v)}
-                                    className="w-7 h-7 rounded-full border-2 transition-all"
-                                    style={{background:level===l.v?l.color:'white',borderColor:level===l.v?l.color:'#e5e7eb'}}
-                                    title={l.label}/>
-                                ))}
+                                {LEVELS.map(l=><button key={l.v} onClick={()=>onSaveSkill(skillPlayer.id,skill.key,l.v)} className="w-7 h-7 rounded-full border-2 transition-all" style={{background:level===l.v?l.color:'white',borderColor:level===l.v?l.color:'#e5e7eb'}} title={l.label}/>)}
                               </div>
                             </div>
                           )
                         })}
                       </div>
-                      {/* GK skills */}
                       {isGK&&(
                         <>
                           <div className="flex items-center gap-2 my-3">
-                            <div className="flex-1 border-t border-cyan-200"/>
-                            <span className="text-xs font-semibold text-cyan-600 px-2">🧤 Goalkeeper Skills</span>
-                            <div className="flex-1 border-t border-cyan-200"/>
+                            <div className="flex-1 border-t border-cyan-200"/><span className="text-xs font-semibold text-cyan-600 px-2">🧤 Goalkeeper Skills</span><div className="flex-1 border-t border-cyan-200"/>
                           </div>
                           <div className="space-y-2.5">
                             {GK_SKILLS.map(skill=>{
@@ -1657,17 +1661,9 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                               return (
                                 <div key={skill.key} className="flex items-center gap-2">
                                   <span className="text-sm w-5 shrink-0">{skill.icon}</span>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-xs font-semibold text-cyan-800">{skill.label}</p>
-                                    <p className="text-xs text-gray-400 leading-tight">{skill.desc}</p>
-                                  </div>
+                                  <div className="flex-1 min-w-0"><p className="text-xs font-semibold text-cyan-800">{skill.label}</p></div>
                                   <div className="flex gap-1 shrink-0">
-                                    {LEVELS.map(l=>(
-                                      <button key={l.v} onClick={()=>onSaveSkill(skillPlayer.id,skill.key,l.v)}
-                                        className="w-7 h-7 rounded-full border-2 transition-all"
-                                        style={{background:level===l.v?l.color:'white',borderColor:level===l.v?l.color:'#e5e7eb'}}
-                                        title={l.label}/>
-                                    ))}
+                                    {LEVELS.map(l=><button key={l.v} onClick={()=>onSaveSkill(skillPlayer.id,skill.key,l.v)} className="w-7 h-7 rounded-full border-2 transition-all" style={{background:level===l.v?l.color:'white',borderColor:level===l.v?l.color:'#e5e7eb'}} title={l.label}/>)}
                                   </div>
                                 </div>
                               )
@@ -1675,17 +1671,11 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                           </div>
                         </>
                       )}
-                      {/* Summary */}
                       <div className="mt-3 grid grid-cols-4 gap-1">
                         {LEVELS.filter(l=>l.v>0).map(l=>{
-                          const all = isGK ? [...OUTFIELD_SKILLS,...GK_SKILLS] : OUTFIELD_SKILLS
+                          const all = isGK?[...OUTFIELD_SKILLS,...GK_SKILLS]:OUTFIELD_SKILLS
                           const count=all.filter(s=>(skillsData[skillPlayer.id+'-'+s.key]||0)===l.v).length
-                          return (
-                            <div key={l.v} className="text-center p-1.5 rounded-lg" style={{background:l.color+'22'}}>
-                              <div className="text-sm font-black" style={{color:l.color}}>{count}</div>
-                              <div className="text-gray-500" style={{fontSize:'8px'}}>{l.label}</div>
-                            </div>
-                          )
+                          return <div key={l.v} className="text-center p-1.5 rounded-lg" style={{background:l.color+'22'}}><div className="text-sm font-black" style={{color:l.color}}>{count}</div><div className="text-gray-500" style={{fontSize:'8px'}}>{l.label}</div></div>
                         })}
                       </div>
                     </div>
@@ -1694,83 +1684,107 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               </>
             )}
 
-            {/* ── BY SKILL VIEW ── */}
-            {skillView==='by-skill'&&squad.length>0&&(
-              <>
-                <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                  <p className="text-xs text-gray-400 mb-3">Select a skill to see how every player rates.</p>
-                  <div className="flex gap-2 flex-wrap">
-                    {[...OUTFIELD_SKILLS,...GK_SKILLS].map(s=>(
-                      <button key={s.key} onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
-                        style={selectedSkill?.key===s.key?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
-                        {s.icon} {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+            {/* ── GRID VIEW ── */}
+            {skillView==='by-skill'&&squad.length>0&&(()=>{
+              const showGK = selectedSkill ? selectedSkill.key.startsWith('gk_') : skillGroupFilter==='gk'
+              const gridSkills = showGK ? GK_SKILLS : OUTFIELD_SKILLS
+              const gridSquad = showGK ? squad.filter(p=>p.preferred==='GK') : squad
 
-                {selectedSkill&&(
-                  <div className="bg-white border border-gray-200 rounded-2xl p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xl">{selectedSkill.icon}</span>
-                      <div>
-                        <p className="font-bold text-gray-900 text-sm">{selectedSkill.label}</p>
-                        <p className="text-xs text-gray-400">{selectedSkill.desc}</p>
-                      </div>
-                    </div>
-                    {/* Legend */}
-                    <div className="flex gap-2 flex-wrap mb-3">
-                      {LEVELS.filter(l=>l.v>0).map(l=>(
-                        <div key={l.v} className="flex items-center gap-1">
-                          <div className="w-3 h-3 rounded-full shrink-0" style={{background:l.color}}/>
-                          <span className="text-xs text-gray-500">{l.label}</span>
-                        </div>
-                      ))}
-                    </div>
-                    {/* Sort players by level descending */}
-                    {(()=>{
-                      const relevantSquad = selectedSkill.key.startsWith('gk_')
-                        ? squad.filter(p=>p.preferred==='GK')
-                        : squad
-                      if(relevantSquad.length===0) return (
-                        <p className="text-xs text-gray-400 text-center py-3">No GK players in squad</p>
-                      )
-                      const sorted = [...relevantSquad].sort((a,b)=>
-                        (skillsData[b.id+'-'+selectedSkill.key]||0)-(skillsData[a.id+'-'+selectedSkill.key]||0)
-                      )
-                      return (
-                        <div className="space-y-2">
-                          {sorted.map(p=>{
-                            const level=skillsData[p.id+'-'+selectedSkill.key]||0
-                            const lev=LEVELS[level]
-                            return (
-                              <div key={p.id} className="flex items-center gap-3 p-2.5 rounded-xl border" style={{borderColor:lev.color+'44',background:lev.color+'11'}}>
-                                <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>
-                                  {p.squad_num||p.name[0]}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                                  <p className="text-xs" style={{color:lev.color}}>{lev.label}</p>
-                                </div>
-                                <div className="flex gap-1 shrink-0">
-                                  {LEVELS.map(l=>(
-                                    <button key={l.v} onClick={()=>onSaveSkill(p.id,selectedSkill.key,l.v)}
-                                      className="w-6 h-6 rounded-full border-2 transition-all"
-                                      style={{background:level===l.v?l.color:'white',borderColor:level===l.v?l.color:'#e5e7eb'}}
-                                      title={l.label}/>
-                                  ))}
-                                </div>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )
-                    })()}
+              return (
+                <div className="space-y-3">
+                  {/* Outfield / GK toggle */}
+                  <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                    <button onClick={()=>{setSkillGroupFilter('outfield');setSelectedSkill(null)}}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      style={!showGK?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                      Outfield Skills
+                    </button>
+                    <button onClick={()=>{setSkillGroupFilter('gk');setSelectedSkill(null)}}
+                      className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                      style={showGK?{background:'#0891b2',color:'white',boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                      🧤 GK Skills
+                    </button>
                   </div>
-                )}
-              </>
-            )}
+
+                  {showGK && gridSquad.length===0 && (
+                    <div className="bg-white border border-gray-200 rounded-2xl p-4 text-center">
+                      <p className="text-sm text-gray-400">No GK players in squad. Set a player's position to GK in the Squad tab.</p>
+                    </div>
+                  )}
+
+                  {(!showGK || gridSquad.length>0)&&(
+                    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
+                      {/* Skill headers */}
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <thead>
+                            <tr style={{background:N.light}}>
+                              <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 z-10" style={{background:N.light,minWidth:'80px'}}>Player</th>
+                              {gridSkills.map(s=>(
+                                <th key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all"
+                                  style={{minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
+                                  onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}>
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span>{s.icon}</span>
+                                    <span style={{fontSize:'9px',fontWeight:'600'}}>{s.label}</span>
+                                  </div>
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {(selectedSkill
+                              ? [...gridSquad].sort((a,b)=>(skillsData[b.id+'-'+selectedSkill.key]||0)-(skillsData[a.id+'-'+selectedSkill.key]||0))
+                              : gridSquad
+                            ).map((p,ri)=>(
+                              <tr key={p.id} style={{background:ri%2===0?'white':'#f9fafb'}}
+                                onClick={()=>{setSkillPlayer(p);setSkillView('by-player')}}>
+                                <td className="px-3 py-2 sticky left-0 z-10 cursor-pointer" style={{background:ri%2===0?'white':'#f9fafb'}}>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0" style={{background:N.bg,fontSize:'9px',fontWeight:'bold'}}>
+                                      {p.squad_num||p.name[0]}
+                                    </div>
+                                    <span className="font-semibold text-gray-900 truncate" style={{maxWidth:'55px'}}>{p.name.split(' ')[0]}</span>
+                                  </div>
+                                </td>
+                                {gridSkills.map(s=>{
+                                  const lv=skillsData[p.id+'-'+s.key]||0
+                                  const col=LEVELS[lv].color
+                                  const isHighlighted = selectedSkill?.key===s.key
+                                  return (
+                                    <td key={s.key} className="px-1 py-2 text-center"
+                                      style={{background:isHighlighted?(col+'22'):'transparent'}}
+                                      onClick={e=>{e.stopPropagation();onSaveSkill(p.id,s.key,(lv+1)%5)}}>
+                                      <div className="w-6 h-6 rounded-full mx-auto border-2 cursor-pointer transition-all"
+                                        style={{background:lv>0?col:'white',borderColor:lv>0?col:'#e5e7eb'}}
+                                        title={LEVELS[lv].label}/>
+                                    </td>
+                                  )
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {/* Legend */}
+                      <div className="flex gap-3 flex-wrap px-3 py-2 border-t border-gray-100">
+                        {LEVELS.map(l=><div key={l.v} className="flex items-center gap-1"><div className="w-3 h-3 rounded-full border" style={{background:l.v>0?l.color:'white',borderColor:l.color}}/><span className="text-gray-500" style={{fontSize:'9px'}}>{l.label}</span></div>)}
+                      </div>
+                      {selectedSkill&&(
+                        <div className="px-3 py-2 border-t border-gray-100 text-xs text-gray-500" style={{background:N.light}}>
+                          Sorted by <strong>{selectedSkill.icon} {selectedSkill.label}</strong> -- tap a player row to open their full profile
+                        </div>
+                      )}
+                      {!selectedSkill&&(
+                        <div className="px-3 py-2 border-t border-gray-100 text-xs text-gray-500">
+                          Tap a skill column to sort and highlight -- tap a player row to open their full profile -- tap a dot to cycle rating
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })()}
           </div>
         )
       })()}
