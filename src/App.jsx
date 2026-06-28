@@ -1346,7 +1346,9 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [noteSaved, setNoteSaved] = useState(false)
   const [progPlayer, setProgPlayer] = useState(null)
   const [posForm, setPosForm] = useState({preferred:'',secondary:''})
-  const POSITIONS = ['GK','RB','CB','LB','RM','CM','LM','ST','CAM','CDM']
+  const POSITIONS_9V9_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST']
+  const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST','CAM','CDM']
+  const POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9_LIST : POSITIONS_11V11_LIST
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
@@ -1816,8 +1818,6 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           {squad.length===0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
           ) : (()=>{
-            const placed = new Set()
-            const unassigned = squad.filter(p=>!p.preferred)
             return (
               <>
                 <div className="relative rounded-xl overflow-hidden mb-4" style={{background:'#166534',paddingTop:'140%'}}>
@@ -1834,25 +1834,51 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       <rect x="38" y="129" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
                     </svg>
                     {/* Player dots */}
-                    {PITCH_POSITIONS.map((slot,i)=>{
-                      const player = squad.find(p=>p.preferred===slot.pos&&!placed.has(p.id))
-                      if(player) placed.add(player.id)
-                      return (
-                        <div key={i} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)'}}>
-                          <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg"
-                            style={{width:'28px',height:'28px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px solid rgba(255,255,255,0.3)'}}>
-                            {player ? (player.squad_num||player.name[0]) : slot.pos}
+                    {(()=>{
+                      // Group all players by preferred position
+                      const byPos = {}
+                      squad.forEach(p=>{ if(p.preferred){ if(!byPos[p.preferred]) byPos[p.preferred]=[]; byPos[p.preferred].push(p) } })
+                      // Track which positions have been rendered to avoid duplicate slot labels
+                      const renderedPos = new Set()
+                      return PITCH_POSITIONS.map((slot,i)=>{
+                        const players = byPos[slot.pos] || []
+                        const alreadyShown = renderedPos.has(slot.pos)
+                        if(!alreadyShown) renderedPos.add(slot.pos)
+                        // For positions with multiple slots (e.g. CB x2), distribute players
+                        const slotIndex = PITCH_POSITIONS.slice(0,i).filter(s=>s.pos===slot.pos).length
+                        const player = players[slotIndex] || null
+                        // Show extra players stacked if more than slots available
+                        const extraPlayers = slotIndex===0 && players.length > PITCH_POSITIONS.filter(s=>s.pos===slot.pos).length
+                          ? players.slice(PITCH_POSITIONS.filter(s=>s.pos===slot.pos).length)
+                          : []
+                        return (
+                          <div key={i} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)'}}>
+                            {/* Primary slot player */}
+                            <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg"
+                              style={{width:'28px',height:'28px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px solid rgba(255,255,255,0.3)'}}>
+                              {player ? (player.squad_num||player.name[0]) : slot.pos}
+                            </div>
+                            {player && <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'36px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>}
+                            {!player && <div className="text-white opacity-40 mt-0.5" style={{fontSize:'7px'}}>{slot.pos}</div>}
+                            {/* Extra players beyond available slots - shown as smaller stacked dots */}
+                            {extraPlayers.map((ep,ei)=>(
+                              <div key={ei} className="flex flex-col items-center mt-0.5">
+                                <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'22px',height:'22px',fontSize:'8px',background:'#6366f1',border:'1.5px solid white',opacity:0.9}}>
+                                  {ep.squad_num||ep.name[0]}
+                                </div>
+                                <div className="text-white mt-0.5 px-1 rounded text-center" style={{fontSize:'6px',background:'rgba(99,102,241,0.7)',maxWidth:'32px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ep.name.split(' ')[0]}</div>
+                              </div>
+                            ))}
                           </div>
-                          {player && <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.4)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>}
-                          {!player && <div className="text-white opacity-40 mt-0.5" style={{fontSize:'7px'}}>{slot.pos}</div>}
-                        </div>
-                      )
-                    })}
+                        )
+                      })
+                    })()}
                   </div>
                 </div>
                 {/* Players not placed */}
                 {(() => {
-                  const unplaced = squad.filter(p=>!placed.has(p.id))
+                  const assignedPositions = PITCH_POSITIONS.map(s=>s.pos)
+                  const unplaced = squad.filter(p=>!p.preferred||!assignedPositions.includes(p.preferred))
                   if(unplaced.length===0) return null
                   return (
                     <div>
