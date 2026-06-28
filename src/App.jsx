@@ -1336,7 +1336,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [tab, setTab] = useState('squad')
   const [squadSort, setSquadSort] = useState('number') // 'number' | 'name'
   const [skillPlayer, setSkillPlayer] = useState(null)
-  const [skillView, setSkillView] = useState('by-player')
+  const [skillView, setSkillView] = useState('by-skill')
   const [selectedSkill, setSelectedSkill] = useState(null)
   const [teamFormat, setTeamFormat] = useState('9v9')
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
