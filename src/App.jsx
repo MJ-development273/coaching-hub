@@ -734,7 +734,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   lines.push(`⚡ *10 min — Attacking*\n${session.attack ? session.attack.title+'\n'+session.attack.description : 'Attacking drill TBC'}`)
   lines.push(`⚽ *15 min — Small Sided Game*\nApply today's theme in a free small sided game. Keep teams even, rotate regularly.`)
   if (sessionNotes) lines.push(`📝 *Notes:* ${sessionNotes}`)
-  lines.push('— Clydach Juniors Coaching Team')
+  lines.push(`— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
   const text = lines.join('\n\n')
   return (
     <Modal onClose={onClose}>
@@ -1057,7 +1057,7 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
     const lines=[`🏠 *This Week's Home Practice — Clydach Juniors*\n`]
     if(message) lines.push(`${message}\n`)
     selectedDrills.forEach((d,i)=>lines.push(`*Drill ${i+1}: ${d.title}*\n⏱ ${d.duration} | 👥 ${d.players}\n\n${d.description}`))
-    lines.push('\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team')
+    lines.push(`\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
     return lines.join('\n\n')
   }
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
