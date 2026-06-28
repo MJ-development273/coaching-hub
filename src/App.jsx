@@ -1964,47 +1964,52 @@ function FAWReference() {
 function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect }) {
   return (
     <div className="space-y-4">
-      {/* Season Dates */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-4 space-y-4">
-        <h3 className="font-bold text-gray-900 text-sm">📅 Season Dates</h3>
-        <div>
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Pre-Season Start</label>
-          {preSeasonStart ? (
-            <div className="flex items-center gap-2">
-              <span className="flex-1 text-sm font-semibold text-gray-800 bg-orange-50 rounded-xl px-3 py-2 border border-orange-200">
-                {new Date(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
-              </span>
-              <button onClick={()=>onPreSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
-            </div>
-          ) : (
-            <input type="date"
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              onFocus={e=>e.target.style.borderColor='#f97316'}
-              onBlur={e=>{e.target.style.borderColor='#d1d5db'; if(e.target.value) onPreSeasonStartChange(e.target.value)}}/>
-          )}
-        </div>
-        <div>
-          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Competitive Season Start</label>
-          <p className="text-xs text-gray-400 mb-2">Sets Week 1. Auto-advances each Monday.</p>
-          {seasonStart ? (
-            <div className="flex items-center gap-2">
-              <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
-                {new Date(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
-              </span>
-              <button onClick={()=>onSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
-            </div>
-          ) : (
-            <input type="date"
-              className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
-              onFocus={e=>e.target.style.borderColor=N.bg}
-              onBlur={e=>{e.target.style.borderColor='#d1d5db'; if(e.target.value) onSeasonStartChange(e.target.value)}}/>
-          )}
-        </div>
-        {preSeasonStart && seasonStart && (
-          <div className="rounded-xl p-3 text-xs" style={{background:N.light}}>
-            <p className="font-semibold" style={{color:N.text}}>Pre-season: {new Date(preSeasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})} -- {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
-            <p style={{color:N.text+'aa'}} className="mt-0.5">Competitive season: Week 1 from {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</p>
+      {/* Pre-Season Dates */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4" style={{borderLeft:'4px solid #f97316'}}>
+        <h3 className="font-bold text-gray-900 text-sm mb-3">🌱 Pre-Season</h3>
+        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Pre-Season Start Date</label>
+        {preSeasonStart ? (
+          <div className="flex items-center gap-2">
+            <span className="flex-1 text-sm font-semibold text-gray-800 bg-orange-50 rounded-xl px-3 py-2 border border-orange-200">
+              {new Date(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+            </span>
+            <button onClick={()=>onPreSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
           </div>
+        ) : (
+          <input type="date"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+            onFocus={e=>e.target.style.borderColor='#f97316'}
+            onBlur={e=>{e.target.style.borderColor='#d1d5db'; if(e.target.value) onPreSeasonStartChange(e.target.value)}}/>
+        )}
+        {preSeasonStart && seasonStart && (
+          <p className="text-xs mt-2" style={{color:'#9a3412'}}>
+            Pre-season runs until {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+          </p>
+        )}
+      </div>
+
+      {/* Competitive Season Dates */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4" style={{borderLeft:`4px solid ${N.bg}`}}>
+        <h3 className="font-bold text-gray-900 text-sm mb-3">📅 Competitive Season</h3>
+        <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-2">Season Start Date</label>
+        <p className="text-xs text-gray-400 mb-2">Sets Week 1. App auto-advances each Monday.</p>
+        {seasonStart ? (
+          <div className="flex items-center gap-2">
+            <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
+              {new Date(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+            </span>
+            <button onClick={()=>onSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
+          </div>
+        ) : (
+          <input type="date"
+            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
+            onFocus={e=>e.target.style.borderColor=N.bg}
+            onBlur={e=>{e.target.style.borderColor='#d1d5db'; if(e.target.value) onSeasonStartChange(e.target.value)}}/>
+        )}
+        {seasonStart && (
+          <p className="text-xs mt-2" style={{color:N.text}}>
+            Week 1 starts {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+          </p>
         )}
       </div>
 
@@ -2221,7 +2226,7 @@ export default function App() {
           {isCoach&&(
             <>
               <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-1">
-                {[{id:'drills',label:'📋 Drills'},{id:'planner',label:'📅 Planner'},{id:'home-manager',label:'🏠 Home',badge:publishedCount>0?publishedCount:null},{id:'status',label:'🔔 Status'}].map(tab=>(
+                {[{id:'drills',label:'📋 Drills'},{id:'home-manager',label:'🏠 Home',badge:publishedCount>0?publishedCount:null},{id:'squad',label:'👥 Squad'},{id:'planner',label:'📅 Planner'}].map(tab=>(
                   <button key={tab.id} onClick={()=>setView(tab.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all relative" style={view===tab.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
                     {tab.label}
                     {tab.badge&&<span className="absolute -top-1 -right-1 w-4 h-4 text-white text-xs rounded-full flex items-center justify-center font-black" style={{background:N.bg,fontSize:'9px'}}>{tab.badge}</span>}
@@ -2229,7 +2234,7 @@ export default function App() {
                 ))}
               </div>
               <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-                {[{id:'match',label:'⚽ Match'},{id:'squad',label:'👥 Squad'},{id:'faw',label:'WAL FAW'},{id:'season',label:'📊 Season'}].map(tab=>(
+                {[{id:'season',label:'📊 Season'},{id:'match',label:'⚽ Match'},{id:'status',label:'🔔 Status'},{id:'faw',label:'WAL FAW'}].map(tab=>(
                   <button key={tab.id} onClick={()=>setView(tab.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={view===tab.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
                     {tab.label}
                   </button>
