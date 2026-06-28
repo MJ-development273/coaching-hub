@@ -1432,33 +1432,54 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
       )}
 
       {tab==='notes'&&(
-        <div className="bg-white border border-gray-200 rounded-2xl p-4">
-          <h3 className="font-bold text-gray-900 text-sm mb-1">📝 Player Development Notes</h3>
-          <p className="text-xs text-gray-400 mb-3">Private - not visible to parents</p>
-          {squad.length===0?<p className="text-sm text-gray-400 text-center py-4">Add players in Attendance tab first</p>:(
-            <>
-              <div className="space-y-2 mb-4">
+        <div className="space-y-3">
+          <div className="bg-white border border-gray-200 rounded-2xl p-4">
+            <h3 className="font-bold text-gray-900 text-sm mb-1">📝 Player Development Notes</h3>
+            <p className="text-xs text-gray-400 mb-3">Tap a player to add or edit notes. Private -- not visible to parents.</p>
+            {squad.length===0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
+            ) : (
+              <div className="space-y-2">
                 {squad.map(p=>{
                   const hasNote=!!(playerNotes[p.id]&&playerNotes[p.id].trim())
+                  const isSelected = notePlayer?.id===p.id
                   return (
-                    <button key={p.id} onClick={()=>{setNotePlayer(p);setNoteText(playerNotes[p.id]||'');setNoteSaved(false)}} className="w-full flex items-center gap-3 p-3 rounded-xl border text-left" style={{borderColor:notePlayer?.id===p.id?N.bg:'#e5e7eb',background:notePlayer?.id===p.id?N.light:'white'}}>
-                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
-                      <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                        {hasNote&&<p className="text-xs text-gray-400 truncate">{playerNotes[p.id]}</p>}</div>
-                      {hasNote&&<span className="text-xs text-green-500">●</span>}
-                    </button>
+                    <div key={p.id}>
+                      <div onClick={()=>{if(isSelected){setNotePlayer(null)}else{setNotePlayer(p);setNoteText(playerNotes[p.id]||'');setNoteSaved(false)}}}
+                        className="w-full flex items-center gap-3 p-3 rounded-xl border cursor-pointer"
+                        style={{borderColor:isSelected?N.bg:'#e5e7eb',background:isSelected?N.light:'white'}}>
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>
+                          {p.squad_num||p.name[0]}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold text-gray-900">{p.name}</p>
+                          {hasNote && <p className="text-xs text-gray-400 truncate">{playerNotes[p.id]}</p>}
+                        </div>
+                        <span className="text-xs shrink-0" style={{color:N.text}}>{isSelected ? '▲' : (hasNote ? '● ▼' : '▼')}</span>
+                      </div>
+                      {isSelected && (
+                        <div className="bg-gray-50 border border-t-0 rounded-b-xl px-3 pb-3 pt-2" style={{borderColor:N.bg}}>
+                          <textarea value={noteText}
+                            onChange={e=>{setNoteText(e.target.value);setNoteSaved(false)}}
+                            rows={4}
+                            placeholder="e.g. Strong in the air, needs work on weak foot. Ready for more responsibility in midfield."
+                            className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none mb-2 bg-white"
+                            onFocus={e=>e.target.style.borderColor=N.bg}
+                            onBlur={e=>e.target.style.borderColor='#d1d5db'}
+                            autoFocus/>
+                          <button onClick={async()=>{await onSaveNote(notePlayer.id,noteText);setNoteSaved(true);setTimeout(()=>setNoteSaved(false),2000)}}
+                            className="w-full text-white font-bold py-2.5 rounded-xl text-sm"
+                            style={{background:noteSaved?'#16a34a':N.bg}}>
+                            {noteSaved?'✓ Saved!':'💾 Save Notes'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   )
                 })}
               </div>
-              {notePlayer&&(
-                <div className="border-t border-gray-100 pt-4">
-                  <label className="text-xs font-semibold text-gray-600 block mb-1">Notes for {notePlayer.name}</label>
-                  <textarea value={noteText} onChange={e=>{setNoteText(e.target.value);setNoteSaved(false)}} rows={4} placeholder="e.g. Strong in the air, needs work on weak foot..." className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none mb-2" onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
-                  <button onClick={async()=>{await onSaveNote(notePlayer.id,noteText);setNoteSaved(true);setTimeout(()=>setNoteSaved(false),2000)}} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:noteSaved?'#16a34a':N.bg}}>{noteSaved?'✓ Saved!':'💾 Save Notes'}</button>
-                </div>
-              )}
-            </>
-          )}
+            )}
+          </div>
         </div>
       )}
 
