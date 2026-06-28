@@ -1345,7 +1345,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [noteSaved, setNoteSaved] = useState(false)
   const [progPlayer, setProgPlayer] = useState(null)
   const [posForm, setPosForm] = useState({preferred:'',secondary:''})
-  const POSITIONS = ['GK','RB','CB','LB','RM','CM','LM','RW','ST','LW','CAM','CDM']
+  const POSITIONS = ['GK','RB','CB','LB','RM','CM','LM','ST','CAM','CDM']
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
@@ -1773,20 +1773,52 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
       })()}
 
       {/* ── Team View Tab ── */}
-      {tab==='teamview'&&(
+      {tab==='teamview'&&(()=>{
+        // Age group formats per FAW guidelines
+        // U12/U13 = 9v9, U14/U15 = 11v11
+        const [teamFormat, setTeamFormat] = useState('9v9')
+
+        // 9v9 layout: GK + 3 defenders + 3 midfielders + 2 forwards
+        const POSITIONS_9V9 = [
+          {pos:'GK',  x:50, y:88},
+          {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+          {pos:'LM',  x:18, y:48},{pos:'CM', x:50, y:50},{pos:'RM', x:82, y:48},
+          {pos:'ST',  x:35, y:25},{pos:'ST', x:65, y:25},
+        ]
+        // 11v11 layout: GK + 4 defenders + 4 midfielders + 2 forwards (4-4-2)
+        const POSITIONS_11V11 = [
+          {pos:'GK',  x:50, y:88},
+          {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+          {pos:'LM',  x:10, y:50},{pos:'CM', x:35, y:52},{pos:'CM', x:65, y:52},{pos:'RM', x:90, y:50},
+          {pos:'CAM', x:50, y:36},
+          {pos:'ST',  x:35, y:18},{pos:'ST', x:65, y:18},
+        ]
+
+        const PITCH_POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9 : POSITIONS_11V11
+        const formatLabel = teamFormat==='9v9' ? '9v9 (U12/U13)' : '11v11 (U14/U15)'
+
+        return (
         <div className="bg-white border border-gray-200 rounded-2xl p-4">
-          <h3 className="font-bold text-gray-900 text-sm mb-1">🏟️ Team View</h3>
-          <p className="text-xs text-gray-400 mb-3">Players shown in their preferred positions. Unassigned players listed below.</p>
+          <div className="flex items-center justify-between mb-3">
+            <div>
+              <h3 className="font-bold text-gray-900 text-sm">🏟️ Team View</h3>
+              <p className="text-xs text-gray-400">Players in preferred positions</p>
+            </div>
+            {/* Format toggle */}
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+              {[{v:'9v9',label:'9v9'},{v:'11v11',label:'11v11'}].map(f=>(
+                <button key={f.v} onClick={()=>setTeamFormat(f.v)}
+                  className="px-3 py-1 rounded-lg text-xs font-bold transition-all"
+                  style={teamFormat===f.v?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <p className="text-xs font-semibold mb-3" style={{color:N.text}}>{formatLabel}</p>
           {squad.length===0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
           ) : (()=>{
-            const PITCH_POSITIONS = [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:15, y:72},{pos:'CB', x:37, y:72},{pos:'CB', x:63, y:72},{pos:'RB', x:85, y:72},
-              {pos:'LM',  x:10, y:52},{pos:'CDM',x:33, y:55},{pos:'CM', x:50, y:50},{pos:'CDM',x:67, y:55},{pos:'RM', x:90, y:52},
-              {pos:'CAM', x:50, y:37},
-              {pos:'LW',  x:15, y:22},{pos:'ST', x:42, y:18},{pos:'ST', x:58, y:18},{pos:'RW', x:85, y:22},
-            ]
             const placed = new Set()
             const unassigned = squad.filter(p=>!p.preferred)
             return (
@@ -1842,7 +1874,8 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
             )
           })()}
         </div>
-      )}
+        )
+      })()}
 
     </div>
   )
