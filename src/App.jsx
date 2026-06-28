@@ -1333,7 +1333,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
 
 // ─── Squad Manager (Attendance + Notes + Positions + Progress) ─────────────────
 function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill }) {
-  const [tab, setTab] = useState('attendance')
+  const [tab, setTab] = useState('squad')
   const [skillPlayer, setSkillPlayer] = useState(null)
   const [skillView, setSkillView] = useState('by-player')
   const [selectedSkill, setSelectedSkill] = useState(null)
