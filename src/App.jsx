@@ -1216,8 +1216,8 @@ function SessionStatusManager({ sessionStatus, onSave }) {
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
   const save = async () => { await onSave(form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const waText = form.status==='cancelled'
-    ? `Clydach Juniors - Training CANCELLED this week. We will be back next week! - Coaches`
-    : `Clydach Juniors - Training is ON this week${form.time?' at '+form.time:''}${form.location?' at '+form.location:''}. See you there! - Coaches`
+    ? `Clydach Juniors - Training CANCELLED this week. We will be back next week! - Coaching Team`
+    : `Clydach Juniors - Training is ON this week${form.time?' at '+form.time:''}${form.location?' at '+form.location:''}. See you there! - Coaching Team`
   return (
     <div className="space-y-4">
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
@@ -1265,8 +1265,8 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const ic = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const fn = e=>e.target.style.borderColor=N.bg, fb = e=>e.target.style.borderColor='#d1d5db'
-  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaches`
-  const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaches`
+  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaching Team`
+  const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaching Team`
   return (
     <div className="space-y-4">
       <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
@@ -1738,7 +1738,7 @@ export default function App() {
   const savePreSeasonStart=async(d)=>{setPreSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,pre_season_start:d||null})}catch(e){}}
   const saveSessionStatus=async(s)=>{setSessionStatus(s);try{await supabase.from('season_settings').upsert({id:1,session_status:s.status,session_location:s.location,session_time:s.time,show_status_to_parents:s.show_parents||false})}catch(e){}}
   const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{await supabase.from('match_notes').upsert({week_num:wk,...note})}catch(e){}}
-  const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note})}catch(e){}}
+  const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note},{onConflict:'player_id'})}catch(e){console.error('player_notes save:',e)}}
   const addSquadPlayer=async(name,num)=>{try{const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single();if(data)setSquad(p=>[...p,data])}catch(e){}}
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
   const updatePlayerPosition=async(id,form)=>{setSquad(p=>p.map(x=>x.id===id?{...x,...form}:x));try{await supabase.from('squad').update(form).eq('id',id)}catch(e){}}
