@@ -63,13 +63,13 @@ function AuthScreen({ onAuth }) {
           <div className="space-y-3">
             <button onClick={()=>setScreen('pin')} onMouseEnter={navyBtnHover} onMouseLeave={navyBtnLeave}
               className="w-full text-white font-bold py-3 rounded-xl transition-colors" style={navyBtn}>
-              🏃 Coach Login
+              📣 Coach Login
             </button>
             <button onClick={()=>onAuth('parent')} className="w-full border-2 font-semibold py-3 rounded-xl transition-colors"
               style={{borderColor:N.bg, color:N.text}}
               onMouseEnter={e=>{e.currentTarget.style.background=N.light}}
               onMouseLeave={e=>{e.currentTarget.style.background='white'}}>
-              👤 Player / Parent
+              ⭐ Player / Parent
             </button>
           </div>
         ) : (
@@ -1334,6 +1334,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
 // ─── Squad Manager (Attendance + Notes + Positions + Progress) ─────────────────
 function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill }) {
   const [tab, setTab] = useState('squad')
+  const [squadSort, setSquadSort] = useState('number') // 'number' | 'name'
   const [skillPlayer, setSkillPlayer] = useState(null)
   const [skillView, setSkillView] = useState('by-player')
   const [selectedSkill, setSelectedSkill] = useState(null)
@@ -1415,10 +1416,27 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               <button onClick={()=>setAdding(false)} className="text-gray-400 text-xs px-2">✕</button>
             </div>
           )}
-          <p className="text-xs font-semibold text-gray-600 mb-2">Tap a player to set positions. ✕ to remove from squad.</p>
-          {squad.length===0?<p className="text-sm text-gray-400 text-center py-4">Add players in Attendance tab first</p>:(
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-600">Tap a player to edit.</p>
+            <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+              {[{v:'number',label:'# No.'},{v:'name',label:'A-Z'}].map(s=>(
+                <button key={s.v} onClick={()=>setSquadSort(s.v)}
+                  className="px-2 py-1 rounded-md text-xs font-bold transition-all"
+                  style={squadSort===s.v?{background:'white',color:N.text,boxShadow:'0 1px 2px rgba(0,0,0,0.1)'}:{color:'#9ca3af'}}>
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          {squad.length===0?<p className="text-sm text-gray-400 text-center py-4">No players yet — add one above</p>:(()=>{
+            const sortedSquad = [...squad].sort((a,b)=>
+              squadSort==='name'
+                ? a.name.localeCompare(b.name)
+                : (parseInt(a.squad_num)||999)-(parseInt(b.squad_num)||999)
+            )
+            return (
             <div className="space-y-2">
-              {squad.map(p=>(
+              {sortedSquad.map(p=>(
                 <button key={p.id} onClick={()=>{setEditPlayer(p);setEditName(p.name);setEditNum(p.squad_num||'');setPosForm({preferred:p.preferred||'',secondary:p.secondary||''})}} className="w-full flex items-center gap-3 p-3 rounded-xl border text-left" style={{borderColor:editPlayer?.id===p.id?N.bg:'#e5e7eb',background:editPlayer?.id===p.id?N.light:'white'}}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
                   <div className="flex-1"><p className="text-sm font-semibold text-gray-900">{p.name}</p>
@@ -1427,7 +1445,8 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                 </button>
               ))}
             </div>
-          )}
+            )
+          })()}
           {editPlayer&&(
             <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}}>
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
