@@ -1331,8 +1331,9 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
 }
 
 // ─── Squad Manager (Attendance + Notes + Positions + Progress) ─────────────────
-function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress }) {
+function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill }) {
   const [tab, setTab] = useState('attendance')
+  const [skillPlayer, setSkillPlayer] = useState(null)
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -1349,10 +1350,17 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-        {[{id:'attendance',label:'✅ Attend.'},{id:'squad',label:'👥 Squad'},{id:'notes',label:'📝 Notes'},{id:'progress',label:'📈 Progress'}].map(t=>(
-          <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
-        ))}
+      <div className="space-y-1">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          {[{id:'attendance',label:'✅ Attend.'},{id:'squad',label:'👥 Squad'},{id:'notes',label:'📝 Notes'}].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
+          ))}
+        </div>
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+          {[{id:'skills',label:'🌟 Skills'},{id:'progress',label:'📈 Progress'},{id:'teamview',label:'🏟️ Team'}].map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
+          ))}
+        </div>
       </div>
 
       {tab==='attendance'&&(
@@ -1514,6 +1522,176 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           )}
         </div>
       )}
+
+      {/* ── Skills Development Tab ── */}
+      {tab==='skills'&&(
+        <div className="space-y-3">
+          {/* Player selector */}
+          <div className="bg-white border border-gray-200 rounded-2xl p-4">
+            <h3 className="font-bold text-gray-900 text-sm mb-1">🌟 Player Skills Development</h3>
+            <p className="text-xs text-gray-400 mb-3">Track fundamental skills for each player. Tap a player then rate each skill.</p>
+            {squad.length===0 ? (
+              <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
+            ) : (
+              <div className="flex gap-2 flex-wrap">
+                {squad.map(p=>(
+                  <button key={p.id} onClick={()=>setSkillPlayer(skillPlayer?.id===p.id?null:p)}
+                    className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                    style={skillPlayer?.id===p.id?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                    {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {skillPlayer&&(()=>{
+            const SKILLS = [
+              {key:'passing',    label:'Passing',       icon:'🎯', desc:'Accuracy, weight, decision-making'},
+              {key:'dribbling',  label:'Dribbling',     icon:'⚡', desc:'Close control, change of direction, speed'},
+              {key:'firsttouch', label:'First Touch',   icon:'🦶', desc:'Control under pressure, both feet'},
+              {key:'shooting',   label:'Shooting',      icon:'🥅', desc:'Technique, power, placement, composure'},
+              {key:'tackling',   label:'Tackling',      icon:'🛡️', desc:'Timing, body position, recovery'},
+              {key:'heading',    label:'Heading',       icon:'🤕', desc:'Timing, direction, defensive and attacking (low priority U12)'},
+              {key:'positioning',label:'Positioning',   icon:'📍', desc:'Reading the game, shape, movement off ball'},
+              {key:'workrate',   label:'Work Rate',     icon:'💪', desc:'Pressing, tracking back, effort levels'},
+              {key:'teamwork',   label:'Teamwork',      icon:'🤝', desc:'Communication, supporting teammates, attitude'},
+              {key:'conditioning',label:'Conditioning', icon:'🏃', desc:'Fitness, stamina, speed, agility'},
+            ]
+            const LEVELS = [{v:0,label:'Not Assessed',color:'#e5e7eb'},{v:1,label:'Needs Work',color:'#ef4444'},{v:2,label:'Developing',color:'#f59e0b'},{v:3,label:'Good',color:'#3b82f6'},{v:4,label:'Excellent',color:'#16a34a'}]
+            return (
+              <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold shrink-0" style={{background:N.bg}}>
+                    {skillPlayer.squad_num||skillPlayer.name[0]}
+                  </div>
+                  <div>
+                    <p className="font-bold text-gray-900">{skillPlayer.name}</p>
+                    <p className="text-xs text-gray-400">{skillPlayer.preferred||'No position set'}</p>
+                  </div>
+                </div>
+                {/* Legend */}
+                <div className="flex gap-2 flex-wrap mb-4">
+                  {LEVELS.map(l=>(
+                    <div key={l.v} className="flex items-center gap-1">
+                      <div className="w-3 h-3 rounded-full shrink-0" style={{background:l.color}}/>
+                      <span className="text-xs text-gray-500">{l.label}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-3">
+                  {SKILLS.map(skill=>{
+                    const level = skillsData[skillPlayer.id+'-'+skill.key]||0
+                    return (
+                      <div key={skill.key} className="flex items-center gap-2">
+                        <span className="text-base w-6 shrink-0">{skill.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-semibold text-gray-900">{skill.label}</p>
+                          <p className="text-xs text-gray-400 leading-tight">{skill.desc}</p>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          {LEVELS.map(l=>(
+                            <button key={l.v} onClick={()=>onSaveSkill(skillPlayer.id,skill.key,l.v)}
+                              className="w-7 h-7 rounded-full border-2 transition-all"
+                              style={{background:level===l.v?l.color:'white',borderColor:level===l.v?l.color:'#e5e7eb'}}
+                              title={l.label}/>
+                          ))}
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+                {/* Summary bar */}
+                <div className="mt-4 grid grid-cols-5 gap-1">
+                  {LEVELS.map(l=>{
+                    const count=SKILLS.filter(s=>(skillsData[skillPlayer.id+'-'+s.key]||0)===l.v).length
+                    if(l.v===0) return null
+                    return (
+                      <div key={l.v} className="text-center p-2 rounded-xl" style={{background:l.color+'22'}}>
+                        <div className="text-sm font-black" style={{color:l.color}}>{count}</div>
+                        <div className="text-xs text-gray-500" style={{fontSize:'9px'}}>{l.label}</div>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      )}
+
+      {/* ── Team View Tab ── */}
+      {tab==='teamview'&&(
+        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+          <h3 className="font-bold text-gray-900 text-sm mb-1">🏟️ Team View</h3>
+          <p className="text-xs text-gray-400 mb-3">Players shown in their preferred positions. Unassigned players listed below.</p>
+          {squad.length===0 ? (
+            <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
+          ) : (()=>{
+            const PITCH_POSITIONS = [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:15, y:72},{pos:'CB', x:37, y:72},{pos:'CB', x:63, y:72},{pos:'RB', x:85, y:72},
+              {pos:'LM',  x:10, y:52},{pos:'CDM',x:33, y:55},{pos:'CM', x:50, y:50},{pos:'CDM',x:67, y:55},{pos:'RM', x:90, y:52},
+              {pos:'CAM', x:50, y:37},
+              {pos:'LW',  x:15, y:22},{pos:'ST', x:42, y:18},{pos:'ST', x:58, y:18},{pos:'RW', x:85, y:22},
+            ]
+            const placed = new Set()
+            const unassigned = squad.filter(p=>!p.preferred)
+            return (
+              <>
+                <div className="relative rounded-xl overflow-hidden mb-4" style={{background:'#166534',paddingTop:'140%'}}>
+                  <div className="absolute inset-0">
+                    {/* Pitch markings */}
+                    <svg viewBox="0 0 100 140" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                      <rect width="100" height="140" fill="#166534"/>
+                      <rect x="3" y="3" width="94" height="134" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
+                      <line x1="3" y1="70" x2="97" y2="70" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                      <circle cx="50" cy="70" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                      <rect x="28" y="3" width="44" height="18" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                      <rect x="28" y="119" width="44" height="18" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                      <rect x="38" y="3" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                      <rect x="38" y="129" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                    </svg>
+                    {/* Player dots */}
+                    {PITCH_POSITIONS.map((slot,i)=>{
+                      const player = squad.find(p=>p.preferred===slot.pos&&!placed.has(p.id))
+                      if(player) placed.add(player.id)
+                      return (
+                        <div key={i} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)'}}>
+                          <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg"
+                            style={{width:'28px',height:'28px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px solid rgba(255,255,255,0.3)'}}>
+                            {player ? (player.squad_num||player.name[0]) : slot.pos}
+                          </div>
+                          {player && <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.4)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>}
+                          {!player && <div className="text-white opacity-40 mt-0.5" style={{fontSize:'7px'}}>{slot.pos}</div>}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+                {/* Players not placed */}
+                {(() => {
+                  const unplaced = squad.filter(p=>!placed.has(p.id))
+                  if(unplaced.length===0) return null
+                  return (
+                    <div>
+                      <p className="text-xs font-semibold text-gray-500 mb-2">No position set ({unplaced.length})</p>
+                      <div className="flex flex-wrap gap-2">
+                        {unplaced.map(p=>(
+                          <span key={p.id} className="text-xs px-2 py-1 rounded-full text-white font-semibold" style={{background:'#9ca3af'}}>
+                            {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+              </>
+            )
+          })()}
+        </div>
+      )}
+
     </div>
   )
 }
@@ -1683,6 +1861,7 @@ export default function App() {
   const [playerNotes,setPlayerNotes]=useState({})
   const [attendance,setAttendance]=useState({})
   const [progressData,setProgressData]=useState({})
+  const [skillsData,setSkillsData]=useState({}) // { 'playerId-skill': level 0-3 }
   const [matchWeek,setMatchWeek]=useState(1)
   const [squadWeek,setSquadWeek]=useState(1)
   const [filterCat,setFilterCat]=useState('All')
@@ -1704,6 +1883,7 @@ export default function App() {
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
+      try{const{data:sk}=await supabase.from('player_skills').select('*');if(sk){const o={};sk.forEach(r=>{o[r.player_id+'-'+r.skill]=r.level});setSkillsData(o)}}catch(e){}
       setLoading(false)
     }
     load()
@@ -1764,6 +1944,14 @@ export default function App() {
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
   const updatePlayerPosition=async(id,form)=>{setSquad(p=>p.map(x=>x.id===id?{...x,...form}:x));try{await supabase.from('squad').update(form).eq('id',id)}catch(e){}}
   const toggleAttendance=async(wk,pid,cur)=>{const k=wk+'-'+pid;setAttendance(p=>({...p,[k]:!cur}));try{await supabase.from('attendance').upsert({week_num:wk,player_name:String(pid),present:!cur},{onConflict:'week_num,player_name'})}catch(e){}}
+  const saveSkill=async(pid,skill,level)=>{
+    const k=pid+'-'+skill
+    setSkillsData(p=>({...p,[k]:level}))
+    try{
+      if(level===0){await supabase.from('player_skills').delete().eq('player_id',pid).eq('skill',skill)}
+      else{await supabase.from('player_skills').upsert({player_id:pid,skill,level},{onConflict:'player_id,skill'})}
+    }catch(e){console.error('skill save:',e)}
+  }
   const saveProgress=async(pid,did,level)=>{setProgressData(p=>({...p,[pid+'-'+did]:level}));try{if(level===0){await supabase.from('player_progress').delete().eq('player_id',pid).eq('drill_id',did)}else{await supabase.from('player_progress').upsert({player_id:pid,drill_id:did,level},{onConflict:'player_id,drill_id'})}}catch(e){}}
 
   const currentWeek=(()=>{if(!seasonStart)return 1;const s=new Date(seasonStart),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);if(t<s)return 1;return Math.floor((t-s)/(1000*60*60*24*7))+1})()
@@ -1833,7 +2021,7 @@ export default function App() {
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>}
-        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress}/>}
+        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
         {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
         {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession}/>}
