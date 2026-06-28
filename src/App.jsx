@@ -1334,8 +1334,9 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
 function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill }) {
   const [tab, setTab] = useState('attendance')
   const [skillPlayer, setSkillPlayer] = useState(null)
-  const [skillView, setSkillView] = useState('by-player') // 'by-player' | 'by-skill'
+  const [skillView, setSkillView] = useState('by-player')
   const [selectedSkill, setSelectedSkill] = useState(null)
+  const [teamFormat, setTeamFormat] = useState('9v9')
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -1774,10 +1775,6 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
       {/* ── Team View Tab ── */}
       {tab==='teamview'&&(()=>{
-        // Age group formats per FAW guidelines
-        // U12/U13 = 9v9, U14/U15 = 11v11
-        const [teamFormat, setTeamFormat] = useState('9v9')
-
         // 9v9 layout: GK + 3 defenders + 3 midfielders + 2 forwards
         const POSITIONS_9V9 = [
           {pos:'GK',  x:50, y:88},
