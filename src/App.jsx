@@ -1885,9 +1885,11 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       <p className="text-xs font-semibold text-gray-500 mb-2">No position set ({unplaced.length})</p>
                       <div className="flex flex-wrap gap-2">
                         {unplaced.map(p=>(
-                          <span key={p.id} className="text-xs px-2 py-1 rounded-full text-white font-semibold" style={{background:'#9ca3af'}}>
-                            {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}
-                          </span>
+                          <button key={p.id} onClick={()=>{setEditPlayer(p);setPosForm({preferred:p.preferred||'',secondary:p.secondary||''});setTab('squad')}}
+                            className="text-xs px-2 py-1 rounded-full text-white font-semibold flex items-center gap-1 transition-opacity hover:opacity-80"
+                            style={{background:'#9ca3af'}}>
+                            {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]} <span style={{fontSize:'9px'}}>+ pos</span>
+                          </button>
                         ))}
                       </div>
                     </div>
