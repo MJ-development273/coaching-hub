@@ -824,7 +824,8 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
         </div>
         {/* Session date - auto from season start or manual override */}
         {(()=>{
-          const autoDate = seasonStart ? (()=>{ const d=new Date(seasonStart); d.setDate(d.getDate()+(weekNum-1)*7); return d.toISOString().split('T')[0] })() : ''
+          const baseDate = isPreSeason ? preSeasonStart : seasonStart
+          const autoDate = baseDate ? (()=>{ const d=new Date(baseDate); d.setDate(d.getDate()+(weekNum-1)*7); return d.toISOString().split('T')[0] })() : ''
           const hasOverride = !!(dateOverrides && dateOverrides[weekNum])
           const displayDate = (dateOverrides && dateOverrides[weekNum]) || autoDate
           const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : ''
@@ -1360,12 +1361,12 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
     <div className="space-y-4">
       <div className="space-y-1">
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-          {[{id:'attendance',label:'✅ Attend.'},{id:'squad',label:'👥 Squad'},{id:'notes',label:'📝 Notes'}].map(t=>(
+          {[{id:'squad',label:'👥 Squad'},{id:'teamview',label:'🏟️ Team'},{id:'notes',label:'📝 Notes'}].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
           ))}
         </div>
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-          {[{id:'skills',label:'🌟 Skills'},{id:'progress',label:'📈 Progress'},{id:'teamview',label:'🏟️ Team'}].map(t=>(
+          {[{id:'skills',label:'🌟 Skills'},{id:'progress',label:'📈 Progress'},{id:'attendance',label:'✅ Attend.'}].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
           ))}
         </div>
