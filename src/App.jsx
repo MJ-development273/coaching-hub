@@ -523,6 +523,19 @@ function TacticalDiagram({ type, category }) {
         <text x={160} y={195} fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Level with last defender = onside</text>
       </svg>
     ),
+    gkhandling: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x="130" y="10" width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        <rect x="100" y="10" width="120" height="65" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        {P(160,55,accent,'GK')}
+        {P(60,140,'#ef4444','S')}{P(160,150,'#ef4444','S')}{P(260,140,'#ef4444','S')}
+        <line x1="68" y1="133" x2="152" y2="62" stroke="white" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.7"/>
+        <line x1="160" y1="141" x2="160" y2="67" stroke="white" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.7"/>
+        <line x1="252" y1="133" x2="168" y2="62" stroke="white" strokeWidth="1.5" strokeDasharray="6,3" opacity="0.7"/>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Serves from multiple angles -- GK reads and responds</text>
+      </svg>
+    ),
     default: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
