@@ -408,7 +408,7 @@ function TacticalDiagram({ type, category }) {
     weave: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
-        {[50,85,120,155,190,225,260].map((x,i) => <polygon key={i} points={`${x},${i%2===0?80:140}-8 ${x}-5,${i%2===0?80:140}+4 ${x}+5,${i%2===0?80:140}+4`} fill="#f59e0b" stroke="white" strokeWidth="1"/>)}
+        {[50,85,120,155,190,225,260].map((x,i)=>{ const y=i%2===0?80:140; return <polygon key={i} points={`${x},${y-8} ${x-5},${y+4} ${x+5},${y+4}`} fill="#f59e0b" stroke="white" strokeWidth="1"/> })}
         {P(25,110,accent,'P')}
         <path d="M35,110 Q52,80 70,110 Q88,140 105,110 Q122,80 140,110 Q158,140 175,110 Q192,80 210,110 Q227,140 244,110 Q262,80 280,110" fill="none" stroke={accent} strokeWidth="2.5" strokeDasharray="none"/>
         <text x={160} y={195} fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Dribble through cones — both feet, close control</text>
