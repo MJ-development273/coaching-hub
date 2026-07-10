@@ -539,6 +539,24 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass accurately to hit each target -- accuracy over power</text>
       </svg>
     ),
+    toetaps: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,110,accent,'P')}
+        <circle cx="160" cy="130" r="6" fill="white" stroke={accent} strokeWidth="1.5"/>
+        {/* Alternating tap arrows - small quick taps down onto the ball from each foot */}
+        <path d="M145,100 L155,124" fill="none" stroke={accent} strokeWidth="2" markerEnd="url(#taparrow1)"/>
+        <path d="M175,100 L165,124" fill="none" stroke={accent} strokeWidth="2" markerEnd="url(#taparrow2)"/>
+        <defs>
+          <marker id="taparrow1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill={accent}/></marker>
+          <marker id="taparrow2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill={accent}/></marker>
+        </defs>
+        <text x="145" y="95" fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">L</text>
+        <text x="175" y="95" fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">R</text>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">ALTERNATING FEET -- QUICK TAPS</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Stand over the ball, tap side to side with each foot</text>
+      </svg>
+    ),
     ballmastery: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
