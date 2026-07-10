@@ -539,6 +539,21 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass accurately to hit each target -- accuracy over power</text>
       </svg>
     ),
+    ballmastery: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,110,accent,'P')}
+        {/* Ball at feet with side-to-side roll arrows */}
+        <circle cx="160" cy="130" r="6" fill="white" stroke={accent} strokeWidth="1.5"/>
+        {Arrow(140,130,110,130,accent)}
+        {Arrow(180,130,210,130,accent,true)}
+        {/* Drag-back arrow */}
+        <path d="M160,124 Q175,105 160,90" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,3"/>
+        <text x="185" y="90" fill="#f59e0b" fontSize="8" fontWeight="bold">drag-back</text>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">SOLE OF FOOT ONLY</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Roll side to side, then drag back -- close control focus</text>
+      </svg>
+    ),
     gkhandling: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
