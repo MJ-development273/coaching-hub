@@ -523,6 +523,22 @@ function TacticalDiagram({ type, category }) {
         <text x={160} y={195} fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Level with last defender = onside</text>
       </svg>
     ),
+    targetpass: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(60,150,accent,'P')}
+        {/* Targets at increasing distances */}
+        <rect x="115" y="140" width="18" height="18" fill="none" stroke="#f59e0b" strokeWidth="2"/>
+        <rect x="175" y="110" width="16" height="16" fill="none" stroke="#f59e0b" strokeWidth="2"/>
+        <rect x="235" y="75" width="14" height="14" fill="none" stroke="#f59e0b" strokeWidth="2"/>
+        <rect x="270" y="140" width="16" height="16" fill="none" stroke="#f59e0b" strokeWidth="2"/>
+        {Arrow(72,148,118,148,accent)}
+        {Arrow(72,145,178,116,accent,true)}
+        {Arrow(72,142,238,80,accent,true)}
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">TARGETS AT VARIED DISTANCES</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass accurately to hit each target -- accuracy over power</text>
+      </svg>
+    ),
     gkhandling: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
