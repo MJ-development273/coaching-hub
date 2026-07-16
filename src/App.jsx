@@ -539,6 +539,122 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass accurately to hit each target -- accuracy over power</text>
       </svg>
     ),
+    vertjump: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,140,accent,'P')}
+        {/* Straight up arrow */}
+        <path d="M160,130 L160,60" fill="none" stroke="white" strokeWidth="3" markerEnd="url(#vjarrow)"/>
+        <defs><marker id="vjarrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="white"/></marker></defs>
+        <circle cx="160" cy="55" r="8" fill={accent} stroke="white" strokeWidth="1.5" opacity="0.6"/>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">EXPLODE STRAIGHT UP -- LAND SOFT</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Quarter squat dip, then jump as high as possible</text>
+      </svg>
+    ),
+    broadjump: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(70,110,accent,'P')}
+        <circle cx="230" cy="110" r="8" fill={accent} stroke="white" strokeWidth="1.5" opacity="0.5"/>
+        <path d="M85,110 Q160,75 220,108" fill="none" stroke="white" strokeWidth="3" markerEnd="url(#bjarrow)"/>
+        <defs><marker id="bjarrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="white"/></marker></defs>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">JUMP FORWARD -- LAND SOFT ON BOTH FEET</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Use arms to drive forward -- measure distance covered</text>
+      </svg>
+    ),
+    lateralbound: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(110,110,accent,'P')}
+        <circle cx="210" cy="110" r="8" fill={accent} stroke="white" strokeWidth="1.5" opacity="0.5"/>
+        <path d="M125,110 L195,110" fill="none" stroke="white" strokeWidth="3" markerEnd="url(#lbarrow)"/>
+        <defs><marker id="lbarrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="white"/></marker></defs>
+        <path d="M195,120 L125,120" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#lbarrow2)"/>
+        <defs><marker id="lbarrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">JUMP SIDEWAYS -- STICK THE LANDING</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Hold landing 2 seconds before jumping back</text>
+      </svg>
+    ),
+    tuckjump: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,145,accent,'P')}
+        <path d="M160,132 L160,75" fill="none" stroke="white" strokeWidth="3" markerEnd="url(#tjarrow)"/>
+        <defs><marker id="tjarrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="white"/></marker></defs>
+        <circle cx="160" cy="65" r="9" fill={accent} stroke="white" strokeWidth="1.5"/>
+        <path d="M153,68 Q160,55 167,68" fill="none" stroke="white" strokeWidth="1.5"/>
+        <text x="160" y="42" fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">KNEES UP</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pull both knees to chest at peak, land softly</text>
+      </svg>
+    ),
+    circuit: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {[['Squats',75,55],['Lunges',245,55],['Press-Ups',75,155],['Sit-Ups',245,155]].map(([t,x,y])=>(
+          <g key={t}>
+            <circle cx={x} cy={y} r="28" fill={N.bg} opacity="0.7" stroke={accent} strokeWidth="1.5"/>
+            <text x={x} y={y+4} fill="white" fontSize="9" textAnchor="middle" fontWeight="bold">{t}</text>
+          </g>
+        ))}
+        <text x="160" y="108" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">30s ON / 15s REST</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Repeat the full circuit 3 times through</text>
+      </svg>
+    ),
+    balance: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {/* Person balancing on one leg */}
+        <circle cx="160" cy="80" r="12" fill={accent} stroke="white" strokeWidth="1.5"/>
+        <line x1="160" y1="92" x2="160" y2="140" stroke={accent} strokeWidth="4"/>
+        <line x1="160" y1="105" x2="135" y2="115" stroke={accent} strokeWidth="3"/>
+        <line x1="160" y1="105" x2="185" y2="115" stroke={accent} strokeWidth="3"/>
+        <line x1="160" y1="140" x2="160" y2="175" stroke={accent} strokeWidth="4"/>
+        <path d="M160,140 Q185,150 195,135" fill="none" stroke={accent} strokeWidth="4" strokeLinecap="round"/>
+        <ellipse cx="160" cy="178" rx="10" ry="4" fill={accent} opacity="0.4"/>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">STAND ON ONE LEG -- 30 SECONDS</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Progress: eyes closed, then reach free leg out</text>
+      </svg>
+    ),
+    plankpress: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {/* Plank position figure */}
+        <circle cx="90" cy="120" r="10" fill={accent} stroke="white" strokeWidth="1.5"/>
+        <line x1="100" y1="122" x2="220" y2="140" stroke={accent} strokeWidth="4"/>
+        <line x1="110" y1="128" x2="105" y2="150" stroke={accent} strokeWidth="3"/>
+        <line x1="210" y1="138" x2="215" y2="155" stroke={accent} strokeWidth="3"/>
+        <path d="M160,50 Q160,80 160,105" fill="none" stroke="white" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#pparrow)"/>
+        <defs><marker id="pparrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,4 L4,0 L8,4 Z" fill="white"/></marker></defs>
+        <text x="160" y="42" fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">PUSH UP ONE ARM AT A TIME</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Forearm plank to full press-up, alternate leading arm</text>
+      </svg>
+    ),
+    antirotation: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,120,accent)}
+        <line x1="160" y1="105" x2="220" y2="100" stroke={accent} strokeWidth="4" strokeLinecap="round"/>
+        <circle cx="222" cy="100" r="6" fill="white" stroke={accent} strokeWidth="1.5"/>
+        <path d="M160,80 L160,60" fill="none" stroke="#ef4444" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#rotarrow)"/>
+        <defs><marker id="rotarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#ef4444"/></marker></defs>
+        <text x="200" y="55" fill="#ef4444" fontSize="8" fontWeight="bold">resist twist</text>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">ARMS OUT -- CORE STAYS STILL</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Hold 20 seconds each side without twisting</text>
+      </svg>
+    ),
+    stickland: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,110,accent,'P')}
+        <path d="M160,100 L160,75" fill="none" stroke="white" strokeWidth="2.5" markerEnd="url(#slarrow)"/>
+        <defs><marker id="slarrow" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="white"/></marker></defs>
+        <path d="M160,120 L160,145" fill="none" stroke="#f59e0b" strokeWidth="2.5" markerEnd="url(#slarrow2)"/>
+        <defs><marker id="slarrow2" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="#f59e0b"/></marker></defs>
+        <text x="200" y="145" fill="#f59e0b" fontSize="8" fontWeight="bold">hold 2s</text>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">SMALL JUMP -- HOLD THE LANDING STILL</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Landing control matters far more than jump height</text>
+      </svg>
+    ),
     toetaps: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
@@ -815,7 +931,7 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
   )
 }
 
-function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartChange, dateOverrides, onDateOverride, onDateClear }) {
+function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartChange, dateOverrides, onDateOverride, onDateClear, squad, groupAssignments, groupCount }) {
   const [weekNum,setWeekNum]=useState(1)
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
@@ -823,6 +939,9 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const [sessionNotes,setSessionNotes]=useState('')
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
+  const [showGroupsFor,setShowGroupsFor]=useState(null)
+  const [groupMode,setGroupMode]=useState(false)
+  const [groupSwapTarget,setGroupSwapTarget]=useState(null) // {blockKey, groupNum}
   const [editingDate,setEditingDate]=useState(false)
   const [tempDate,setTempDate]=useState('')
   const [showPreSeason,setShowPreSeason]=useState(null) // null=auto, true=forced on, false=forced off
@@ -849,16 +968,64 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const session = {}
   activeBlocks.forEach(b => {
     if (b.fixed) return
-    session[b.key] = weekOverrides[b.key] || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
+    // If group mode active and a group-specific override exists (stored as {__groups: {1: drill, 2: drill}}),
+    // fall back to the base drill for the "default" view
+    const ov = weekOverrides[b.key]
+    const baseOverride = ov && ov.__groups ? ov.base : ov
+    session[b.key] = baseOverride || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
   })
+
+  // Per-group drill: returns the drill assigned to a specific group for a block, falling back to the main session drill
+  const getGroupDrill = (blockKey, groupNum) => {
+    const ov = weekOverrides[blockKey]
+    if (ov && ov.__groups && ov.__groups[groupNum]) return ov.__groups[groupNum]
+    return session[blockKey]
+  }
 
   const handleSwap = (key, drill) => {
     const okey = `${weekNum}-${ageFilter}`
+    if (groupSwapTarget) {
+      // Swapping a drill for a SPECIFIC group only
+      const { blockKey, groupNum } = groupSwapTarget
+      setOverrides(prev => {
+        const existing = prev[okey]?.[blockKey]
+        const existingGroups = (existing && existing.__groups) ? existing.__groups : {}
+        const existingBase = (existing && existing.__groups) ? existing.base : existing
+        return {
+          ...prev,
+          [okey]: {
+            ...(prev[okey]||{}),
+            [blockKey]: { __groups: { ...existingGroups, [groupNum]: drill }, base: existingBase || session[blockKey] }
+          }
+        }
+      })
+      setGroupSwapTarget(null)
+      setSwapTarget(null)
+      return
+    }
     setOverrides(prev => ({ ...prev, [okey]: { ...(prev[okey]||{}), [key]: drill } }))
     setSwapTarget(null)
   }
 
-  const swapBlock = activeBlocks.find(b => b.key === swapTarget)
+  const clearGroupOverride = (blockKey, groupNum) => {
+    const okey = `${weekNum}-${ageFilter}`
+    setOverrides(prev => {
+      const existing = prev[okey]?.[blockKey]
+      if (!existing || !existing.__groups) return prev
+      const newGroups = { ...existing.__groups }
+      delete newGroups[groupNum]
+      const hasAnyGroups = Object.keys(newGroups).length > 0
+      return {
+        ...prev,
+        [okey]: {
+          ...(prev[okey]||{}),
+          [blockKey]: hasAnyGroups ? { __groups: newGroups, base: existing.base } : existing.base
+        }
+      }
+    })
+  }
+
+  const swapBlock = activeBlocks.find(b => b.key === (groupSwapTarget?.blockKey || swapTarget))
 
   return (
     <div>
@@ -868,6 +1035,17 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
           <h2 className="font-bold text-gray-900 text-sm">📅 {isPreSeason ? 'Pre-Season Session' : '1-Hour Session Planner'}</h2>
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
+        {squad && squad.length>0 && groupCount>1 && (
+          <div className="flex items-center justify-between mb-3 p-2.5 rounded-xl" style={{background:groupMode?N.light:'#f9fafb'}}>
+            <div>
+              <p className="text-xs font-semibold text-gray-800">🎯 Group-Aware Planning</p>
+              <p className="text-xs text-gray-400">{groupMode?'Set different drills per ability group':'Same drill for whole squad'}</p>
+            </div>
+            <button onClick={()=>setGroupMode(!groupMode)} className="w-12 h-6 rounded-full transition-all relative shrink-0 ml-3" style={{background:groupMode?N.bg:'#d1d5db'}}>
+              <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow" style={{left:groupMode?'26px':'2px'}}/>
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Week</label>
@@ -1030,14 +1208,86 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                 </div>
               </div>
               {drill ? (
-                <div className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(drill)}>
-                  <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
-                  <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-gray-900 text-sm">{drill.title}</p>
-                    <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{drill.description}</p>
-                    <div className="flex gap-1 mt-1 flex-wrap">{(drill.age_groups||[]).map(ag=><span key={ag} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{ag}</span>)}</div>
-                  </div>
-                </div>
+                <>
+                  {!groupMode && (
+                    <div className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(drill)}>
+                      <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm">{drill.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5 leading-relaxed line-clamp-2">{drill.description}</p>
+                        <div className="flex gap-1 mt-1 flex-wrap">{(drill.age_groups||[]).map(ag=><span key={ag} className="text-xs bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{ag}</span>)}</div>
+                      </div>
+                    </div>
+                  )}
+                  {groupMode && squad && squad.length>0 && (()=>{
+                    const GROUP_COLORS = ['#1e3a5f','#16a34a','#f59e0b','#8b5cf6','#ef4444','#0891b2']
+                    const groups = Array.from({length:groupCount||2},(_,i)=>i+1)
+                    return (
+                      <div className="p-3 space-y-2">
+                        {groups.map(g=>{
+                          const groupDrill = getGroupDrill(block.key, g)
+                          const players = squad.filter(p=>groupAssignments?.[p.id]===g)
+                          const isCustom = weekOverrides[block.key]?.__groups?.[g]
+                          return (
+                            <div key={g} className="rounded-xl overflow-hidden border" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
+                              <div className="px-3 py-1.5 flex items-center justify-between" style={{background:GROUP_COLORS[g-1]+'11'}}>
+                                <div className="flex items-center gap-1.5">
+                                  <div className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold shrink-0" style={{background:GROUP_COLORS[g-1],fontSize:'9px'}}>{g}</div>
+                                  <span className="text-xs font-bold" style={{color:GROUP_COLORS[g-1]}}>Group {g}</span>
+                                  <span className="text-xs text-gray-400">({players.length})</span>
+                                  {isCustom && <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-semibold" style={{background:GROUP_COLORS[g-1]}}>Custom</span>}
+                                </div>
+                                <button onClick={()=>{setGroupSwapTarget({blockKey:block.key,groupNum:g});setSwapTarget(block.key)}}
+                                  className="text-xs font-semibold underline" style={{color:GROUP_COLORS[g-1]}}>swap</button>
+                              </div>
+                              {groupDrill ? (
+                                <div className="flex gap-2 p-2 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(groupDrill)}>
+                                  <div className="w-14 h-11 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={groupDrill.diagram} category={groupDrill.category}/></div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="font-semibold text-gray-900 text-xs">{groupDrill.title}</p>
+                                    <p className="text-xs text-gray-400 line-clamp-1">{groupDrill.description}</p>
+                                  </div>
+                                  {isCustom && <button onClick={(e)=>{e.stopPropagation();clearGroupOverride(block.key,g)}} className="text-xs text-red-400 self-start px-1">✕</button>}
+                                </div>
+                              ) : (
+                                <p className="text-xs text-gray-400 p-2">No drill assigned</p>
+                              )}
+                            </div>
+                          )
+                        })}
+                      </div>
+                    )
+                  })()}
+                  {squad && squad.length>0 && !groupMode && (
+                    <div className="px-3 pb-3">
+                      <button onClick={()=>setShowGroupsFor(showGroupsFor===block.key?null:block.key)}
+                        className="text-xs font-semibold underline underline-offset-2" style={{color:N.text}}>
+                        {showGroupsFor===block.key ? 'Hide groups' : '🎯 Show groups for this drill'}
+                      </button>
+                      {showGroupsFor===block.key && (()=>{
+                        const GROUP_COLORS = ['#1e3a5f','#16a34a','#f59e0b','#8b5cf6','#ef4444','#0891b2']
+                        const groups = Array.from({length:groupCount||2},(_,i)=>i+1)
+                        return (
+                          <div className="mt-2 grid grid-cols-2 gap-2">
+                            {groups.map(g=>{
+                              const players = squad.filter(p=>groupAssignments?.[p.id]===g)
+                              return (
+                                <div key={g} className="rounded-xl p-2" style={{background:GROUP_COLORS[g-1]+'11',border:`1px solid ${GROUP_COLORS[g-1]}33`}}>
+                                  <p className="text-xs font-bold mb-1" style={{color:GROUP_COLORS[g-1]}}>Group {g} ({players.length})</p>
+                                  {players.length===0 ? <p className="text-xs text-gray-400">No players</p> : (
+                                    <div className="flex flex-wrap gap-1">
+                                      {players.map(p=><span key={p.id} className="text-xs bg-white px-1.5 py-0.5 rounded-full text-gray-700 font-medium">{p.name.split(' ')[0]}</span>)}
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        )
+                      })()}
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="p-4 text-center text-gray-400">
                   <p className="text-xs">No {block.cat} drills available for {ageFilter}</p>
@@ -1064,10 +1314,10 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
 
       {/* Swap modal */}
       {swapTarget && swapBlock && (
-        <Modal onClose={()=>setSwapTarget(null)} wide>
+        <Modal onClose={()=>{setSwapTarget(null);setGroupSwapTarget(null)}} wide>
           <div className="p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}</h2>
-            <p className="text-sm text-gray-500 mb-4">Choose a different drill for this block:</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}{groupSwapTarget?` -- Group ${groupSwapTarget.groupNum}`:''}</h2>
+            <p className="text-sm text-gray-500 mb-4">{groupSwapTarget?`Choose a drill for Group ${groupSwapTarget.groupNum} only:`:'Choose a different drill for this block:'}</p>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
               {drills.filter(d => d.category === swapBlock.cat && (ageFilter==='All'||(d.age_groups||[]).includes(ageFilter))).map(d => (
                 <div key={d.id} onClick={()=>handleSwap(swapTarget, d)}
@@ -1084,7 +1334,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                 </div>
               ))}
             </div>
-            <button onClick={()=>setSwapTarget(null)} className="mt-4 w-full border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
+            <button onClick={()=>{setSwapTarget(null);setGroupSwapTarget(null)}} className="mt-4 w-full border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl hover:bg-gray-50 text-sm">Cancel</button>
           </div>
         </Modal>
       )}
@@ -1097,7 +1347,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
 }
 
 // ─── Home Session Manager ─────────────────────────────────────────────────────
-function HomeSessionManager({ drills, homeSession, onSave }) {
+function HomeSessionManager({ drills, homeSession, onSave, matchNotes, currentWeek }) {
   const homeDrills=drills.filter(d=>d.home_ready)
   const [selected,setSelected]=useState(homeSession.drill_ids||[])
   const [message,setMessage]=useState(homeSession.message||'')
@@ -1122,9 +1372,28 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
     lines.push(`\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
     return lines.join('\n\n')
   }
+  const [recap, setRecap] = useState('')
+  const [weeklySent, setWeeklySent] = useState(false)
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
+
+  // Build the combined weekly parent update message
+  const upcomingFixture = matchNotes && currentWeek ? (matchNotes[currentWeek]?.show_parents ? matchNotes[currentWeek] : Object.entries(matchNotes||{}).map(([wk,n])=>({...n,wk:Number(wk)})).filter(n=>n.show_parents&&n.opponent&&n.wk>=currentWeek).sort((a,b)=>a.wk-b.wk)[0]) : null
+
+  const weeklyUpdateText = () => {
+    const lines = [`📰 *Weekly Update -- Clydach Juniors*\n`]
+    if (recap) lines.push(`*This Week:*\n${recap}`)
+    if (upcomingFixture && upcomingFixture.opponent) {
+      lines.push(`*⚽ Upcoming Match:*\nvs ${upcomingFixture.opponent}${upcomingFixture.match_time?'\n⏰ '+upcomingFixture.match_time:''}${upcomingFixture.venue?'\n📍 '+upcomingFixture.venue:''}`)
+    }
+    if (selectedDrills.length > 0) {
+      lines.push(`*🏠 Home Practice This Week:*\n${selectedDrills.map(d=>`- ${d.title} (${d.duration})`).join('\n')}`)
+    }
+    lines.push(`\n-- Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
+    return lines.join('\n\n')
+  }
+
   return (
     <div>
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
@@ -1209,6 +1478,34 @@ function HomeSessionManager({ drills, homeSession, onSave }) {
         </div>
       }
       {detailDrill&&<DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
+
+      {/* Weekly Parent Update Builder */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-6">
+        <h2 className="font-bold text-gray-900 text-sm mb-1">📰 Weekly Parent Update</h2>
+        <p className="text-xs text-gray-500 mb-3">Combine a session recap, upcoming fixture, and home drills into one message.</p>
+        <div className="mb-3">
+          <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">This Week's Recap <span className="text-gray-400 font-normal">(optional)</span></label>
+          <textarea value={recap} onChange={e=>{setRecap(e.target.value);setWeeklySent(false)}} rows={3}
+            placeholder="e.g. Great session on pressing this week -- the players are really starting to press as a unit!"
+            className={inputCls+' resize-none'} onFocus={focusNavy} onBlur={blurGray}/>
+        </div>
+        {upcomingFixture && upcomingFixture.opponent && (
+          <div className="rounded-xl p-3 mb-3" style={{background:'#eff6ff',border:'1px solid #bfdbfe'}}>
+            <p className="text-xs font-semibold text-blue-800">⚽ Will include: vs {upcomingFixture.opponent}{upcomingFixture.match_time?' at '+upcomingFixture.match_time:''}</p>
+          </div>
+        )}
+        {selectedDrills.length > 0 && (
+          <div className="rounded-xl p-3 mb-3" style={{background:N.light}}>
+            <p className="text-xs font-semibold" style={{color:N.text}}>🏠 Will include: {selectedDrills.length} home drill{selectedDrills.length>1?'s':''}</p>
+          </div>
+        )}
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3 text-xs text-gray-600 whitespace-pre-wrap font-mono max-h-40 overflow-y-auto">{weeklyUpdateText()}</div>
+        <a href={`https://wa.me/?text=${encodeURIComponent(weeklyUpdateText())}`} target="_blank" rel="noreferrer"
+          onClick={()=>{setWeeklySent(true);setTimeout(()=>setWeeklySent(false),3000)}}
+          className="w-full text-white font-bold py-3 rounded-2xl text-sm flex items-center justify-center gap-2" style={{background:weeklySent?'#16a34a':'#16a34a'}}>
+          {weeklySent?'✓ Opened WhatsApp!':'📲 Send Weekly Update'}
+        </a>
+      </div>
     </div>
   )
 }
@@ -1319,12 +1616,43 @@ function SessionStatusManager({ sessionStatus, onSave }) {
 }
 
 // ─── Match Day Notes ───────────────────────────────────────────────────────────
-function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave }) {
+function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad }) {
   const note = matchNotes[weekNum] || {}
   const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_type:'League',show_parents:false})
   const [tab, setTab] = useState('fixture')
   const [saved, setSaved] = useState(false)
+  const [squadSaved, setSquadSaved] = useState(false)
+  const squadData = matchSquad?.[weekNum] || { starters:[], subs:[], minutes:{} }
+  const [starters, setStarters] = useState(squadData.starters)
+  const [benchSubs, setBenchSubs] = useState(squadData.subs)
   useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
+  useEffect(()=>{
+    const sd = matchSquad?.[weekNum] || { starters:[], subs:[] }
+    setStarters(sd.starters||[])
+    setBenchSubs(sd.subs||[])
+    setSquadSaved(false)
+  },[weekNum, matchSquad])
+
+  const toggleStarter = (pid) => {
+    setStarters(prev => prev.includes(pid) ? prev.filter(x=>x!==pid) : [...prev, pid])
+    setBenchSubs(prev => prev.filter(x=>x!==pid))
+    setSquadSaved(false)
+  }
+  const toggleSub = (pid) => {
+    setBenchSubs(prev => prev.includes(pid) ? prev.filter(x=>x!==pid) : [...prev, pid])
+    setStarters(prev => prev.filter(x=>x!==pid))
+    setSquadSaved(false)
+  }
+  const saveSquadSelection = async () => {
+    await onSaveMatchSquad(weekNum, { starters, subs: benchSubs, minutes: squadData.minutes||{} })
+    setSquadSaved(true)
+    setTimeout(()=>setSquadSaved(false), 2000)
+  }
+  const squadWa = () => {
+    const startersList = (squad||[]).filter(p=>starters.includes(p.id))
+    const subsList = (squad||[]).filter(p=>benchSubs.includes(p.id))
+    return `Clydach Juniors -- Team Sheet${form.opponent?' vs '+form.opponent:''}\n\nStarting XI:\n${startersList.map(p=>`${p.squad_num?'#'+p.squad_num+' ':''}${p.name}${p.preferred?' ('+p.preferred+')':''}`).join('\n')}\n\nSubs:\n${subsList.map(p=>`${p.squad_num?'#'+p.squad_num+' ':''}${p.name}`).join('\n')}\n\n- Coaching Team\n🔗 ${SITE_URL}`
+  }
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const ic = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
@@ -1341,11 +1669,13 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
       </div>
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
-          {[{id:'fixture',label:'📋 Fixture'},{id:'result',label:'📊 Result'}].map(t=>(
+          {[{id:'fixture',label:'📋 Fixture'},{id:'squadsel',label:'🎽 Squad'},{id:'result',label:'📊 Result'}].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
           ))}
         </div>
         <div className="space-y-3">
+          {tab!=='squadsel' && (
+          <>
           {/* Match type */}
           <div>
             <label className="text-xs font-semibold text-gray-600 block mb-2">Match Type</label>
@@ -1362,6 +1692,8 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
 
           <div><label className="text-xs font-semibold text-gray-600 block mb-1">Opponent</label>
             <input value={form.opponent} onChange={e=>set('opponent',e.target.value)} placeholder="e.g. Swansea Juniors" className={ic} onFocus={fn} onBlur={fb}/></div>
+          </>
+          )}
           {tab==='fixture'&&<>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs font-semibold text-gray-600 block mb-1">Time</label>
@@ -1376,6 +1708,95 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
               </button>
             </div>
           </>}
+          {tab==='squadsel'&&(()=>{
+            const availablePlayers = (squad||[]).filter(p=>!starters.includes(p.id)&&!benchSubs.includes(p.id))
+            const startersList = (squad||[]).filter(p=>starters.includes(p.id))
+            const subsList = (squad||[]).filter(p=>benchSubs.includes(p.id))
+            return (
+              <div className="space-y-3">
+                {(!squad || squad.length===0) ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
+                ) : (
+                  <>
+                    {/* Starting XI */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-gray-700">⭐ Starting XI</p>
+                        <span className="text-xs text-gray-400">{startersList.length} selected</span>
+                      </div>
+                      {startersList.length===0 ? (
+                        <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl p-3 text-center">Tap players below to add to Starting XI</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {startersList.map(p=>(
+                            <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl" style={{background:'#f0fdf4',border:'1px solid #bbf7d0'}}>
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
+                              <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
+                              {p.preferred && <span className="text-xs bg-white px-1.5 py-0.5 rounded-full text-gray-500">{p.preferred}</span>}
+                              <button onClick={()=>toggleStarter(p.id)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Subs bench */}
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <p className="text-xs font-bold text-gray-700">🔄 Subs Bench</p>
+                        <span className="text-xs text-gray-400">{subsList.length} selected</span>
+                      </div>
+                      {subsList.length===0 ? (
+                        <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl p-3 text-center">Tap players below to add to bench</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {subsList.map(p=>(
+                            <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl" style={{background:'#eff6ff',border:'1px solid #bfdbfe'}}>
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
+                              <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
+                              <button onClick={()=>toggleSub(p.id)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Available players */}
+                    {availablePlayers.length>0 && (
+                      <div>
+                        <p className="text-xs font-bold text-gray-700 mb-2">Available Squad ({availablePlayers.length})</p>
+                        <div className="flex flex-wrap gap-2">
+                          {availablePlayers.map(p=>(
+                            <div key={p.id} className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-full px-2 py-1">
+                              <span className="text-xs font-semibold text-gray-700">{p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}</span>
+                              <button onClick={()=>toggleStarter(p.id)} className="text-xs font-bold text-green-600 px-1" title="Add to Starting XI">XI</button>
+                              <button onClick={()=>toggleSub(p.id)} className="text-xs font-bold text-blue-600 px-1" title="Add to Subs">Sub</button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 50% playing time reminder */}
+                    <div className="rounded-xl p-3 text-xs" style={{background:N.light}}>
+                      <p className="font-semibold" style={{color:N.text}}>⏱️ FAW Rule Reminder</p>
+                      <p style={{color:N.text+'aa'}} className="mt-0.5">All squad members must play a minimum of 50% of total playing time. Rolling substitutes are permitted.</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button onClick={saveSquadSelection} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:squadSaved?'#16a34a':N.bg}}>
+                        {squadSaved?'✓ Saved!':'💾 Save Squad'}
+                      </button>
+                      <a href={`https://wa.me/?text=${encodeURIComponent(squadWa())}`} target="_blank" rel="noreferrer"
+                        className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm text-center" style={{background:'#16a34a'}}>
+                        📲 Share Team Sheet
+                      </a>
+                    </div>
+                  </>
+                )}
+              </div>
+            )
+          })()}
           {tab==='result'&&<>
             <div><label className="text-xs font-semibold text-gray-600 block mb-1">Result</label>
               <input value={form.result} onChange={e=>set('result',e.target.value)} placeholder="e.g. Won 3-1" className={ic} onFocus={fn} onBlur={fb}/></div>
@@ -1384,10 +1805,12 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
             <div><label className="text-xs font-semibold text-gray-600 block mb-1">Coach Notes (private)</label>
               <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on..." className={ic+' resize-none'} onFocus={fn} onBlur={fb}/></div>
           </>}
-          <div className="flex gap-2">
-            <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:saved?'#16a34a':N.bg}}>{saved?'✓ Saved!':'💾 Save'}</button>
-            <a href={`https://wa.me/?text=${encodeURIComponent(tab==='fixture'?fixtureWa:resultWa)}`} target="_blank" rel="noreferrer" className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm text-center" style={{background:'#16a34a'}}>📲 {tab==='fixture'?'Share Fixture':'Share Result'}</a>
-          </div>
+          {tab!=='squadsel' && (
+            <div className="flex gap-2">
+              <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:saved?'#16a34a':N.bg}}>{saved?'✓ Saved!':'💾 Save'}</button>
+              <a href={`https://wa.me/?text=${encodeURIComponent(tab==='fixture'?fixtureWa:resultWa)}`} target="_blank" rel="noreferrer" className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm text-center" style={{background:'#16a34a'}}>📲 {tab==='fixture'?'Share Fixture':'Share Result'}</a>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1395,7 +1818,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave })
 }
 
 // ─── Squad Manager (Attendance + Notes + Positions + Progress) ─────────────────
-function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill }) {
+function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup }) {
   const [tab, setTab] = useState('squad')
   const [squadSort, setSquadSort] = useState('number') // 'number' | 'name'
   const [skillPlayer, setSkillPlayer] = useState(null)
@@ -1425,7 +1848,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
     <div className="space-y-4">
       <div className="space-y-1">
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
-          {[{id:'squad',label:'👥 Squad'},{id:'teamview',label:'🏟️ Team'},{id:'notes',label:'📝 Notes'}].map(t=>(
+          {[{id:'squad',label:'👥 Squad'},{id:'teamview',label:'🏟️ Team'},{id:'groups',label:'🎯 Groups'},{id:'notes',label:'📝 Notes'}].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
           ))}
         </div>
@@ -1547,6 +1970,103 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           )}
         </div>
       )}
+
+      {tab==='groups'&&(()=>{
+        const GROUP_COLORS = ['#1e3a5f','#16a34a','#f59e0b','#8b5cf6','#ef4444','#0891b2']
+        const groups = Array.from({length:groupCount},(_,i)=>i+1)
+        const unassigned = squad.filter(p=>!groupAssignments[p.id])
+
+        return (
+          <div className="space-y-3">
+            <div className="bg-white border border-gray-200 rounded-2xl p-4">
+              <h3 className="font-bold text-gray-900 text-sm mb-1">🎯 Training Groups</h3>
+              <p className="text-xs text-gray-400 mb-3">Split the squad into ability groups for training drills.</p>
+              <div className="flex items-center gap-2">
+                <label className="text-xs font-semibold text-gray-600">Number of groups:</label>
+                <div className="flex gap-1">
+                  {[2,3,4].map(n=>(
+                    <button key={n} onClick={()=>onGroupCountChange(n)}
+                      className="w-9 h-9 rounded-xl text-sm font-bold border-2 transition-all"
+                      style={groupCount===n?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {squad.length===0 ? (
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 text-center">
+                <p className="text-sm text-gray-400">Add players in the Squad tab first</p>
+              </div>
+            ) : (
+              <>
+                {/* Unassigned players */}
+                {unassigned.length>0 && (
+                  <div className="bg-white border border-gray-200 rounded-2xl p-4">
+                    <p className="text-xs font-semibold text-gray-500 mb-2">Unassigned ({unassigned.length})</p>
+                    <div className="flex flex-wrap gap-2">
+                      {unassigned.map(p=>(
+                        <div key={p.id} className="flex items-center gap-1 px-2 py-1 rounded-full bg-gray-100">
+                          <span className="text-xs font-semibold text-gray-700">{p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}</span>
+                          <div className="flex gap-0.5 ml-1">
+                            {groups.map(g=>(
+                              <button key={g} onClick={()=>onAssignGroup(p.id,g)}
+                                className="w-5 h-5 rounded-full text-xs font-bold text-white flex items-center justify-center"
+                                style={{background:GROUP_COLORS[g-1]}}>
+                                {g}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Groups */}
+                {groups.map(g=>{
+                  const groupPlayers = squad.filter(p=>groupAssignments[p.id]===g)
+                  return (
+                    <div key={g} className="bg-white border-2 rounded-2xl p-4" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="flex items-center gap-2">
+                          <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{background:GROUP_COLORS[g-1]}}>{g}</div>
+                          <p className="font-bold text-gray-900 text-sm">Group {g}</p>
+                        </div>
+                        <span className="text-xs text-gray-400">{groupPlayers.length} players</span>
+                      </div>
+                      {groupPlayers.length===0 ? (
+                        <p className="text-xs text-gray-400 text-center py-3">No players assigned yet</p>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {groupPlayers.map(p=>(
+                            <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl" style={{background:GROUP_COLORS[g-1]+'11'}}>
+                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
+                              <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
+                              <div className="flex gap-1">
+                                {groups.filter(og=>og!==g).map(og=>(
+                                  <button key={og} onClick={()=>onAssignGroup(p.id,og)}
+                                    className="w-5 h-5 rounded-full text-xs font-bold text-white flex items-center justify-center opacity-50 hover:opacity-100"
+                                    style={{background:GROUP_COLORS[og-1]}}
+                                    title={`Move to Group ${og}`}>
+                                    {og}
+                                  </button>
+                                ))}
+                                <button onClick={()=>onAssignGroup(p.id,null)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </>
+            )}
+          </div>
+        )
+      })()}
 
       {tab==='notes'&&(
         <div className="space-y-3">
@@ -2174,6 +2694,9 @@ export default function App() {
   const [attendance,setAttendance]=useState({})
   const [progressData,setProgressData]=useState({})
   const [skillsData,setSkillsData]=useState({}) // { 'playerId-skill': level 0-3 }
+  const [groupCount,setGroupCount]=useState(2)
+  const [groupAssignments,setGroupAssignments]=useState({}) // { playerId: groupNum }
+  const [matchSquad,setMatchSquad]=useState({}) // { weekNum: { starters:[ids], subs:[ids], minutes:{playerId:mins} } }
   const [matchWeek,setMatchWeek]=useState(1)
   const [squadWeek,setSquadWeek]=useState(1)
   const [filterCat,setFilterCat]=useState('All')
@@ -2190,12 +2713,13 @@ export default function App() {
     async function load(){
       try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
-      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
-      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq)setSquad(sq)}catch(e){}
+      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
+      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};sq.forEach(p=>{if(p.group_num)ga[p.id]=p.group_num});setGroupAssignments(ga)}}catch(e){}
       try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
+      try{const{data:ms}=await supabase.from('match_squad').select('*');if(ms){const o={};ms.forEach(r=>{o[r.week_num]={starters:r.starters||[],subs:r.subs||[],minutes:r.minutes||{}}});setMatchSquad(o)}}catch(e){}
       try{const{data:sk}=await supabase.from('player_skills').select('*');if(sk){const o={};sk.forEach(r=>{o[r.player_id+'-'+r.skill]=r.level});setSkillsData(o)}}catch(e){}
       setLoading(false)
     }
@@ -2257,6 +2781,18 @@ export default function App() {
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
   const updatePlayerPosition=async(id,form)=>{setSquad(p=>p.map(x=>x.id===id?{...x,...form}:x));try{await supabase.from('squad').update(form).eq('id',id)}catch(e){}}
   const toggleAttendance=async(wk,pid,cur)=>{const k=wk+'-'+pid;setAttendance(p=>({...p,[k]:!cur}));try{await supabase.from('attendance').upsert({week_num:wk,player_name:String(pid),present:!cur},{onConflict:'week_num,player_name'})}catch(e){}}
+  const saveMatchSquad=async(wk,data)=>{
+    setMatchSquad(p=>({...p,[wk]:data}))
+    try{await supabase.from('match_squad').upsert({week_num:wk,starters:data.starters,subs:data.subs,minutes:data.minutes})}catch(e){console.error('match_squad save:',e)}
+  }
+  const saveGroupCount=async(count)=>{
+    setGroupCount(count)
+    try{await supabase.from('season_settings').upsert({id:1,group_count:count})}catch(e){}
+  }
+  const assignPlayerGroup=async(pid,groupNum)=>{
+    setGroupAssignments(p=>({...p,[pid]:groupNum}))
+    try{await supabase.from('squad').update({group_num:groupNum}).eq('id',pid)}catch(e){}
+  }
   const saveSkill=async(pid,skill,level)=>{
     const k=pid+'-'+skill
     setSkillsData(p=>({...p,[k]:level}))
@@ -2358,11 +2894,11 @@ export default function App() {
       </header>
 
       <main className="max-w-5xl mx-auto px-4 py-5">
-        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})}/>}
-        {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession}/>}
+        {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})} squad={squad} groupAssignments={groupAssignments} groupCount={groupCount}/>}
+        {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession} matchNotes={matchNotes} currentWeek={currentWeek}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
-        {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote}/>}
-        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill}/>}
+        {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote} squad={squad} matchSquad={matchSquad} onSaveMatchSquad={saveMatchSquad}/>}
+        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
         {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
         {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession}/>}
