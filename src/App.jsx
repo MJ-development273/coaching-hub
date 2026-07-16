@@ -1372,6 +1372,7 @@ function HomeSessionManager({ drills, homeSession, onSave, matchNotes, currentWe
     lines.push(`\nGive these a go before next training! 💪\n— Clydach Juniors Coaching Team\n🔗 ${SITE_URL}`)
     return lines.join('\n\n')
   }
+  const [homeTab, setHomeTab] = useState('drills')
   const [recap, setRecap] = useState('')
   const [weeklySent, setWeeklySent] = useState(false)
   const inputCls="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
@@ -1396,6 +1397,14 @@ function HomeSessionManager({ drills, homeSession, onSave, matchNotes, currentWe
 
   return (
     <div>
+      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
+        {[{id:'drills',label:'🏠 Home Drills'},{id:'weekly',label:'📰 Weekly Update'}].map(t=>(
+          <button key={t.id} onClick={()=>setHomeTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={homeTab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
+        ))}
+      </div>
+
+      {homeTab==='drills'&&(
+      <>
       <div className="bg-white border border-gray-200 rounded-2xl p-4 mb-4">
         <h2 className="font-bold text-gray-900 text-sm mb-1">🏠 This Week's Home Session</h2>
         <p className="text-xs text-gray-500 mb-3">Choose up to 2 drills. Only your selected drills appear in the parent view.</p>
@@ -1478,9 +1487,11 @@ function HomeSessionManager({ drills, homeSession, onSave, matchNotes, currentWe
         </div>
       }
       {detailDrill&&<DrillDetail drill={detailDrill} onClose={()=>setDetailDrill(null)} isCoach={true}/>}
+      </>
+      )}
 
-      {/* Weekly Parent Update Builder */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-4 mt-6">
+      {homeTab==='weekly'&&(
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
         <h2 className="font-bold text-gray-900 text-sm mb-1">📰 Weekly Parent Update</h2>
         <p className="text-xs text-gray-500 mb-3">Combine a session recap, upcoming fixture, and home drills into one message.</p>
         <div className="mb-3">
@@ -1506,6 +1517,7 @@ function HomeSessionManager({ drills, homeSession, onSave, matchNotes, currentWe
           {weeklySent?'✓ Opened WhatsApp!':'📲 Send Weekly Update'}
         </a>
       </div>
+      )}
     </div>
   )
 }
