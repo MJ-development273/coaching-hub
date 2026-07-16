@@ -27,25 +27,8 @@ const navyBtnLeave = (e) => { e.currentTarget.style.background = N.bg }
 
 // ─── SVG Diagrams ─────────────────────────────────────────────────────────────
 function DrillDiagram({ type, category }) {
-  const accent = (CAT_COLORS[category] || {}).accent || '#3b82f6'
-  const overlays = {
-    rondo: <>{[0,51,103,154,205,257,309].map((a,i)=>{const r=68,cx=100+r*Math.cos((a-90)*Math.PI/180),cy=100+r*Math.sin((a-90)*Math.PI/180);return <circle key={i} cx={cx} cy={cy} r="10" fill={accent} stroke="#fff" strokeWidth="1.5"/>})}<circle cx="83" cy="88" r="10" fill="#ef4444" stroke="#fff" strokeWidth="1.5"/><circle cx="117" cy="112" r="10" fill="#ef4444" stroke="#fff" strokeWidth="1.5"/><circle cx="100" cy="100" r="7" fill="white" opacity="0.9"/>{[[100,100,32,32],[100,100,168,32],[100,100,168,168]].map(([x1,y1,x2,y2],i)=><line key={i} x1={x1} y1={y1} x2={x2} y2={y2} stroke={accent} strokeWidth="1.5" strokeDasharray="4,3" opacity="0.6"/>)}</>,
-    weave: <>{[1,2,3,4,5,6].map(i=><polygon key={i} points={`${25*i+5},${i%2===0?75:125} ${25*i-3},${i%2===0?92:108} ${25*i+13},${i%2===0?92:108}`} fill={accent} stroke="#fff" strokeWidth="1"/>)}<path d="M12,155 Q37,75 62,115 Q87,155 112,75 Q137,35 162,95" fill="none" stroke="#60a5fa" strokeWidth="2.5" strokeDasharray="6,3"/><circle cx="12" cy="155" r="9" fill={accent} stroke="#fff" strokeWidth="1.5"/></>,
-    tackle: <><circle cx="68" cy="100" r="12" fill={accent} stroke="#fff" strokeWidth="1.5"/><circle cx="132" cy="100" r="12" fill="#ef4444" stroke="#fff" strokeWidth="1.5"/><circle cx="100" cy="114" r="7" fill="white" opacity="0.9"/><path d="M80,100 L120,100" stroke="white" strokeWidth="1.5" strokeDasharray="4,3"/><defs><marker id="ar1" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill={accent}/></marker></defs><path d="M123,88 Q110,72 100,80" fill="none" stroke={accent} strokeWidth="1.5" markerEnd="url(#ar1)"/></>,
-    '3v2': <><rect x="76" y="158" width="48" height="22" fill="none" stroke="white" strokeWidth="2"/>{[[58,48],[100,38],[142,52]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="10" fill={accent} stroke="#fff" strokeWidth="1.5"/>)}{[[78,112],[122,112]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="10" fill="#ef4444" stroke="#fff" strokeWidth="1.5"/>)}<circle cx="100" cy="172" r="8" fill="#94a3b8" stroke="#fff" strokeWidth="1.5"/><circle cx="100" cy="62" r="7" fill="white" opacity="0.9"/><path d="M58,48 Q79,55 100,62" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="4,3"/><path d="M100,62 Q121,57 142,52" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="4,3"/></>,
-    positions: <><circle cx="100" cy="178" r="9" fill="#94a3b8" stroke="#fff" strokeWidth="1.5"/>{[[42,148],[80,143],[120,143],[158,148]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="9" fill={N.bg} stroke="#fff" strokeWidth="1.5"/>)}{[[62,108],[100,103],[138,108]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="9" fill="#8b5cf6" stroke="#fff" strokeWidth="1.5"/>)}{[[45,62],[100,45],[155,62]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="9" fill={accent} stroke="#fff" strokeWidth="1.5"/>)}</>,
-    default: <>{[[60,70],[140,70],[60,130],[140,130]].map(([x,y],i)=><circle key={i} cx={x} cy={y} r="9" fill={accent} stroke="#fff" strokeWidth="1.5"/>)}<circle cx="100" cy="100" r="20" fill="none" stroke={accent} strokeWidth="2" opacity="0.4"/><circle cx="100" cy="100" r="8" fill="white" opacity="0.7"/></>,
-  }
-  const overlay = overlays[type] || overlays.default
-  return (
-    <svg viewBox="0 0 200 200" className="w-full h-full">
-      <rect width="200" height="200" fill="#14532d" rx="4"/>
-      <rect x="10" y="10" width="180" height="180" fill="none" stroke="#166534" strokeWidth="1" opacity="0.4"/>
-      <line x1="100" y1="10" x2="100" y2="190" stroke="#166534" strokeWidth="0.8" opacity="0.3"/>
-      <line x1="10" y1="100" x2="190" y2="100" stroke="#166534" strokeWidth="0.8" opacity="0.3"/>
-      {overlay}
-    </svg>
-  )
+  // Card thumbnails reuse the same full tactical diagram as the detail view, just scaled down
+  return <TacticalDiagram type={type} category={category}/>
 }
 
 // ─── Auth ──────────────────────────────────────────────────────────────────────
