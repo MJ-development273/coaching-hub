@@ -570,6 +570,20 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pull both knees to chest at peak, land softly</text>
       </svg>
     ),
+    boxstep: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x="130" y="140" width="60" height="20" fill="#f59e0b" opacity="0.5" stroke="#f59e0b" strokeWidth="2"/>
+        <text x="160" y="154" fill="white" fontSize="8" textAnchor="middle" fontWeight="bold">STEP/CURB</text>
+        {P(160,110,accent,'P')}
+        <path d="M160,122 L160,140" fill="none" stroke="white" strokeWidth="2.5" markerEnd="url(#bsarrow1)"/>
+        <defs><marker id="bsarrow1" markerWidth="9" markerHeight="9" refX="4.5" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9 Z" fill="white"/></marker></defs>
+        <path d="M180,150 L210,110" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#bsarrow2)"/>
+        <defs><marker id="bsarrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">STEP UP -- STEP DOWN -- RESET</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Land softly, absorb through the knees not the floor</text>
+      </svg>
+    ),
     reactionsprint: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
