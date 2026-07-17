@@ -570,6 +570,34 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pull both knees to chest at peak, land softly</text>
       </svg>
     ),
+    reactionsprint: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {/* Coach with cone raised */}
+        <circle cx="60" cy="70" r="10" fill="#94a3b8" stroke="white" strokeWidth="1.5"/>
+        <rect x="55" y="45" width="10" height="14" fill="#f59e0b" stroke="white" strokeWidth="1"/>
+        <text x="60" y="35" fill="#f59e0b" fontSize="8" fontWeight="bold" textAnchor="middle">DROP</text>
+        {P(60,120,accent,'P')}
+        <path d="M75,120 L230,110" fill="none" stroke="white" strokeWidth="2.5" strokeDasharray="6,3" markerEnd="url(#rsarrow)"/>
+        <defs><marker id="rsarrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="white"/></marker></defs>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">SPRINT ON THE DROP -- REACT FAST</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">10m sprint from standing start, vary direction called</text>
+      </svg>
+    ),
+    stairs: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {/* Stair steps drawn as ascending blocks */}
+        {[0,1,2,3,4,5].map(i=>(
+          <rect key={i} x={70+i*30} y={175-i*22} width="30" height={22+i*22} fill="#94a3b8" opacity="0.5" stroke="white" strokeWidth="1"/>
+        ))}
+        {P(85,165,accent,'P')}
+        <path d="M85,155 L235,55" fill="none" stroke="white" strokeWidth="2.5" strokeDasharray="6,3" markerEnd="url(#stairarrow)"/>
+        <defs><marker id="stairarrow" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="white"/></marker></defs>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">SPRINT UP -- WALK DOWN TO RECOVER</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">8-10 reps, full recovery on the way down</text>
+      </svg>
+    ),
     circuit: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
