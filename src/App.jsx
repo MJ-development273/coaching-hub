@@ -1862,6 +1862,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [skillView, setSkillView] = useState('by-skill')
   const [selectedSkill, setSelectedSkill] = useState(null)
   const [teamFormat, setTeamFormat] = useState('9v9')
+  const [formation, setFormation] = useState('3-3-2')
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
@@ -1874,8 +1875,8 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [noteSaved, setNoteSaved] = useState(false)
   const [progPlayer, setProgPlayer] = useState(null)
   const [posForm, setPosForm] = useState({preferred:'',secondary:''})
-  const POSITIONS_9V9_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST']
-  const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST','CAM','CDM']
+  const POSITIONS_9V9_LIST = ['GK','RB','CB','LB','RM','CM','LM','LW','ST','RW','CDM']
+  const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','LW','ST','RW','CAM','CDM']
   const POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9_LIST : POSITIONS_11V11_LIST
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
@@ -1983,11 +1984,21 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Player name" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none" onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
                   </div>
                   {/* Preferred position */}
-                  <div><label className="text-xs font-semibold text-gray-600 block mb-2">Preferred Position</label>
-                    <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,preferred:pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.preferred===pos?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div></div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-gray-600">Preferred Position</label>
+                      {posForm.preferred && <button onClick={()=>setPosForm(f=>({...f,preferred:''}))} className="text-xs text-red-400 font-semibold">Clear</button>}
+                    </div>
+                    <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,preferred:f.preferred===pos?'':pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.preferred===pos?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div>
+                  </div>
                   {/* Secondary position */}
-                  <div><label className="text-xs font-semibold text-gray-600 block mb-2">Secondary Position</label>
-                    <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,secondary:f.secondary===pos?'':pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.secondary===pos?{background:'#8b5cf6',color:'white',borderColor:'#8b5cf6'}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div></div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="text-xs font-semibold text-gray-600">Secondary Position</label>
+                      {posForm.secondary && <button onClick={()=>setPosForm(f=>({...f,secondary:''}))} className="text-xs text-red-400 font-semibold">Clear</button>}
+                    </div>
+                    <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,secondary:f.secondary===pos?'':pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.secondary===pos?{background:'#8b5cf6',color:'white',borderColor:'#8b5cf6'}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div>
+                  </div>
                 </div>
                 <div className="flex gap-2">
                   <button onClick={()=>{
@@ -2431,23 +2442,60 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
       {/* ── Team View Tab ── */}
       {tab==='teamview'&&(()=>{
-        // 9v9 layout: GK + 3 defenders + 3 midfielders + 2 forwards
-        const POSITIONS_9V9 = [
-          {pos:'GK',  x:50, y:88},
-          {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
-          {pos:'LM',  x:18, y:48},{pos:'CM', x:50, y:50},{pos:'RM', x:82, y:48},
-          {pos:'ST',  x:35, y:25},{pos:'ST', x:65, y:25},
-        ]
-        // 11v11 layout: GK + 4 defenders + 4 midfielders + 2 forwards (4-4-2)
-        const POSITIONS_11V11 = [
-          {pos:'GK',  x:50, y:88},
-          {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
-          {pos:'LM',  x:10, y:50},{pos:'CM', x:35, y:52},{pos:'CM', x:65, y:52},{pos:'RM', x:90, y:50},
-          {pos:'CAM', x:50, y:36},
-          {pos:'ST',  x:35, y:18},{pos:'ST', x:65, y:18},
-        ]
+        // Formation layouts grouped by squad size
+        const FORMATIONS = {
+          '9v9': {
+            '3-3-2': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+              {pos:'LM',  x:18, y:48},{pos:'CM', x:50, y:50},{pos:'RM', x:82, y:48},
+              {pos:'ST',  x:35, y:25},{pos:'ST', x:65, y:25},
+            ],
+            '2-3-3': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'CB',  x:35, y:72},{pos:'CB', x:65, y:72},
+              {pos:'LM',  x:15, y:52},{pos:'CM', x:50, y:52},{pos:'RM', x:85, y:52},
+              {pos:'LW',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RW', x:80, y:22},
+            ],
+            '3-2-3': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+              {pos:'CDM', x:35, y:50},{pos:'CM', x:65, y:50},
+              {pos:'LW',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RW', x:80, y:22},
+            ],
+            '3-4-1': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+              {pos:'LM',  x:12, y:48},{pos:'CM', x:38, y:50},{pos:'CM', x:62, y:50},{pos:'RM', x:88, y:48},
+              {pos:'ST',  x:50, y:18},
+            ],
+          },
+          '11v11': {
+            '4-4-2': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+              {pos:'LM',  x:10, y:50},{pos:'CM', x:35, y:52},{pos:'CM', x:65, y:52},{pos:'RM', x:90, y:50},
+              {pos:'ST',  x:35, y:18},{pos:'ST', x:65, y:18},
+            ],
+            '4-3-3': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+              {pos:'CDM', x:50, y:56},{pos:'CM', x:28, y:46},{pos:'CM', x:72, y:46},
+              {pos:'LW',  x:15, y:20},{pos:'ST', x:50, y:15},{pos:'RW', x:85, y:20},
+            ],
+            '4-2-3-1': [
+              {pos:'GK',  x:50, y:88},
+              {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+              {pos:'CDM', x:35, y:56},{pos:'CDM', x:65, y:56},
+              {pos:'LM',  x:15, y:36},{pos:'CAM', x:50, y:34},{pos:'RM', x:85, y:36},
+              {pos:'ST',  x:50, y:14},
+            ],
+          }
+        }
 
-        const PITCH_POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9 : POSITIONS_11V11
+        const formationOptions = Object.keys(FORMATIONS[teamFormat])
+        const activeFormation = FORMATIONS[teamFormat][formation] ? formation : formationOptions[0]
+        const PITCH_POSITIONS = FORMATIONS[teamFormat][activeFormation]
         const formatLabel = teamFormat==='9v9' ? '9v9 (U12/U13)' : '11v11 (U14/U15)'
 
         return (
@@ -2457,10 +2505,10 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               <h3 className="font-bold text-gray-900 text-sm">🏟️ Team View</h3>
               <p className="text-xs text-gray-400">Players in preferred positions</p>
             </div>
-            {/* Format toggle */}
+            {/* Squad size toggle */}
             <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
               {[{v:'9v9',label:'9v9'},{v:'11v11',label:'11v11'}].map(f=>(
-                <button key={f.v} onClick={()=>setTeamFormat(f.v)}
+                <button key={f.v} onClick={()=>{setTeamFormat(f.v);setFormation(Object.keys(FORMATIONS[f.v])[0])}}
                   className="px-3 py-1 rounded-lg text-xs font-bold transition-all"
                   style={teamFormat===f.v?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
                   {f.label}
@@ -2468,7 +2516,17 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               ))}
             </div>
           </div>
-          <p className="text-xs font-semibold mb-3" style={{color:N.text}}>{formatLabel}</p>
+          <p className="text-xs font-semibold mb-2" style={{color:N.text}}>{formatLabel}</p>
+          {/* Formation selector */}
+          <div className="flex gap-2 mb-3 flex-wrap">
+            {formationOptions.map(f=>(
+              <button key={f} onClick={()=>setFormation(f)}
+                className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                style={activeFormation===f?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                {f}
+              </button>
+            ))}
+          </div>
           {squad.length===0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
           ) : (()=>{
