@@ -1855,14 +1855,14 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
 }
 
 // ─── Squad Manager (Attendance + Notes + Positions + Progress) ─────────────────
-function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup }) {
+function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup, preferredTeamFormat, preferredFormation, onSaveFormationPref }) {
   const [tab, setTab] = useState('squad')
   const [squadSort, setSquadSort] = useState('number') // 'number' | 'name'
   const [skillPlayer, setSkillPlayer] = useState(null)
   const [skillView, setSkillView] = useState('by-skill')
   const [selectedSkill, setSelectedSkill] = useState(null)
-  const [teamFormat, setTeamFormat] = useState('9v9')
-  const [formation, setFormation] = useState('3-3-2')
+  const [teamFormat, setTeamFormat] = useState(preferredTeamFormat||'9v9')
+  const [formation, setFormation] = useState(preferredFormation||'3-3-2')
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
@@ -2451,12 +2451,6 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               {pos:'LM',  x:18, y:48},{pos:'CM', x:50, y:50},{pos:'RM', x:82, y:48},
               {pos:'ST',  x:35, y:25},{pos:'ST', x:65, y:25},
             ],
-            '2-3-3': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'CB',  x:35, y:72},{pos:'CB', x:65, y:72},
-              {pos:'LM',  x:15, y:52},{pos:'CM', x:50, y:52},{pos:'RM', x:85, y:52},
-              {pos:'LM',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RM', x:80, y:22},
-            ],
             '3-2-3': [
               {pos:'GK',  x:50, y:88},
               {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
@@ -2518,14 +2512,26 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           </div>
           <p className="text-xs font-semibold mb-2" style={{color:N.text}}>{formatLabel}</p>
           {/* Formation selector */}
-          <div className="flex gap-2 mb-3 flex-wrap">
-            {formationOptions.map(f=>(
-              <button key={f} onClick={()=>setFormation(f)}
-                className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
-                style={activeFormation===f?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
-                {f}
+          <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+            <div className="flex gap-2 flex-wrap">
+              {formationOptions.map(f=>(
+                <button key={f} onClick={()=>setFormation(f)}
+                  className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                  style={activeFormation===f?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                  {f}
+                </button>
+              ))}
+            </div>
+            {(preferredTeamFormat!==teamFormat || preferredFormation!==activeFormation) ? (
+              <button onClick={()=>onSaveFormationPref(teamFormat,activeFormation)}
+                className="text-xs font-semibold px-3 py-1.5 rounded-full text-white" style={{background:'#16a34a'}}>
+                ⭐ Set as Default
               </button>
-            ))}
+            ) : (
+              <span className="text-xs font-semibold px-3 py-1.5 rounded-full" style={{background:N.light,color:N.text}}>
+                ⭐ Default
+              </span>
+            )}
           </div>
           {squad.length===0 ? (
             <p className="text-sm text-gray-400 text-center py-4">Add players in the Squad tab first</p>
@@ -2792,6 +2798,8 @@ export default function App() {
   const [groupCount,setGroupCount]=useState(2)
   const [groupAssignments,setGroupAssignments]=useState({}) // { playerId: groupNum }
   const [matchSquad,setMatchSquad]=useState({}) // { weekNum: { starters:[ids], subs:[ids], minutes:{playerId:mins} } }
+  const [preferredTeamFormat,setPreferredTeamFormat]=useState('9v9')
+  const [preferredFormation,setPreferredFormation]=useState('3-3-2')
   const [matchWeek,setMatchWeek]=useState(1)
   const [squadWeek,setSquadWeek]=useState(1)
   const [filterCat,setFilterCat]=useState('All')
@@ -2808,7 +2816,7 @@ export default function App() {
     async function load(){
       try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
-      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
+      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};sq.forEach(p=>{if(p.group_num)ga[p.id]=p.group_num});setGroupAssignments(ga)}}catch(e){}
       try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
@@ -2876,6 +2884,11 @@ export default function App() {
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
   const updatePlayerPosition=async(id,form)=>{setSquad(p=>p.map(x=>x.id===id?{...x,...form}:x));try{await supabase.from('squad').update(form).eq('id',id)}catch(e){}}
   const toggleAttendance=async(wk,pid,cur)=>{const k=wk+'-'+pid;setAttendance(p=>({...p,[k]:!cur}));try{await supabase.from('attendance').upsert({week_num:wk,player_name:String(pid),present:!cur},{onConflict:'week_num,player_name'})}catch(e){}}
+  const saveFormationPref=async(fmt,form)=>{
+    setPreferredTeamFormat(fmt)
+    setPreferredFormation(form)
+    try{await supabase.from('season_settings').upsert({id:1,pref_team_format:fmt,pref_formation:form})}catch(e){console.error('formation pref save:',e)}
+  }
   const saveMatchSquad=async(wk,data)=>{
     setMatchSquad(p=>({...p,[wk]:data}))
     try{await supabase.from('match_squad').upsert({week_num:wk,starters:data.starters,subs:data.subs,minutes:data.minutes})}catch(e){console.error('match_squad save:',e)}
@@ -2993,7 +3006,7 @@ export default function App() {
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession} matchNotes={matchNotes} currentWeek={currentWeek}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote} squad={squad} matchSquad={matchSquad} onSaveMatchSquad={saveMatchSquad}/>}
-        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup}/>}
+        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup} preferredTeamFormat={preferredTeamFormat} preferredFormation={preferredFormation} onSaveFormationPref={saveFormationPref}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
         {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
         {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession}/>}
