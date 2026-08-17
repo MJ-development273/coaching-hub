@@ -1875,8 +1875,8 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [noteSaved, setNoteSaved] = useState(false)
   const [progPlayer, setProgPlayer] = useState(null)
   const [posForm, setPosForm] = useState({preferred:'',secondary:''})
-  const POSITIONS_9V9_LIST = ['GK','RB','CB','LB','RM','CM','LM','LW','ST','RW','CDM']
-  const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','LW','ST','RW','CAM','CDM']
+  const POSITIONS_9V9_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST']
+  const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST']
   const POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9_LIST : POSITIONS_11V11_LIST
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
@@ -2455,13 +2455,13 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               {pos:'GK',  x:50, y:88},
               {pos:'CB',  x:35, y:72},{pos:'CB', x:65, y:72},
               {pos:'LM',  x:15, y:52},{pos:'CM', x:50, y:52},{pos:'RM', x:85, y:52},
-              {pos:'LW',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RW', x:80, y:22},
+              {pos:'LM',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RM', x:80, y:22},
             ],
             '3-2-3': [
               {pos:'GK',  x:50, y:88},
               {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
-              {pos:'CDM', x:35, y:50},{pos:'CM', x:65, y:50},
-              {pos:'LW',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RW', x:80, y:22},
+              {pos:'CM',  x:35, y:50},{pos:'CM', x:65, y:50},
+              {pos:'LM',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RM', x:80, y:22},
             ],
             '3-4-1': [
               {pos:'GK',  x:50, y:88},
@@ -2480,14 +2480,14 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
             '4-3-3': [
               {pos:'GK',  x:50, y:88},
               {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
-              {pos:'CDM', x:50, y:56},{pos:'CM', x:28, y:46},{pos:'CM', x:72, y:46},
-              {pos:'LW',  x:15, y:20},{pos:'ST', x:50, y:15},{pos:'RW', x:85, y:20},
+              {pos:'CM',  x:50, y:56},{pos:'CM', x:28, y:46},{pos:'CM', x:72, y:46},
+              {pos:'LM',  x:15, y:20},{pos:'ST', x:50, y:15},{pos:'RM', x:85, y:20},
             ],
             '4-2-3-1': [
               {pos:'GK',  x:50, y:88},
               {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
-              {pos:'CDM', x:35, y:56},{pos:'CDM', x:65, y:56},
-              {pos:'LM',  x:15, y:36},{pos:'CAM', x:50, y:34},{pos:'RM', x:85, y:36},
+              {pos:'CM',  x:35, y:56},{pos:'CM', x:65, y:56},
+              {pos:'LM',  x:15, y:36},{pos:'CM', x:50, y:34},{pos:'RM', x:85, y:36},
               {pos:'ST',  x:50, y:14},
             ],
           }
