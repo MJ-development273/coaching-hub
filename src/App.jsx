@@ -1693,7 +1693,7 @@ function SessionStatusManager({ sessionStatus, onSave }) {
 }
 
 // ─── Match Day Notes ───────────────────────────────────────────────────────────
-function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad }) {
+function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad, preferredTeamFormat }) {
   const note = matchNotes[weekNum] || {}
   const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
   const [tab, setTab] = useState('fixture')
@@ -1706,6 +1706,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const [subReplacements, setSubReplacements] = useState(squadData.subReplacements||{}) // { subPlayerId: starterPlayerId }
   const [squadView, setSquadView] = useState('list') // 'list' | 'pitch'
   const [posEditPlayer, setPosEditPlayer] = useState(null)
+  const [matchFormation, setMatchFormation] = useState('')
   useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
   useEffect(()=>{
     const sd = matchSquad?.[weekNum] || { starters:[], subs:[], positions:{}, subReplacements:{} }
@@ -1853,82 +1854,82 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                           ))}
                         </div>
                       ) : (
-                        /* Pitch view */
-                        <div className="relative rounded-xl overflow-hidden" style={{background:'#166534',paddingTop:'130%'}}>
-                          <div className="absolute inset-0">
-                            <svg viewBox="0 0 100 130" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                              <rect width="100" height="130" fill="#166534"/>
-                              <rect x="3" y="3" width="94" height="124" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
-                              <line x1="3" y1="65" x2="97" y2="65" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                              <circle cx="50" cy="65" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                              <rect x="30" y="3" width="40" height="16" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                              <rect x="30" y="111" width="40" height="16" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                            </svg>
-                            {(()=>{
-                              // Fixed pitch coordinates per specific position -- own goal at bottom (y near 112),
-                              // opponent goal at top (y near 22), halfway line at y=65
-                              const SLOT_COORDS = {
-                                GK:  [{x:50, y:112}],
-                                LB:  [{x:18, y:88}],
-                                CB:  [{x:38, y:90}, {x:62, y:90}], // supports 1 or 2 CBs
-                                RB:  [{x:82, y:88}],
-                                LM:  [{x:15, y:63}],
-                                CM:  [{x:38, y:65}, {x:62, y:65}], // supports 1 or 2 CMs
-                                RM:  [{x:85, y:63}],
-                                ST:  [{x:38, y:22}, {x:62, y:22}], // supports 1 or 2 STs
-                              }
-                              const dots = []
-                              const cbSlotIndex = {} // tracks how many CB/CM/ST slots have been used so far
-                              const usedGK = startersList.some(p => (startingPositions[p.id]||p.preferred)==='GK')
+                        /* Pitch view -- uses the same formation grid as Team View so every slot is fixed and predictable */
+                        (()=>{
+                          const teamFmt = preferredTeamFormat || '9v9'
+                          const fmtOptions = Object.keys(PITCH_FORMATIONS[teamFmt])
+                          const activeFmt = PITCH_FORMATIONS[teamFmt][matchFormation] ? matchFormation : fmtOptions[0]
+                          const slots = PITCH_FORMATIONS[teamFmt][activeFmt]
 
-                              // GK slot -- always rendered, even if nobody is assigned yet
-                              if(!usedGK){
-                                const gk = SLOT_COORDS.GK[0]
-                                dots.push(
-                                  <div key="gk-empty" className="absolute flex flex-col items-center" style={{left:`${gk.x}%`,top:`${gk.y}%`,transform:'translate(-50%,-50%)'}}>
-                                    <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'26px',height:'26px',fontSize:'8px',background:'rgba(255,255,255,0.15)',border:'2px dashed rgba(255,255,255,0.6)'}}>GK</div>
-                                    <div className="text-white opacity-70 mt-0.5" style={{fontSize:'7px'}}>Not set</div>
-                                  </div>
-                                )
-                              }
+                          // Assign starters to slots: prefer a starter whose set position matches the slot,
+                          // otherwise fill remaining slots with any unassigned starters in order
+                          const usedPlayerIds = new Set()
+                          const slotAssignments = slots.map(slot => {
+                            const match = startersList.find(p => !usedPlayerIds.has(p.id) && (startingPositions[p.id]||p.preferred)===slot.pos)
+                            if(match){ usedPlayerIds.add(match.id); return { slot, player: match } }
+                            return { slot, player: null }
+                          })
+                          // Any starters left over (no matching slot, or extra players in a position with all slots full)
+                          const leftover = startersList.filter(p => !usedPlayerIds.has(p.id))
 
-                              startersList.forEach(p=>{
-                                const posLabel = startingPositions[p.id] || p.preferred || ''
-                                const slots = SLOT_COORDS[posLabel]
-                                let coord
-                                if(slots){
-                                  const idx = cbSlotIndex[posLabel] || 0
-                                  coord = slots[idx] || slots[slots.length-1]
-                                  cbSlotIndex[posLabel] = idx+1
-                                } else {
-                                  // No specific position set -- place in a holding area near the centre so it's visible but clearly needs assigning
-                                  const idx = cbSlotIndex['_unset'] || 0
-                                  coord = { x: 50, y: 65 }
-                                  cbSlotIndex['_unset'] = idx+1
-                                }
-                                dots.push(
-                                  <div key={p.id} onClick={()=>setPosEditPlayer(p)} className="absolute flex flex-col items-center cursor-pointer" style={{left:`${coord.x}%`,top:`${coord.y}%`,transform:'translate(-50%,-50%)'}}>
-                                    <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:posLabel?N.bg:'#ea580c',border:posLabel?'2px solid white':'2px solid #fed7aa'}}>
-                                      {p.squad_num||p.name[0]}
+                          return (
+                            <>
+                              <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs text-gray-500">Formation:</p>
+                                <div className="flex gap-1 flex-wrap">
+                                  {fmtOptions.map(f=>(
+                                    <button key={f} onClick={()=>setMatchFormation(f)}
+                                      className="px-2 py-1 rounded-lg text-xs font-bold border transition-all"
+                                      style={activeFmt===f?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                                      {f}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                              <div className="relative rounded-xl overflow-hidden" style={{background:'#166534',paddingTop:'130%'}}>
+                                <div className="absolute inset-0">
+                                  <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                                    <rect width="100" height="100" fill="#166534"/>
+                                    <rect x="3" y="3" width="94" height="94" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
+                                    <line x1="3" y1="50" x2="97" y2="50" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                                    <circle cx="50" cy="50" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                                    <rect x="30" y="3" width="40" height="14" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                                    <rect x="30" y="83" width="40" height="14" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                                  </svg>
+                                  {slotAssignments.map(({slot,player},i)=>(
+                                    <div key={i} onClick={()=>player&&setPosEditPlayer(player)} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${100-slot.y}%`,transform:'translate(-50%,-50%)',cursor:player?'pointer':'default'}}>
+                                      <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px dashed rgba(255,255,255,0.6)'}}>
+                                        {player ? (player.squad_num||player.name[0]) : slot.pos}
+                                      </div>
+                                      {player ? (
+                                        <>
+                                          <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>
+                                          <div className="text-white opacity-90" style={{fontSize:'6px'}}>{slot.pos}</div>
+                                        </>
+                                      ) : (
+                                        <div className="text-white opacity-60 mt-0.5" style={{fontSize:'7px'}}>Empty</div>
+                                      )}
                                     </div>
-                                    <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name.split(' ')[0]}</div>
-                                    <div className="opacity-90" style={{fontSize:'6px',color:posLabel?'white':'#fed7aa'}}>{posLabel||'Set position'}</div>
+                                  ))}
+                                </div>
+                              </div>
+                              {leftover.length>0 && (
+                                <div className="mt-2 p-2 rounded-xl" style={{background:'#fff7ed',border:'1px solid #fed7aa'}}>
+                                  <p className="text-xs font-semibold text-orange-700 mb-1">⚠️ {leftover.length} player{leftover.length>1?'s':''} not placed in a slot -- tap to assign a position that fits the formation</p>
+                                  <div className="flex flex-wrap gap-1">
+                                    {leftover.map(p=>(
+                                      <button key={p.id} onClick={()=>setPosEditPlayer(p)} className="text-xs px-2 py-1 rounded-full text-white font-semibold" style={{background:'#ea580c'}}>
+                                        {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}
+                                      </button>
+                                    ))}
                                   </div>
-                                )
-                              })
-                              return dots
-                            })()}
-                          </div>
-                        </div>
+                                </div>
+                              )}
+                            </>
+                          )
+                        })()
                       )}
-                      {squadView==='pitch' && startersList.length>0 && (()=>{
-                        const unsetCount = startersList.filter(p=>!(startingPositions[p.id]||p.preferred)).length
-                        return unsetCount>0 ? (
-                          <p className="text-xs text-orange-600 font-semibold mt-2 text-center">⚠️ {unsetCount} player{unsetCount>1?'s':''} without a position set -- tap the orange dot{unsetCount>1?'s':''} to assign</p>
-                        ) : (
-                          <p className="text-xs text-gray-400 mt-2 text-center">Tap a player to change their position for this match</p>
-                        )
-                      })()}
+                      
                     </div>
 
                     {/* Subs bench */}
@@ -2043,6 +2044,50 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
 }
 
 // ─── Squad Manager (Attendance + Notes + Positions + Progress) ─────────────────
+const PITCH_FORMATIONS = {
+  '9v9': {
+    '3-3-2': [
+      {pos:'GK',  x:50, y:88},
+      {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+      {pos:'LM',  x:18, y:48},{pos:'CM', x:50, y:50},{pos:'RM', x:82, y:48},
+      {pos:'ST',  x:35, y:25},{pos:'ST', x:65, y:25},
+    ],
+    '3-2-3': [
+      {pos:'GK',  x:50, y:88},
+      {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+      {pos:'CM',  x:35, y:50},{pos:'CM', x:65, y:50},
+      {pos:'LM',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RM', x:80, y:22},
+    ],
+    '3-4-1': [
+      {pos:'GK',  x:50, y:88},
+      {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
+      {pos:'LM',  x:12, y:48},{pos:'CM', x:38, y:50},{pos:'CM', x:62, y:50},{pos:'RM', x:88, y:48},
+      {pos:'ST',  x:50, y:18},
+    ],
+  },
+  '11v11': {
+    '4-4-2': [
+      {pos:'GK',  x:50, y:88},
+      {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+      {pos:'LM',  x:10, y:50},{pos:'CM', x:35, y:52},{pos:'CM', x:65, y:52},{pos:'RM', x:90, y:50},
+      {pos:'ST',  x:35, y:18},{pos:'ST', x:65, y:18},
+    ],
+    '4-3-3': [
+      {pos:'GK',  x:50, y:88},
+      {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+      {pos:'CM',  x:50, y:56},{pos:'CM', x:28, y:46},{pos:'CM', x:72, y:46},
+      {pos:'LM',  x:15, y:20},{pos:'ST', x:50, y:15},{pos:'RM', x:85, y:20},
+    ],
+    '4-2-3-1': [
+      {pos:'GK',  x:50, y:88},
+      {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
+      {pos:'CM',  x:35, y:56},{pos:'CM', x:65, y:56},
+      {pos:'LM',  x:15, y:36},{pos:'CM', x:50, y:34},{pos:'RM', x:85, y:36},
+      {pos:'ST',  x:50, y:14},
+    ],
+  }
+}
+
 function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup, preferredTeamFormat, preferredFormation, onSaveFormationPref }) {
   const [tab, setTab] = useState('squad')
   const [squadSort, setSquadSort] = useState('number') // 'number' | 'name'
@@ -2631,49 +2676,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
       {/* ── Team View Tab ── */}
       {tab==='teamview'&&(()=>{
         // Formation layouts grouped by squad size
-        const FORMATIONS = {
-          '9v9': {
-            '3-3-2': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
-              {pos:'LM',  x:18, y:48},{pos:'CM', x:50, y:50},{pos:'RM', x:82, y:48},
-              {pos:'ST',  x:35, y:25},{pos:'ST', x:65, y:25},
-            ],
-            '3-2-3': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
-              {pos:'CM',  x:35, y:50},{pos:'CM', x:65, y:50},
-              {pos:'LM',  x:20, y:22},{pos:'ST', x:50, y:18},{pos:'RM', x:80, y:22},
-            ],
-            '3-4-1': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:18, y:70},{pos:'CB', x:50, y:72},{pos:'RB', x:82, y:70},
-              {pos:'LM',  x:12, y:48},{pos:'CM', x:38, y:50},{pos:'CM', x:62, y:50},{pos:'RM', x:88, y:48},
-              {pos:'ST',  x:50, y:18},
-            ],
-          },
-          '11v11': {
-            '4-4-2': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
-              {pos:'LM',  x:10, y:50},{pos:'CM', x:35, y:52},{pos:'CM', x:65, y:52},{pos:'RM', x:90, y:50},
-              {pos:'ST',  x:35, y:18},{pos:'ST', x:65, y:18},
-            ],
-            '4-3-3': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
-              {pos:'CM',  x:50, y:56},{pos:'CM', x:28, y:46},{pos:'CM', x:72, y:46},
-              {pos:'LM',  x:15, y:20},{pos:'ST', x:50, y:15},{pos:'RM', x:85, y:20},
-            ],
-            '4-2-3-1': [
-              {pos:'GK',  x:50, y:88},
-              {pos:'LB',  x:10, y:72},{pos:'CB', x:35, y:72},{pos:'CB', x:65, y:72},{pos:'RB', x:90, y:72},
-              {pos:'CM',  x:35, y:56},{pos:'CM', x:65, y:56},
-              {pos:'LM',  x:15, y:36},{pos:'CM', x:50, y:34},{pos:'RM', x:85, y:36},
-              {pos:'ST',  x:50, y:14},
-            ],
-          }
-        }
+        const FORMATIONS = PITCH_FORMATIONS
 
         const formationOptions = Object.keys(FORMATIONS[teamFormat])
         const activeFormation = FORMATIONS[teamFormat][formation] ? formation : formationOptions[0]
@@ -3222,7 +3225,7 @@ export default function App() {
         {isCoach&&view==='planner'&&<TrainingPlanner drills={drills} seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} dateOverrides={dateOverrides} onDateOverride={(wk,date)=>setDateOverrides(p=>({...p,[wk]:date}))} onDateClear={(wk)=>setDateOverrides(p=>{const n={...p};delete n[wk];return n})} squad={squad} groupAssignments={groupAssignments} groupCount={groupCount}/>}
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession} matchNotes={matchNotes} currentWeek={currentWeek}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
-        {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote} squad={squad} matchSquad={matchSquad} onSaveMatchSquad={saveMatchSquad}/>}
+        {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote} squad={squad} matchSquad={matchSquad} onSaveMatchSquad={saveMatchSquad} preferredTeamFormat={preferredTeamFormat}/>}
         {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup} preferredTeamFormat={preferredTeamFormat} preferredFormation={preferredFormation} onSaveFormationPref={saveFormationPref}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
         {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
