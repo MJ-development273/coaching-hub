@@ -1699,14 +1699,20 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const [tab, setTab] = useState('fixture')
   const [saved, setSaved] = useState(false)
   const [squadSaved, setSquadSaved] = useState(false)
-  const squadData = matchSquad?.[weekNum] || { starters:[], subs:[], minutes:{} }
+  const squadData = matchSquad?.[weekNum] || { starters:[], subs:[], minutes:{}, positions:{}, subReplacements:{} }
   const [starters, setStarters] = useState(squadData.starters)
   const [benchSubs, setBenchSubs] = useState(squadData.subs)
+  const [startingPositions, setStartingPositions] = useState(squadData.positions||{}) // { playerId: 'CB' }
+  const [subReplacements, setSubReplacements] = useState(squadData.subReplacements||{}) // { subPlayerId: starterPlayerId }
+  const [squadView, setSquadView] = useState('list') // 'list' | 'pitch'
+  const [posEditPlayer, setPosEditPlayer] = useState(null)
   useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
   useEffect(()=>{
-    const sd = matchSquad?.[weekNum] || { starters:[], subs:[] }
+    const sd = matchSquad?.[weekNum] || { starters:[], subs:[], positions:{}, subReplacements:{} }
     setStarters(sd.starters||[])
     setBenchSubs(sd.subs||[])
+    setStartingPositions(sd.positions||{})
+    setSubReplacements(sd.subReplacements||{})
     setSquadSaved(false)
   },[weekNum, matchSquad])
 
@@ -1720,15 +1726,28 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
     setStarters(prev => prev.filter(x=>x!==pid))
     setSquadSaved(false)
   }
+  const setPlayerPosition = (pid, pos) => {
+    setStartingPositions(prev => ({ ...prev, [pid]: pos }))
+    setSquadSaved(false)
+  }
+  const setSubReplacement = (subId, starterId) => {
+    setSubReplacements(prev => ({ ...prev, [subId]: starterId || null }))
+    setSquadSaved(false)
+  }
   const saveSquadSelection = async () => {
-    await onSaveMatchSquad(weekNum, { starters, subs: benchSubs, minutes: squadData.minutes||{} })
+    await onSaveMatchSquad(weekNum, { starters, subs: benchSubs, minutes: squadData.minutes||{}, positions: startingPositions, subReplacements })
     setSquadSaved(true)
     setTimeout(()=>setSquadSaved(false), 2000)
   }
   const squadWa = () => {
     const startersList = (squad||[]).filter(p=>starters.includes(p.id))
     const subsList = (squad||[]).filter(p=>benchSubs.includes(p.id))
-    return `Clydach Juniors -- Team Sheet${form.opponent?' vs '+form.opponent:''}\n\nStarting XI:\n${startersList.map(p=>`${p.squad_num?'#'+p.squad_num+' ':''}${p.name}${p.preferred?' ('+p.preferred+')':''}`).join('\n')}\n\nSubs:\n${subsList.map(p=>`${p.squad_num?'#'+p.squad_num+' ':''}${p.name}`).join('\n')}\n\n- Coaching Team\n🔗 ${SITE_URL}`
+    const subsText = subsList.map(p=>{
+      const replacingId = subReplacements[p.id]
+      const replacingPlayer = replacingId ? startersList.find(s=>s.id===replacingId) : null
+      return `${p.squad_num?'#'+p.squad_num+' ':''}${p.name}${replacingPlayer?` (for ${replacingPlayer.name})`:''}`
+    }).join('\n')
+    return `Clydach Juniors -- Team Sheet${form.opponent?' vs '+form.opponent:''}\n\nStarting XI:\n${startersList.map(p=>`${p.squad_num?'#'+p.squad_num+' ':''}${p.name} (${startingPositions[p.id]||p.preferred||'?'})`).join('\n')}\n\nSubs:\n${subsText}\n\n- Coaching Team\n🔗 ${SITE_URL}`
   }
   const set = (k,v) => { setForm(f=>({...f,[k]:v})); setSaved(false) }
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
@@ -1808,22 +1827,75 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                     <div>
                       <div className="flex items-center justify-between mb-2">
                         <p className="text-xs font-bold text-gray-700">⭐ Starting XI</p>
-                        <span className="text-xs text-gray-400">{startersList.length} selected</span>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-gray-400">{startersList.length} selected</span>
+                          {startersList.length>0 && (
+                            <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+                              <button onClick={()=>setSquadView('list')} className="px-2 py-0.5 rounded text-xs font-bold transition-all" style={squadView==='list'?{background:'white',color:N.text}:{color:'#9ca3af'}}>List</button>
+                              <button onClick={()=>setSquadView('pitch')} className="px-2 py-0.5 rounded text-xs font-bold transition-all" style={squadView==='pitch'?{background:'white',color:N.text}:{color:'#9ca3af'}}>Pitch</button>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       {startersList.length===0 ? (
                         <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl p-3 text-center">Tap players below to add to Starting XI</p>
-                      ) : (
+                      ) : squadView==='list' ? (
                         <div className="space-y-1.5">
                           {startersList.map(p=>(
                             <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl" style={{background:'#f0fdf4',border:'1px solid #bbf7d0'}}>
                               <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
                               <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
-                              {p.preferred && <span className="text-xs bg-white px-1.5 py-0.5 rounded-full text-gray-500">{p.preferred}</span>}
+                              <button onClick={()=>setPosEditPlayer(p)} className="text-xs bg-white px-1.5 py-0.5 rounded-full text-gray-500 border border-gray-200">
+                                {startingPositions[p.id] || p.preferred || 'Set position'}
+                              </button>
                               <button onClick={()=>toggleStarter(p.id)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
                             </div>
                           ))}
                         </div>
+                      ) : (
+                        /* Pitch view */
+                        <div className="relative rounded-xl overflow-hidden" style={{background:'#166534',paddingTop:'130%'}}>
+                          <div className="absolute inset-0">
+                            <svg viewBox="0 0 100 130" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                              <rect width="100" height="130" fill="#166534"/>
+                              <rect x="3" y="3" width="94" height="124" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
+                              <line x1="3" y1="65" x2="97" y2="65" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                              <circle cx="50" cy="65" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                              <rect x="30" y="3" width="40" height="16" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                              <rect x="30" y="111" width="40" height="16" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+                            </svg>
+                            {(()=>{
+                              // Distribute starters vertically by assigned/preferred position, GK at bottom, ST at top
+                              const posOrder = {GK:0,LB:1,CB:1,RB:1,LM:2,CM:2,RM:2,ST:3}
+                              const grouped = {}
+                              startersList.forEach(p=>{
+                                const pos = startingPositions[p.id] || p.preferred || 'CM'
+                                const row = posOrder[pos]!==undefined?posOrder[pos]:2
+                                if(!grouped[row]) grouped[row]=[]
+                                grouped[row].push(p)
+                              })
+                              const rowY = {0:118,1:95,2:65,3:20}
+                              return Object.entries(grouped).map(([row,players])=>{
+                                const y = rowY[row]||65
+                                return players.map((p,i)=>{
+                                  const spacing = 90/(players.length+1)
+                                  const x = spacing*(i+1)+5
+                                  return (
+                                    <div key={p.id} onClick={()=>setPosEditPlayer(p)} className="absolute flex flex-col items-center cursor-pointer" style={{left:`${x}%`,top:`${y}%`,transform:'translate(-50%,-50%)'}}>
+                                      <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:N.bg,border:'2px solid white'}}>
+                                        {p.squad_num||p.name[0]}
+                                      </div>
+                                      <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name.split(' ')[0]}</div>
+                                      <div className="text-white opacity-70" style={{fontSize:'6px'}}>{startingPositions[p.id]||p.preferred||'?'}</div>
+                                    </div>
+                                  )
+                                })
+                              })
+                            })()}
+                          </div>
+                        </div>
                       )}
+                      {squadView==='pitch' && startersList.length>0 && <p className="text-xs text-gray-400 mt-2 text-center">Tap a player to set their position for this match</p>}
                     </div>
 
                     {/* Subs bench */}
@@ -1836,13 +1908,27 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                         <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl p-3 text-center">Tap players below to add to bench</p>
                       ) : (
                         <div className="space-y-1.5">
-                          {subsList.map(p=>(
-                            <div key={p.id} className="flex items-center gap-2 p-2 rounded-xl" style={{background:'#eff6ff',border:'1px solid #bfdbfe'}}>
-                              <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
-                              <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
-                              <button onClick={()=>toggleSub(p.id)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
-                            </div>
-                          ))}
+                          {subsList.map(p=>{
+                            const replacingId = subReplacements[p.id]
+                            const replacingPlayer = replacingId ? startersList.find(s=>s.id===replacingId) : null
+                            return (
+                              <div key={p.id} className="rounded-xl overflow-hidden" style={{background:'#eff6ff',border:'1px solid #bfdbfe'}}>
+                                <div className="flex items-center gap-2 p-2">
+                                  <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
+                                  <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
+                                  <button onClick={()=>toggleSub(p.id)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+                                </div>
+                                <div className="px-2 pb-2 flex items-center gap-2">
+                                  <span className="text-xs text-blue-600 font-semibold">Replacing:</span>
+                                  <select value={replacingId||''} onChange={e=>setSubReplacement(p.id, e.target.value?Number(e.target.value):null)}
+                                    className="flex-1 text-xs border border-blue-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
+                                    <option value="">-- Select player --</option>
+                                    {startersList.map(s=><option key={s.id} value={s.id}>{s.name}{s.preferred?' ('+s.preferred+')':''}</option>)}
+                                  </select>
+                                </div>
+                              </div>
+                            )
+                          })}
                         </div>
                       )}
                     </div>
@@ -1878,6 +1964,26 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                         📲 Share Team Sheet
                       </a>
                     </div>
+
+                    {/* Position edit modal */}
+                    {posEditPlayer && (
+                      <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{background:'rgba(0,0,0,0.75)'}}>
+                        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6">
+                          <h3 className="font-bold text-gray-900 mb-1">🎽 {posEditPlayer.name}</h3>
+                          <p className="text-xs text-gray-400 mb-4">Set position for this match{posEditPlayer.preferred?` -- usually plays ${posEditPlayer.preferred}`:''}</p>
+                          <div className="flex flex-wrap gap-2 mb-4">
+                            {['GK','LB','CB','RB','LM','CM','RM','ST'].map(pos=>(
+                              <button key={pos} onClick={()=>setPlayerPosition(posEditPlayer.id, pos)}
+                                className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all"
+                                style={(startingPositions[posEditPlayer.id]||posEditPlayer.preferred)===pos?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                                {pos}
+                              </button>
+                            ))}
+                          </div>
+                          <button onClick={()=>setPosEditPlayer(null)} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:N.bg}}>Done</button>
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -2900,7 +3006,7 @@ export default function App() {
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
-      try{const{data:ms}=await supabase.from('match_squad').select('*');if(ms){const o={};ms.forEach(r=>{o[r.week_num]={starters:r.starters||[],subs:r.subs||[],minutes:r.minutes||{}}});setMatchSquad(o)}}catch(e){}
+      try{const{data:ms}=await supabase.from('match_squad').select('*');if(ms){const o={};ms.forEach(r=>{o[r.week_num]={starters:r.starters||[],subs:r.subs||[],minutes:r.minutes||{},positions:r.positions||{},subReplacements:r.sub_replacements||{}}});setMatchSquad(o)}}catch(e){}
       try{const{data:sk}=await supabase.from('player_skills').select('*');if(sk){const o={};sk.forEach(r=>{o[r.player_id+'-'+r.skill]=r.level});setSkillsData(o)}}catch(e){}
       setLoading(false)
     }
@@ -2969,7 +3075,7 @@ export default function App() {
   }
   const saveMatchSquad=async(wk,data)=>{
     setMatchSquad(p=>({...p,[wk]:data}))
-    try{await supabase.from('match_squad').upsert({week_num:wk,starters:data.starters,subs:data.subs,minutes:data.minutes})}catch(e){console.error('match_squad save:',e)}
+    try{await supabase.from('match_squad').upsert({week_num:wk,starters:data.starters,subs:data.subs,minutes:data.minutes,positions:data.positions||{},sub_replacements:data.subReplacements||{}})}catch(e){console.error('match_squad save:',e)}
   }
   const saveGroupCount=async(count)=>{
     setGroupCount(count)
