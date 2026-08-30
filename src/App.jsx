@@ -1865,34 +1865,35 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                               <rect x="30" y="111" width="40" height="16" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
                             </svg>
                             {(()=>{
-                              // Distribute starters vertically by assigned/preferred position, GK at bottom, ST at top
+                              // Distribute starters vertically: GK nearest own goal (bottom), attackers nearest opponent goal (top)
                               const posOrder = {GK:0,LB:1,CB:1,RB:1,LM:2,CM:2,RM:2,ST:3}
-                              const grouped = {0:[],1:[],2:[],3:[]}
+                              const rows = {0:[],1:[],2:[],3:[]}
                               startersList.forEach(p=>{
                                 const pos = startingPositions[p.id] || p.preferred || ''
-                                const row = posOrder[pos]!==undefined ? posOrder[pos] : 2
-                                grouped[row].push(p)
+                                const rowNum = posOrder[pos]!==undefined ? posOrder[pos] : 2
+                                rows[rowNum].push(p)
                               })
-                              const rowY = {0:118,1:95,2:65,3:20}
-                              return Object.entries(grouped).map(([row,players])=>{
-                                const y = rowY[row]
-                                if(players.length===0){
-                                  // Show an empty GK slot placeholder so it's obvious someone needs assigning
-                                  if(row==='0'){
-                                    return (
-                                      <div key="gk-empty" className="absolute flex flex-col items-center" style={{left:'50%',top:`${y}%`,transform:'translate(-50%,-50%)'}}>
-                                        <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'26px',height:'26px',fontSize:'8px',background:'rgba(255,255,255,0.15)',border:'2px dashed rgba(255,255,255,0.5)'}}>GK</div>
-                                        <div className="text-white opacity-60 mt-0.5" style={{fontSize:'7px'}}>Not set</div>
-                                      </div>
-                                    )
-                                  }
-                                  return null
-                                }
-                                return players.map((p,i)=>{
+                              // Row 0 = GK (near bottom, own goal) ... Row 3 = strikers (near top, opponent goal)
+                              const rowY = {0:112,1:88,2:55,3:22}
+                              const dots = []
+                              // GK row - always render, even if empty, so it's never silently missing
+                              if(rows[0].length===0){
+                                dots.push(
+                                  <div key="gk-empty" className="absolute flex flex-col items-center" style={{left:'50%',top:`${rowY[0]}%`,transform:'translate(-50%,-50%)'}}>
+                                    <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'26px',height:'26px',fontSize:'8px',background:'rgba(255,255,255,0.15)',border:'2px dashed rgba(255,255,255,0.6)'}}>GK</div>
+                                    <div className="text-white opacity-70 mt-0.5" style={{fontSize:'7px'}}>Not set</div>
+                                  </div>
+                                )
+                              }
+                              ;[0,1,2,3].forEach(rowNum=>{
+                                const players = rows[rowNum]
+                                if(players.length===0) return
+                                const y = rowY[rowNum]
+                                players.forEach((p,i)=>{
                                   const spacing = 90/(players.length+1)
                                   const x = spacing*(i+1)+5
                                   const posLabel = startingPositions[p.id]||p.preferred||''
-                                  return (
+                                  dots.push(
                                     <div key={p.id} onClick={()=>setPosEditPlayer(p)} className="absolute flex flex-col items-center cursor-pointer" style={{left:`${x}%`,top:`${y}%`,transform:'translate(-50%,-50%)'}}>
                                       <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:posLabel?N.bg:'#ea580c',border:posLabel?'2px solid white':'2px solid #fed7aa'}}>
                                         {p.squad_num||p.name[0]}
@@ -1903,6 +1904,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                                   )
                                 })
                               })
+                              return dots
                             })()}
                           </div>
                         </div>
