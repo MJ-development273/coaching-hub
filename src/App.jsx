@@ -2796,8 +2796,16 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
 }
 
 // ─── Parent View ───────────────────────────────────────────────────────────────
-function ParentView({ sessionStatus, matchNotes, drills, homeSession }) {
-  const upcomingFixture = Object.values(matchNotes).find(n=>n.show_parents&&n.opponent)
+function ParentView({ sessionStatus, matchNotes, drills, homeSession, seasonStart }) {
+  const upcomingEntry = Object.entries(matchNotes).find(([wk,n])=>n.show_parents&&n.opponent)
+  const upcomingFixture = upcomingEntry ? upcomingEntry[1] : null
+  const upcomingWeekNum = upcomingEntry ? Number(upcomingEntry[0]) : null
+  const fixtureDate = (seasonStart && upcomingWeekNum) ? (()=>{
+    const d = new Date(seasonStart)
+    d.setDate(d.getDate() + (upcomingWeekNum - 1) * 7
+    )
+    return d
+  })() : null
   return (
     <div>
       {sessionStatus.show_parents&&(
@@ -2809,6 +2817,7 @@ function ParentView({ sessionStatus, matchNotes, drills, homeSession }) {
         <div className="rounded-2xl p-4 mb-4" style={{background:'#eff6ff',border:'1px solid #bfdbfe'}}>
           <p className="font-bold text-blue-800 text-sm mb-1">⚽ Upcoming Match</p>
           <p className="text-blue-900 font-semibold text-sm">vs {upcomingFixture.opponent}</p>
+          {fixtureDate && <p className="text-blue-700 text-xs mt-0.5">📅 {fixtureDate.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'})}</p>}
           <div className="flex gap-3 mt-1">
             {upcomingFixture.match_time&&<p className="text-blue-700 text-xs">⏰ {upcomingFixture.match_time}</p>}
             {upcomingFixture.venue&&<p className="text-blue-700 text-xs">📍 {upcomingFixture.venue}</p>}
@@ -3049,7 +3058,7 @@ export default function App() {
         {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup} preferredTeamFormat={preferredTeamFormat} preferredFormation={preferredFormation} onSaveFormationPref={saveFormationPref}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
         {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
-        {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession}/>}
+        {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession} seasonStart={seasonStart}/>}
 
         {isCoach&&view==='drills'&&(
           <>
