@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from './supabase'
 import { SEED_DRILLS } from './drills'
 
@@ -957,7 +957,29 @@ function SharePlanModal({ session, weekNum, sessionDate, sessionNotes, ageFilter
 }
 
 function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartChange, dateOverrides, onDateOverride, onDateClear, squad, groupAssignments, groupCount }) {
-  const [weekNum,setWeekNum]=useState(1)
+  // Detect if TODAY falls in the pre-season window (used both for week calc and default toggle)
+  const isPreSeasonAuto = (() => {
+    if (!preSeasonStart) return false
+    const today = new Date(); today.setHours(0,0,0,0)
+    const pre = new Date(preSeasonStart); pre.setHours(0,0,0,0)
+    const comp = seasonStart ? new Date(seasonStart) : null
+    if (comp) comp.setHours(0,0,0,0)
+    if (today < pre) return false
+    if (comp && today >= comp) return false
+    return true
+  })()
+
+  // Calculate the correct current week number based on which season is active
+  const calcWeekFor = (isPre) => {
+    const base = isPre ? preSeasonStart : seasonStart
+    if (!base) return 1
+    const s = new Date(base), t = new Date()
+    s.setHours(0,0,0,0); t.setHours(0,0,0,0)
+    if (t < s) return 1
+    return Math.floor((t - s) / (1000*60*60*24*7)) + 1
+  }
+
+  const [weekNum,setWeekNum]=useState(()=>calcWeekFor(isPreSeasonAuto))
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
@@ -974,22 +996,40 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const focusNavy=e=>e.target.style.borderColor=N.bg
   const blurGray=e=>e.target.style.borderColor='#d1d5db'
 
-  // Build auto session
-  // Detect if current week falls in pre-season window
-  const isPreSeasonAuto = (() => {
-    if (!preSeasonStart) return false
-    const today = new Date(); today.setHours(0,0,0,0)
-    const pre = new Date(preSeasonStart); pre.setHours(0,0,0,0)
-    const comp = seasonStart ? new Date(seasonStart) : null
-    if (comp) comp.setHours(0,0,0,0)
-    if (today < pre) return false
-    if (comp && today >= comp) return false
-    return true
-  })()
   const isPreSeason = showPreSeason !== null ? showPreSeason : isPreSeasonAuto
 
+  const overridesLoadedRef = useRef(false)
+
+  // Load saved drill swaps from Supabase once on mount
+  useEffect(()=>{
+    (async()=>{
+      try{
+        const{data}=await supabase.from('season_settings').select('session_overrides').eq('id',1).single()
+        if(data && data.session_overrides) setOverrides(data.session_overrides)
+      }catch(e){console.error('load overrides:',e)}
+      overridesLoadedRef.current = true
+    })()
+  },[])
+
+  // Persist drill swaps to Supabase whenever they change (debounced), but never before the initial load completes
+  useEffect(()=>{
+    if(!overridesLoadedRef.current) return
+    const t = setTimeout(()=>{
+      supabase.from('season_settings').upsert({id:1, session_overrides: overrides}).then(({error})=>{
+        if(error) console.error('save overrides:',error)
+      })
+    }, 600)
+    return ()=>clearTimeout(t)
+  },[overrides])
+
+  // Re-sync week number whenever season dates change or the pre-season/season toggle changes,
+  // so the planner always opens on the correct upcoming week rather than staying wherever it was
+  useEffect(()=>{
+    setWeekNum(calcWeekFor(isPreSeason))
+  },[seasonStart, preSeasonStart, isPreSeason])
+
   const activeBlocks = isPreSeason ? PRE_SEASON_BLOCKS : SESSION_BLOCKS
-  const weekOverrides = overrides[`${weekNum}-${ageFilter}`] || {}
+  const weekOverrides = overrides[`${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`] || {}
   const session = {}
   activeBlocks.forEach(b => {
     if (b.fixed) return
@@ -1008,7 +1048,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   }
 
   const handleSwap = (key, drill) => {
-    const okey = `${weekNum}-${ageFilter}`
+    const okey = `${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`
     if (groupSwapTarget) {
       // Swapping a drill for a SPECIFIC group only
       const { blockKey, groupNum } = groupSwapTarget
@@ -1033,7 +1073,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   }
 
   const clearGroupOverride = (blockKey, groupNum) => {
-    const okey = `${weekNum}-${ageFilter}`
+    const okey = `${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`
     setOverrides(prev => {
       const existing = prev[okey]?.[blockKey]
       if (!existing || !existing.__groups) return prev
@@ -3054,4 +3094,3 @@ export default function App() {
     </div>
   )
 }
-
