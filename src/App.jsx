@@ -1695,14 +1695,14 @@ function SessionStatusManager({ sessionStatus, onSave }) {
 // ─── Match Day Notes ───────────────────────────────────────────────────────────
 function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad }) {
   const note = matchNotes[weekNum] || {}
-  const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_type:'League',show_parents:false})
+  const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
   const [tab, setTab] = useState('fixture')
   const [saved, setSaved] = useState(false)
   const [squadSaved, setSquadSaved] = useState(false)
   const squadData = matchSquad?.[weekNum] || { starters:[], subs:[], minutes:{} }
   const [starters, setStarters] = useState(squadData.starters)
   const [benchSubs, setBenchSubs] = useState(squadData.subs)
-  useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
+  useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
   useEffect(()=>{
     const sd = matchSquad?.[weekNum] || { starters:[], subs:[] }
     setStarters(sd.starters||[])
@@ -1734,13 +1734,17 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const ic = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const fn = e=>e.target.style.borderColor=N.bg, fb = e=>e.target.style.borderColor='#d1d5db'
-  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaching Team\n🔗 ${SITE_URL}`
+  const fixtureDateFmt = form.match_date ? new Date(form.match_date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}) : ''
+  const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${fixtureDateFmt?'\nDate: '+fixtureDateFmt:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaching Team\n🔗 ${SITE_URL}`
   const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaching Team\n🔗 ${SITE_URL}`
   return (
     <div className="space-y-4">
       <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
         <button onClick={()=>setWeekNum(w=>Math.max(1,w-1))} className="w-9 h-9 rounded-xl border border-gray-300 font-bold flex items-center justify-center">&#8249;</button>
-        <div className="flex-1 text-center"><p className="font-bold text-gray-900 text-sm">Week {weekNum}{form.opponent?' - vs '+form.opponent:''}</p></div>
+        <div className="flex-1 text-center">
+          <p className="font-bold text-gray-900 text-sm">Week {weekNum}{form.opponent?' - vs '+form.opponent:''}</p>
+          {form.match_date && <p className="text-xs text-gray-400">{new Date(form.match_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</p>}
+        </div>
         <button onClick={()=>setWeekNum(w=>w+1)} className="w-9 h-9 rounded-xl border border-gray-300 font-bold flex items-center justify-center">&#8250;</button>
         <button onClick={()=>setWeekNum(currentWeek)} className="text-xs font-semibold px-2 py-1 rounded-lg" style={{background:N.light,color:N.text}}>Today</button>
       </div>
@@ -1772,6 +1776,11 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
           </>
           )}
           {tab==='fixture'&&<>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-1">Match Date</label>
+              <input type="date" value={form.match_date} onChange={e=>set('match_date',e.target.value)} className={ic} onFocus={fn} onBlur={fb}/>
+              <p className="text-xs text-gray-400 mt-1">Set this for each match -- useful when playing more than once a week</p>
+            </div>
             <div className="grid grid-cols-2 gap-3">
               <div><label className="text-xs font-semibold text-gray-600 block mb-1">Time</label>
                 <input value={form.match_time} onChange={e=>set('match_time',e.target.value)} placeholder="e.g. 10:00am" className={ic} onFocus={fn} onBlur={fb}/></div>
@@ -2797,15 +2806,35 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
 
 // ─── Parent View ───────────────────────────────────────────────────────────────
 function ParentView({ sessionStatus, matchNotes, drills, homeSession, seasonStart }) {
-  const upcomingEntry = Object.entries(matchNotes).find(([wk,n])=>n.show_parents&&n.opponent)
-  const upcomingFixture = upcomingEntry ? upcomingEntry[1] : null
-  const upcomingWeekNum = upcomingEntry ? Number(upcomingEntry[0]) : null
-  const fixtureDate = (seasonStart && upcomingWeekNum) ? (()=>{
-    const d = new Date(seasonStart)
-    d.setDate(d.getDate() + (upcomingWeekNum - 1) * 7
-    )
-    return d
-  })() : null
+  // Find the nearest upcoming fixture marked visible to parents.
+  // Prefer sorting by actual match_date if set, otherwise fall back to week number order.
+  const candidates = Object.entries(matchNotes)
+    .filter(([wk,n])=>n.show_parents&&n.opponent)
+    .map(([wk,n])=>({...n, wk:Number(wk)}))
+  const today = new Date(); today.setHours(0,0,0,0)
+  candidates.sort((a,b)=>{
+    const da = a.match_date ? new Date(a.match_date) : null
+    const db = b.match_date ? new Date(b.match_date) : null
+    if (da && db) return da - db
+    if (da && !db) return -1
+    if (!da && db) return 1
+    return a.wk - b.wk
+  })
+  // Prefer the first one that's today or in the future (by date if available)
+  const upcomingFixture = candidates.find(c => {
+    if (c.match_date) return new Date(c.match_date) >= today
+    return true // no date set, can't filter by date, just take it in week order
+  }) || candidates[0] || null
+  const upcomingWeekNum = upcomingFixture ? upcomingFixture.wk : null
+  // Prefer the manually-set match date (accounts for mid-week fixtures, doubleheaders etc.)
+  // Fall back to the calculated week date only if no specific date was set
+  const fixtureDate = upcomingFixture?.match_date
+    ? new Date(upcomingFixture.match_date)
+    : (seasonStart && upcomingWeekNum) ? (()=>{
+        const d = new Date(seasonStart)
+        d.setDate(d.getDate() + (upcomingWeekNum - 1) * 7)
+        return d
+      })() : null
   return (
     <div>
       {sessionStatus.show_parents&&(
@@ -2867,7 +2896,7 @@ export default function App() {
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};sq.forEach(p=>{if(p.group_num)ga[p.id]=p.group_num});setGroupAssignments(ga)}}catch(e){}
-      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
+      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
@@ -2906,7 +2935,7 @@ export default function App() {
       .on('postgres_changes',{event:'*',schema:'public',table:'match_notes'},p=>{
         if(p.new){
           const r=p.new
-          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}}))
+          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}}))
         }
       })
       .subscribe()
