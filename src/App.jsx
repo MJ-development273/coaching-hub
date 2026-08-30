@@ -1865,44 +1865,56 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                               <rect x="30" y="111" width="40" height="16" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
                             </svg>
                             {(()=>{
-                              // Distribute starters vertically: GK nearest own goal (bottom), attackers nearest opponent goal (top)
-                              const posOrder = {GK:0,LB:1,CB:1,RB:1,LM:2,CM:2,RM:2,ST:3}
-                              const rows = {0:[],1:[],2:[],3:[]}
-                              startersList.forEach(p=>{
-                                const pos = startingPositions[p.id] || p.preferred || ''
-                                const rowNum = posOrder[pos]!==undefined ? posOrder[pos] : 2
-                                rows[rowNum].push(p)
-                              })
-                              // Row 0 = GK (near bottom, own goal) ... Row 3 = strikers (near top, opponent goal)
-                              const rowY = {0:112,1:88,2:55,3:22}
+                              // Fixed pitch coordinates per specific position -- own goal at bottom (y near 112),
+                              // opponent goal at top (y near 22), halfway line at y=65
+                              const SLOT_COORDS = {
+                                GK:  [{x:50, y:112}],
+                                LB:  [{x:18, y:88}],
+                                CB:  [{x:38, y:90}, {x:62, y:90}], // supports 1 or 2 CBs
+                                RB:  [{x:82, y:88}],
+                                LM:  [{x:15, y:63}],
+                                CM:  [{x:38, y:65}, {x:62, y:65}], // supports 1 or 2 CMs
+                                RM:  [{x:85, y:63}],
+                                ST:  [{x:38, y:22}, {x:62, y:22}], // supports 1 or 2 STs
+                              }
                               const dots = []
-                              // GK row - always render, even if empty, so it's never silently missing
-                              if(rows[0].length===0){
+                              const cbSlotIndex = {} // tracks how many CB/CM/ST slots have been used so far
+                              const usedGK = startersList.some(p => (startingPositions[p.id]||p.preferred)==='GK')
+
+                              // GK slot -- always rendered, even if nobody is assigned yet
+                              if(!usedGK){
+                                const gk = SLOT_COORDS.GK[0]
                                 dots.push(
-                                  <div key="gk-empty" className="absolute flex flex-col items-center" style={{left:'50%',top:`${rowY[0]}%`,transform:'translate(-50%,-50%)'}}>
+                                  <div key="gk-empty" className="absolute flex flex-col items-center" style={{left:`${gk.x}%`,top:`${gk.y}%`,transform:'translate(-50%,-50%)'}}>
                                     <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'26px',height:'26px',fontSize:'8px',background:'rgba(255,255,255,0.15)',border:'2px dashed rgba(255,255,255,0.6)'}}>GK</div>
                                     <div className="text-white opacity-70 mt-0.5" style={{fontSize:'7px'}}>Not set</div>
                                   </div>
                                 )
                               }
-                              ;[0,1,2,3].forEach(rowNum=>{
-                                const players = rows[rowNum]
-                                if(players.length===0) return
-                                const y = rowY[rowNum]
-                                players.forEach((p,i)=>{
-                                  const spacing = 90/(players.length+1)
-                                  const x = spacing*(i+1)+5
-                                  const posLabel = startingPositions[p.id]||p.preferred||''
-                                  dots.push(
-                                    <div key={p.id} onClick={()=>setPosEditPlayer(p)} className="absolute flex flex-col items-center cursor-pointer" style={{left:`${x}%`,top:`${y}%`,transform:'translate(-50%,-50%)'}}>
-                                      <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:posLabel?N.bg:'#ea580c',border:posLabel?'2px solid white':'2px solid #fed7aa'}}>
-                                        {p.squad_num||p.name[0]}
-                                      </div>
-                                      <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name.split(' ')[0]}</div>
-                                      <div className="opacity-90" style={{fontSize:'6px',color:posLabel?'white':'#fed7aa'}}>{posLabel||'Set position'}</div>
+
+                              startersList.forEach(p=>{
+                                const posLabel = startingPositions[p.id] || p.preferred || ''
+                                const slots = SLOT_COORDS[posLabel]
+                                let coord
+                                if(slots){
+                                  const idx = cbSlotIndex[posLabel] || 0
+                                  coord = slots[idx] || slots[slots.length-1]
+                                  cbSlotIndex[posLabel] = idx+1
+                                } else {
+                                  // No specific position set -- place in a holding area near the centre so it's visible but clearly needs assigning
+                                  const idx = cbSlotIndex['_unset'] || 0
+                                  coord = { x: 50, y: 65 }
+                                  cbSlotIndex['_unset'] = idx+1
+                                }
+                                dots.push(
+                                  <div key={p.id} onClick={()=>setPosEditPlayer(p)} className="absolute flex flex-col items-center cursor-pointer" style={{left:`${coord.x}%`,top:`${coord.y}%`,transform:'translate(-50%,-50%)'}}>
+                                    <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:posLabel?N.bg:'#ea580c',border:posLabel?'2px solid white':'2px solid #fed7aa'}}>
+                                      {p.squad_num||p.name[0]}
                                     </div>
-                                  )
-                                })
+                                    <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name.split(' ')[0]}</div>
+                                    <div className="opacity-90" style={{fontSize:'6px',color:posLabel?'white':'#fed7aa'}}>{posLabel||'Set position'}</div>
+                                  </div>
+                                )
                               })
                               return dots
                             })()}
