@@ -1897,7 +1897,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                                     <rect x="30" y="83" width="40" height="14" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
                                   </svg>
                                   {slotAssignments.map(({slot,player},i)=>(
-                                    <div key={i} onClick={()=>player&&setPosEditPlayer(player)} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${100-slot.y}%`,transform:'translate(-50%,-50%)',cursor:player?'pointer':'default'}}>
+                                    <div key={i} onClick={()=>player&&setPosEditPlayer(player)} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)',cursor:player?'pointer':'default'}}>
                                       <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px dashed rgba(255,255,255,0.6)'}}>
                                         {player ? (player.squad_num||player.name[0]) : slot.pos}
                                       </div>
