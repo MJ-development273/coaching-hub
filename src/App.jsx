@@ -1867,26 +1867,38 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                             {(()=>{
                               // Distribute starters vertically by assigned/preferred position, GK at bottom, ST at top
                               const posOrder = {GK:0,LB:1,CB:1,RB:1,LM:2,CM:2,RM:2,ST:3}
-                              const grouped = {}
+                              const grouped = {0:[],1:[],2:[],3:[]}
                               startersList.forEach(p=>{
-                                const pos = startingPositions[p.id] || p.preferred || 'CM'
-                                const row = posOrder[pos]!==undefined?posOrder[pos]:2
-                                if(!grouped[row]) grouped[row]=[]
+                                const pos = startingPositions[p.id] || p.preferred || ''
+                                const row = posOrder[pos]!==undefined ? posOrder[pos] : 2
                                 grouped[row].push(p)
                               })
                               const rowY = {0:118,1:95,2:65,3:20}
                               return Object.entries(grouped).map(([row,players])=>{
-                                const y = rowY[row]||65
+                                const y = rowY[row]
+                                if(players.length===0){
+                                  // Show an empty GK slot placeholder so it's obvious someone needs assigning
+                                  if(row==='0'){
+                                    return (
+                                      <div key="gk-empty" className="absolute flex flex-col items-center" style={{left:'50%',top:`${y}%`,transform:'translate(-50%,-50%)'}}>
+                                        <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'26px',height:'26px',fontSize:'8px',background:'rgba(255,255,255,0.15)',border:'2px dashed rgba(255,255,255,0.5)'}}>GK</div>
+                                        <div className="text-white opacity-60 mt-0.5" style={{fontSize:'7px'}}>Not set</div>
+                                      </div>
+                                    )
+                                  }
+                                  return null
+                                }
                                 return players.map((p,i)=>{
                                   const spacing = 90/(players.length+1)
                                   const x = spacing*(i+1)+5
+                                  const posLabel = startingPositions[p.id]||p.preferred||''
                                   return (
                                     <div key={p.id} onClick={()=>setPosEditPlayer(p)} className="absolute flex flex-col items-center cursor-pointer" style={{left:`${x}%`,top:`${y}%`,transform:'translate(-50%,-50%)'}}>
-                                      <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:N.bg,border:'2px solid white'}}>
+                                      <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:posLabel?N.bg:'#ea580c',border:posLabel?'2px solid white':'2px solid #fed7aa'}}>
                                         {p.squad_num||p.name[0]}
                                       </div>
                                       <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{p.name.split(' ')[0]}</div>
-                                      <div className="text-white opacity-70" style={{fontSize:'6px'}}>{startingPositions[p.id]||p.preferred||'?'}</div>
+                                      <div className="opacity-90" style={{fontSize:'6px',color:posLabel?'white':'#fed7aa'}}>{posLabel||'Set position'}</div>
                                     </div>
                                   )
                                 })
@@ -1895,7 +1907,14 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                           </div>
                         </div>
                       )}
-                      {squadView==='pitch' && startersList.length>0 && <p className="text-xs text-gray-400 mt-2 text-center">Tap a player to set their position for this match</p>}
+                      {squadView==='pitch' && startersList.length>0 && (()=>{
+                        const unsetCount = startersList.filter(p=>!(startingPositions[p.id]||p.preferred)).length
+                        return unsetCount>0 ? (
+                          <p className="text-xs text-orange-600 font-semibold mt-2 text-center">⚠️ {unsetCount} player{unsetCount>1?'s':''} without a position set -- tap the orange dot{unsetCount>1?'s':''} to assign</p>
+                        ) : (
+                          <p className="text-xs text-gray-400 mt-2 text-center">Tap a player to change their position for this match</p>
+                        )
+                      })()}
                     </div>
 
                     {/* Subs bench */}
