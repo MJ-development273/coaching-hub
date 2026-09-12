@@ -584,6 +584,20 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Land softly, absorb through the knees not the floor</text>
       </svg>
     ),
+    scanning: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(120,120,accent,'A')}
+        {P(200,80,'#ef4444','D')}
+        <circle cx="160" cy="100" r="7" fill="white" opacity="0.9"/>
+        {Arrow(200,88,168,98,accent)}
+        {/* Head turn arc showing the scan */}
+        <path d="M112,108 A14,14 0 1,1 128,108" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="3,2"/>
+        <text x="120" y="95" fill="#f59e0b" fontSize="8" fontWeight="bold" textAnchor="middle">scan</text>
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">CHECK SHOULDER BEFORE THE BALL ARRIVES</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Know what's behind you before you receive</text>
+      </svg>
+    ),
     reactionsprint: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
