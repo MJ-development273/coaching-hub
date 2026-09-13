@@ -2614,7 +2614,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                   {showFixedSkillHeader && (
                     <div className="fixed left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-md" style={{top:`${appHeaderHeight}px`}}>
                       <div className="max-w-5xl mx-auto overflow-x-auto">
-                        <table className="w-full text-xs" style={{tableLayout:'fixed'}}>
+                        <table className="w-full text-xs">
                           <tbody>
                             <tr style={{background:N.light}}>
                               <td className="text-left px-3 py-1 font-semibold text-gray-700 sticky left-0" style={{background:N.light,width:'80px'}}>Player</td>
@@ -2655,7 +2655,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                       {/* Skill headers */}
                       <div className="overflow-x-auto">
-                        <table className="w-full text-xs" style={{tableLayout:'fixed'}}>
+                        <table className="w-full text-xs">
                           <thead ref={skillTheadRef}>
                             <tr style={{background:N.light}}>
                               <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 z-10" style={{background:N.light,minWidth:'80px'}}>Player</th>
