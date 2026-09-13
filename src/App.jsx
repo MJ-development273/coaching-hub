@@ -2132,21 +2132,30 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9_LIST : POSITIONS_11V11_LIST
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
 
-  // Watch the real skill-grid header; once it scrolls out of view, show a floating fixed copy
+  // Watch the real skill-grid header; once it scrolls out of view, fix it in place using the real markup (no duplicate copy)
   useEffect(()=>{
     if(tab!=='skills' || skillView!=='by-skill'){ setShowFixedSkillHeader(false); return }
     const target = skillTheadRef.current
-    if(!target){ setShowFixedSkillHeader(false); return }
-    // Measure the real app header's actual rendered height so our floating bar docks directly beneath it
+    const wrap = skillTableWrapRef.current
+    if(!target || !wrap){ setShowFixedSkillHeader(false); return }
     const appHeader = document.querySelector('header')
     const headerHeight = appHeader ? appHeader.getBoundingClientRect().height : 0
     setAppHeaderHeight(headerHeight)
+
+    const measure = () => {
+      const rect = wrap.getBoundingClientRect()
+      const table = wrap.querySelector('table')
+      setSkillHeaderRect({ left: rect.left, width: rect.width, tableWidth: table ? table.getBoundingClientRect().width : rect.width })
+    }
+
     const observer = new IntersectionObserver(
-      ([entry])=>setShowFixedSkillHeader(!entry.isIntersecting),
+      ([entry])=>{ setShowFixedSkillHeader(!entry.isIntersecting); if(!entry.isIntersecting) measure() },
       { threshold: 0, rootMargin: `-${headerHeight}px 0px 0px 0px` }
     )
     observer.observe(target)
-    return ()=>observer.disconnect()
+    window.addEventListener('scroll', measure, { passive:true })
+    window.addEventListener('resize', measure)
+    return ()=>{ observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure) }
   })
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
