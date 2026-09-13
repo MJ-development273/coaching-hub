@@ -990,7 +990,16 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
     const s = new Date(base), t = new Date()
     s.setHours(0,0,0,0); t.setHours(0,0,0,0)
     if (t < s) return 1
-    return Math.floor((t - s) / (1000*60*60*24*7)) + 1
+    let week = Math.floor((t - s) / (1000*60*60*24*7)) + 1
+    // If this week's session has a manually-set date that's different to the auto Monday date,
+    // and that specific date has already passed, advance to the next week early rather than
+    // waiting for the next auto-calculated 7-day boundary.
+    if (!isPre && dateOverrides && dateOverrides[week]) {
+      const overrideDate = new Date(dateOverrides[week])
+      overrideDate.setHours(0,0,0,0)
+      if (t > overrideDate) week += 1
+    }
+    return week
   }
 
   const [weekNum,setWeekNum]=useState(()=>calcWeekFor(isPreSeasonAuto))
