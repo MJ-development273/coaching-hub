@@ -2116,6 +2116,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [showFixedSkillHeader, setShowFixedSkillHeader] = useState(false)
   const [appHeaderHeight, setAppHeaderHeight] = useState(0)
   const [skillHeaderRect, setSkillHeaderRect] = useState({left:0, width:'auto', tableWidth:'auto'})
+  const [skillScrollLeft, setSkillScrollLeft] = useState(0)
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -2147,6 +2148,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
       const table = wrap.querySelector('table')
       setSkillHeaderRect({ left: rect.left, width: rect.width, tableWidth: table ? table.getBoundingClientRect().width : rect.width })
     }
+    const handleWrapScroll = () => setSkillScrollLeft(wrap.scrollLeft)
 
     const observer = new IntersectionObserver(
       ([entry])=>{ setShowFixedSkillHeader(!entry.isIntersecting); if(!entry.isIntersecting) measure() },
@@ -2155,7 +2157,9 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
     observer.observe(target)
     window.addEventListener('scroll', measure, { passive:true })
     window.addEventListener('resize', measure)
-    return ()=>{ observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure) }
+    wrap.addEventListener('scroll', handleWrapScroll, { passive:true })
+    handleWrapScroll()
+    return ()=>{ observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); wrap.removeEventListener('scroll', handleWrapScroll) }
   })
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
@@ -2647,7 +2651,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       <div className="overflow-x-auto" ref={skillTableWrapRef}>
                         {showFixedSkillHeader && (
                           <div className="fixed z-30 bg-white border-b border-gray-200 shadow-md overflow-hidden" style={{top:`${appHeaderHeight}px`,left:skillHeaderRect.left,width:skillHeaderRect.width}}>
-                            <table className="text-xs" style={{width:skillHeaderRect.tableWidth}}>
+                            <table className="text-xs" style={{width:skillHeaderRect.tableWidth,transform:`translateX(-${skillScrollLeft}px)`}}>
                               <tbody>
                                 <tr style={{background:N.light}}>
                                   <td className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0" style={{background:N.light,minWidth:'80px'}}>Player</td>
