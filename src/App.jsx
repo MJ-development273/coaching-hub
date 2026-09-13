@@ -2613,14 +2613,13 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                   {(!showGK || gridSquad.length>0)&&(
                     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                       {/* Skill headers */}
-                      <div className="overflow-auto" style={{maxHeight:'420px'}}>
+                      <div className="overflow-x-auto">
                         <table className="w-full text-xs">
                           <thead>
                             <tr style={{background:N.light}}>
-                              <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 top-0 z-20" style={{background:N.light,minWidth:'80px'}}>Player</th>
+                              <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 z-30" style={{background:N.light,minWidth:'80px',top:'148px'}}>Player</th>
                               {gridSkills.map(s=>(
-                                <th key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all sticky top-0 z-10"
-                                  style={{minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
+                                <th key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all sticky z-20" style={{top:'148px',minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
                                   onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}>
                                   <div className="flex flex-col items-center gap-0.5">
                                     <span>{s.icon}</span>
