@@ -1305,7 +1305,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                       <div className="p-3 space-y-2">
                         {groups.map(g=>{
                           const groupDrill = getGroupDrill(block.key, g)
-                          const players = squad.filter(p=>groupAssignments?.[`${groupCount}-${p.id}`]===g)
+                          const players = squad.filter(p=>groupAssignments?.[`ability-${groupCount}-${p.id}`]===g)
                           const isCustom = weekOverrides[block.key]?.__groups?.[g]
                           return (
                             <div key={g} className="rounded-xl overflow-hidden border" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
@@ -1349,7 +1349,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                         return (
                           <div className="mt-2 grid grid-cols-2 gap-2">
                             {groups.map(g=>{
-                              const players = squad.filter(p=>groupAssignments?.[`${groupCount}-${p.id}`]===g)
+                              const players = squad.filter(p=>groupAssignments?.[`ability-${groupCount}-${p.id}`]===g)
                               return (
                                 <div key={g} className="rounded-xl p-2" style={{background:GROUP_COLORS[g-1]+'11',border:`1px solid ${GROUP_COLORS[g-1]}33`}}>
                                   <p className="text-xs font-bold mb-1" style={{color:GROUP_COLORS[g-1]}}>Group {g} ({players.length})</p>
@@ -2102,7 +2102,8 @@ const PITCH_FORMATIONS = {
   }
 }
 
-function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup, preferredTeamFormat, preferredFormation, onSaveFormationPref }) {
+function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup, preferredTeamFormat, preferredFormation, onSaveFormationPref, teamCount, onSaveTeamCount, teamAssignments, onAssignTeam }) {
+  const [groupMode, setGroupMode] = useState('ability') // 'ability' | 'team'
   const [tab, setTab] = useState('squad')
   const [squadSort, setSquadSort] = useState('number') // 'number' | 'name'
   const [skillPlayer, setSkillPlayer] = useState(null)
@@ -2268,21 +2269,38 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
       {tab==='groups'&&(()=>{
         const GROUP_COLORS = ['#1e3a5f','#16a34a','#f59e0b','#8b5cf6','#ef4444','#0891b2']
-        const groups = Array.from({length:groupCount},(_,i)=>i+1)
-        const unassigned = squad.filter(p=>!groupAssignments[`${groupCount}-${p.id}`])
+        const mode = groupMode // 'ability' | 'team'
+        const count = mode==='team' ? teamCount : groupCount
+        const setCount = mode==='team' ? onSaveTeamCount : onGroupCountChange
+        const groups = Array.from({length:count},(_,i)=>i+1)
+        const schemeKey = `${mode}-${count}`
+        const assignments = mode==='team' ? teamAssignments : groupAssignments
+        const onAssign = mode==='team' ? onAssignTeam : onAssignGroup
+        const unassigned = squad.filter(p=>!assignments[`${schemeKey}-${p.id}`])
 
         return (
           <div className="space-y-3">
+            <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+              <button onClick={()=>setGroupMode('ability')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                style={mode==='ability'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                🎯 Ability Groups
+              </button>
+              <button onClick={()=>setGroupMode('team')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+                style={mode==='team'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+                ⚽ Match Teams
+              </button>
+            </div>
+
             <div className="bg-white border border-gray-200 rounded-2xl p-4">
-              <h3 className="font-bold text-gray-900 text-sm mb-1">🎯 Training Groups</h3>
-              <p className="text-xs text-gray-400 mb-3">Split the squad into ability groups for training drills.</p>
+              <h3 className="font-bold text-gray-900 text-sm mb-1">{mode==='team'?'⚽ Small-Sided Game Teams':'🎯 Training Groups'}</h3>
+              <p className="text-xs text-gray-400 mb-3">{mode==='team'?'Split the squad into balanced teams for small-sided games.':'Split the squad into ability groups for training drills.'}</p>
               <div className="flex flex-col gap-2">
-                <label className="text-xs font-semibold text-gray-600">Number of groups:</label>
+                <label className="text-xs font-semibold text-gray-600">Number of {mode==='team'?'teams':'groups'}:</label>
                 <div className="flex gap-1 flex-wrap">
                   {[2,3,4,5,6].map(n=>(
-                    <button key={n} onClick={()=>onGroupCountChange(n)}
+                    <button key={n} onClick={()=>setCount(n)}
                       className="w-9 h-9 rounded-xl text-sm font-bold border-2 transition-all shrink-0"
-                      style={groupCount===n?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
+                      style={count===n?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
                       {n}
                     </button>
                   ))}
@@ -2306,7 +2324,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                           <span className="text-xs font-semibold text-gray-700">{p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]}</span>
                           <div className="flex gap-0.5 ml-1">
                             {groups.map(g=>(
-                              <button key={g} onClick={()=>onAssignGroup(p.id,g)}
+                              <button key={g} onClick={()=>onAssign(p.id,g,count)}
                                 className="w-5 h-5 rounded-full text-xs font-bold text-white flex items-center justify-center"
                                 style={{background:GROUP_COLORS[g-1]}}>
                                 {g}
@@ -2319,15 +2337,15 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                   </div>
                 )}
 
-                {/* Groups */}
+                {/* Groups / Teams */}
                 {groups.map(g=>{
-                  const groupPlayers = squad.filter(p=>groupAssignments[`${groupCount}-${p.id}`]===g)
+                  const groupPlayers = squad.filter(p=>assignments[`${schemeKey}-${p.id}`]===g)
                   return (
                     <div key={g} className="bg-white border-2 rounded-2xl p-4" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{background:GROUP_COLORS[g-1]}}>{g}</div>
-                          <p className="font-bold text-gray-900 text-sm">Group {g}</p>
+                          <p className="font-bold text-gray-900 text-sm">{mode==='team'?`Team ${g}`:`Group ${g}`}</p>
                         </div>
                         <span className="text-xs text-gray-400">{groupPlayers.length} players</span>
                       </div>
@@ -2341,14 +2359,14 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                               <span className="flex-1 text-sm font-medium text-gray-800">{p.name}</span>
                               <div className="flex gap-1">
                                 {groups.filter(og=>og!==g).map(og=>(
-                                  <button key={og} onClick={()=>onAssignGroup(p.id,og)}
+                                  <button key={og} onClick={()=>onAssign(p.id,og,count)}
                                     className="w-5 h-5 rounded-full text-xs font-bold text-white flex items-center justify-center opacity-50 hover:opacity-100"
                                     style={{background:GROUP_COLORS[og-1]}}
-                                    title={`Move to Group ${og}`}>
+                                    title={`Move to ${mode==='team'?'Team':'Group'} ${og}`}>
                                     {og}
                                   </button>
                                 ))}
-                                <button onClick={()=>onAssignGroup(p.id,null)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
+                                <button onClick={()=>onAssign(p.id,null,count)} className="text-gray-300 hover:text-red-400 text-xs px-1">✕</button>
                               </div>
                             </div>
                           ))}
@@ -2357,6 +2375,18 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                     </div>
                   )
                 })}
+                {mode==='team' && groups.some(g=>squad.some(p=>assignments[`${schemeKey}-${p.id}`]===g)) && (
+                  <a href={`https://wa.me/?text=${encodeURIComponent(
+                    `Clydach Juniors -- Small-Sided Teams\n\n${groups.map(g=>{
+                      const gp = squad.filter(p=>assignments[`${schemeKey}-${p.id}`]===g)
+                      return `*Team ${g}:*\n${gp.map(p=>`${p.squad_num?'#'+p.squad_num+' ':''}${p.name}`).join('\n')||'(empty)'}`
+                    }).join('\n\n')}\n\n-- Coaching Team\n🔗 ${SITE_URL}`
+                  )}`}
+                    target="_blank" rel="noreferrer"
+                    className="w-full text-white font-bold py-2.5 rounded-xl text-sm text-center block" style={{background:'#16a34a'}}>
+                    📲 Share Teams
+                  </a>
+                )}
               </>
             )}
           </div>
@@ -3031,6 +3061,8 @@ export default function App() {
   const [skillsData,setSkillsData]=useState({}) // { 'playerId-skill': level 0-3 }
   const [groupCount,setGroupCount]=useState(2)
   const [groupAssignments,setGroupAssignments]=useState({}) // { playerId: groupNum }
+  const [teamCount,setTeamCount]=useState(2)
+  const [teamAssignments,setTeamAssignments]=useState({}) // { 'team-count-playerId': teamNum }
   const [matchSquad,setMatchSquad]=useState({}) // { weekNum: { starters:[ids], subs:[ids], minutes:{playerId:mins} } }
   const [preferredTeamFormat,setPreferredTeamFormat]=useState('9v9')
   const [preferredFormation,setPreferredFormation]=useState('3-3-2')
@@ -3050,8 +3082,8 @@ export default function App() {
     async function load(){
       try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
-      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
-      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,groupNum])=>{ga[`${scheme}-${p.id}`]=groupNum})}});setGroupAssignments(ga)}}catch(e){}
+      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
+      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};const ta={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,num])=>{if(scheme.startsWith('ability-')){ga[`${scheme}-${p.id}`]=num}else if(scheme.startsWith('team-')){ta[`${scheme}-${p.id}`]=num}})}});setGroupAssignments(ga);setTeamAssignments(ta)}}catch(e){}
       try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
@@ -3132,14 +3164,28 @@ export default function App() {
     try{await supabase.from('season_settings').upsert({id:1,group_count:count})}catch(e){}
   }
   const assignPlayerGroup=async(pid,groupNum)=>{
-    const key = `${groupCount}-${pid}`
+    const key = `ability-${groupCount}-${pid}`
     setGroupAssignments(p=>({...p,[key]:groupNum}))
     try{
       const{data:sq}=await supabase.from('squad').select('group_assignments').eq('id',pid).single()
       const existing = (sq && sq.group_assignments) || {}
-      const updated = {...existing, [groupCount]: groupNum}
+      const updated = {...existing, [`ability-${groupCount}`]: groupNum}
       await supabase.from('squad').update({group_assignments:updated}).eq('id',pid)
     }catch(e){console.error('group assign save:',e)}
+  }
+  const saveTeamCount=async(count)=>{
+    setTeamCount(count)
+    try{await supabase.from('season_settings').upsert({id:1,team_count:count})}catch(e){}
+  }
+  const assignPlayerTeam=async(pid,teamNum)=>{
+    const key = `team-${teamCount}-${pid}`
+    setTeamAssignments(p=>({...p,[key]:teamNum}))
+    try{
+      const{data:sq}=await supabase.from('squad').select('group_assignments').eq('id',pid).single()
+      const existing = (sq && sq.group_assignments) || {}
+      const updated = {...existing, [`team-${teamCount}`]: teamNum}
+      await supabase.from('squad').update({group_assignments:updated}).eq('id',pid)
+    }catch(e){console.error('team assign save:',e)}
   }
   const saveSkill=async(pid,skill,level)=>{
     const k=pid+'-'+skill
@@ -3246,7 +3292,7 @@ export default function App() {
         {isCoach&&view==='home-manager'&&<HomeSessionManager drills={drills} homeSession={homeSession} onSave={saveHomeSession} matchNotes={matchNotes} currentWeek={currentWeek}/>}
         {isCoach&&view==='status'&&<SessionStatusManager sessionStatus={sessionStatus} onSave={saveSessionStatus}/>}
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote} squad={squad} matchSquad={matchSquad} onSaveMatchSquad={saveMatchSquad} preferredTeamFormat={preferredTeamFormat}/>}
-        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup} preferredTeamFormat={preferredTeamFormat} preferredFormation={preferredFormation} onSaveFormationPref={saveFormationPref}/>}
+        {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup} preferredTeamFormat={preferredTeamFormat} preferredFormation={preferredFormation} onSaveFormationPref={saveFormationPref} teamCount={teamCount} onSaveTeamCount={saveTeamCount} teamAssignments={teamAssignments} onAssignTeam={assignPlayerTeam}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
         {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')}/>}
         {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession} seasonStart={seasonStart}/>}
