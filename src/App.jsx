@@ -2111,6 +2111,8 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [teamFormat, setTeamFormat] = useState(preferredTeamFormat||'9v9')
   const [formation, setFormation] = useState(preferredFormation||'3-3-2')
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
+  const skillTheadRef = useRef(null)
+  const [showFixedSkillHeader, setShowFixedSkillHeader] = useState(false)
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -2126,6 +2128,19 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST']
   const POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9_LIST : POSITIONS_11V11_LIST
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
+
+  // Watch the real skill-grid header; once it scrolls out of view, show a floating fixed copy
+  useEffect(()=>{
+    if(tab!=='skills' || skillView!=='by-skill'){ setShowFixedSkillHeader(false); return }
+    const target = skillTheadRef.current
+    if(!target){ setShowFixedSkillHeader(false); return }
+    const observer = new IntersectionObserver(
+      ([entry])=>setShowFixedSkillHeader(!entry.isIntersecting),
+      { threshold: 0, rootMargin: '-64px 0px 0px 0px' } // offset for the app's own sticky nav bars
+    )
+    observer.observe(target)
+    return ()=>observer.disconnect()
+  })
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
 
@@ -2615,7 +2630,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       {/* Skill headers */}
                       <div className="overflow-x-auto">
                         <table className="w-full text-xs">
-                          <thead>
+                          <thead ref={skillTheadRef}>
                             <tr style={{background:N.light}}>
                               <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 z-10" style={{background:N.light,minWidth:'80px'}}>Player</th>
                               {gridSkills.map(s=>(
@@ -2635,46 +2650,31 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                               ? [...gridSquad].sort((a,b)=>(skillsData[b.id+'-'+selectedSkill.key]||0)-(skillsData[a.id+'-'+selectedSkill.key]||0))
                               : gridSquad
                             ).map((p,ri)=>(
-                              <Fragment key={p.id}>
-                                {ri>0 && ri%8===0 && (
-                                  <tr style={{background:N.light}}>
-                                    <td className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0" style={{background:N.light,minWidth:'80px'}}>Player</td>
-                                    {gridSkills.map(s=>(
-                                      <td key={s.key} className="px-1 py-2 text-center" style={{minWidth:'36px'}}>
-                                        <div className="flex flex-col items-center gap-0.5">
-                                          <span>{s.icon}</span>
-                                          <span style={{fontSize:'9px',fontWeight:'600',color:N.text}}>{s.label}</span>
-                                        </div>
-                                      </td>
-                                    ))}
-                                  </tr>
-                                )}
-                                <tr style={{background:ri%2===0?'white':'#f9fafb'}}
-                                  onClick={()=>{setSkillPlayer(p);setSkillView('by-player')}}>
-                                  <td className="px-3 py-2 sticky left-0 z-10 cursor-pointer" style={{background:ri%2===0?'white':'#f9fafb'}}>
-                                    <div className="flex items-center gap-1.5">
-                                      <div className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0" style={{background:N.bg,fontSize:'9px',fontWeight:'bold'}}>
-                                        {p.squad_num||p.name[0]}
-                                      </div>
-                                      <span className="font-semibold text-gray-900 truncate" style={{maxWidth:'55px'}}>{p.name.split(' ')[0]}</span>
+                              <tr key={p.id} data-grid-row style={{background:ri%2===0?'white':'#f9fafb'}}
+                                onClick={()=>{setSkillPlayer(p);setSkillView('by-player')}}>
+                                <td className="px-3 py-2 sticky left-0 z-10 cursor-pointer" style={{background:ri%2===0?'white':'#f9fafb'}}>
+                                  <div className="flex items-center gap-1.5">
+                                    <div className="w-6 h-6 rounded-full flex items-center justify-center text-white shrink-0" style={{background:N.bg,fontSize:'9px',fontWeight:'bold'}}>
+                                      {p.squad_num||p.name[0]}
                                     </div>
-                                  </td>
-                                  {gridSkills.map(s=>{
-                                    const lv=skillsData[p.id+'-'+s.key]||0
-                                    const col=LEVELS[lv].color
-                                    const isHighlighted = selectedSkill?.key===s.key
-                                    return (
-                                      <td key={s.key} className="px-1 py-2 text-center"
-                                        style={{background:isHighlighted?(col+'22'):'transparent'}}
-                                        onClick={e=>{e.stopPropagation();onSaveSkill(p.id,s.key,(lv+1)%5)}}>
-                                        <div className="w-6 h-6 rounded-full mx-auto border-2 cursor-pointer transition-all"
-                                          style={{background:lv>0?col:'white',borderColor:lv>0?col:'#e5e7eb'}}
-                                          title={LEVELS[lv].label}/>
-                                      </td>
-                                    )
-                                  })}
-                                </tr>
-                              </Fragment>
+                                    <span className="font-semibold text-gray-900 truncate" style={{maxWidth:'55px'}}>{p.name.split(' ')[0]}</span>
+                                  </div>
+                                </td>
+                                {gridSkills.map(s=>{
+                                  const lv=skillsData[p.id+'-'+s.key]||0
+                                  const col=LEVELS[lv].color
+                                  const isHighlighted = selectedSkill?.key===s.key
+                                  return (
+                                    <td key={s.key} className="px-1 py-2 text-center"
+                                      style={{background:isHighlighted?(col+'22'):'transparent'}}
+                                      onClick={e=>{e.stopPropagation();onSaveSkill(p.id,s.key,(lv+1)%5)}}>
+                                      <div className="w-6 h-6 rounded-full mx-auto border-2 cursor-pointer transition-all"
+                                        style={{background:lv>0?col:'white',borderColor:lv>0?col:'#e5e7eb'}}
+                                        title={LEVELS[lv].label}/>
+                                    </td>
+                                  )
+                                })}
+                              </tr>
                             ))}
                           </tbody>
                         </table>
