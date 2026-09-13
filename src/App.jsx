@@ -1305,7 +1305,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                       <div className="p-3 space-y-2">
                         {groups.map(g=>{
                           const groupDrill = getGroupDrill(block.key, g)
-                          const players = squad.filter(p=>groupAssignments?.[p.id]===g)
+                          const players = squad.filter(p=>groupAssignments?.[`${groupCount}-${p.id}`]===g)
                           const isCustom = weekOverrides[block.key]?.__groups?.[g]
                           return (
                             <div key={g} className="rounded-xl overflow-hidden border" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
@@ -1349,7 +1349,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                         return (
                           <div className="mt-2 grid grid-cols-2 gap-2">
                             {groups.map(g=>{
-                              const players = squad.filter(p=>groupAssignments?.[p.id]===g)
+                              const players = squad.filter(p=>groupAssignments?.[`${groupCount}-${p.id}`]===g)
                               return (
                                 <div key={g} className="rounded-xl p-2" style={{background:GROUP_COLORS[g-1]+'11',border:`1px solid ${GROUP_COLORS[g-1]}33`}}>
                                   <p className="text-xs font-bold mb-1" style={{color:GROUP_COLORS[g-1]}}>Group {g} ({players.length})</p>
@@ -2269,19 +2269,19 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
       {tab==='groups'&&(()=>{
         const GROUP_COLORS = ['#1e3a5f','#16a34a','#f59e0b','#8b5cf6','#ef4444','#0891b2']
         const groups = Array.from({length:groupCount},(_,i)=>i+1)
-        const unassigned = squad.filter(p=>!groupAssignments[p.id])
+        const unassigned = squad.filter(p=>!groupAssignments[`${groupCount}-${p.id}`])
 
         return (
           <div className="space-y-3">
             <div className="bg-white border border-gray-200 rounded-2xl p-4">
               <h3 className="font-bold text-gray-900 text-sm mb-1">🎯 Training Groups</h3>
               <p className="text-xs text-gray-400 mb-3">Split the squad into ability groups for training drills.</p>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-2">
                 <label className="text-xs font-semibold text-gray-600">Number of groups:</label>
-                <div className="flex gap-1">
+                <div className="flex gap-1 flex-wrap">
                   {[2,3,4,5,6].map(n=>(
                     <button key={n} onClick={()=>onGroupCountChange(n)}
-                      className="w-9 h-9 rounded-xl text-sm font-bold border-2 transition-all"
+                      className="w-9 h-9 rounded-xl text-sm font-bold border-2 transition-all shrink-0"
                       style={groupCount===n?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
                       {n}
                     </button>
@@ -2321,7 +2321,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
                 {/* Groups */}
                 {groups.map(g=>{
-                  const groupPlayers = squad.filter(p=>groupAssignments[p.id]===g)
+                  const groupPlayers = squad.filter(p=>groupAssignments[`${groupCount}-${p.id}`]===g)
                   return (
                     <div key={g} className="bg-white border-2 rounded-2xl p-4" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
                       <div className="flex items-center justify-between mb-3">
@@ -3051,7 +3051,7 @@ export default function App() {
       try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
-      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};sq.forEach(p=>{if(p.group_num)ga[p.id]=p.group_num});setGroupAssignments(ga)}}catch(e){}
+      try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,groupNum])=>{ga[`${scheme}-${p.id}`]=groupNum})}});setGroupAssignments(ga)}}catch(e){}
       try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
@@ -3132,8 +3132,14 @@ export default function App() {
     try{await supabase.from('season_settings').upsert({id:1,group_count:count})}catch(e){}
   }
   const assignPlayerGroup=async(pid,groupNum)=>{
-    setGroupAssignments(p=>({...p,[pid]:groupNum}))
-    try{await supabase.from('squad').update({group_num:groupNum}).eq('id',pid)}catch(e){}
+    const key = `${groupCount}-${pid}`
+    setGroupAssignments(p=>({...p,[key]:groupNum}))
+    try{
+      const{data:sq}=await supabase.from('squad').select('group_assignments').eq('id',pid).single()
+      const existing = (sq && sq.group_assignments) || {}
+      const updated = {...existing, [groupCount]: groupNum}
+      await supabase.from('squad').update({group_assignments:updated}).eq('id',pid)
+    }catch(e){console.error('group assign save:',e)}
   }
   const saveSkill=async(pid,skill,level)=>{
     const k=pid+'-'+skill
