@@ -1776,7 +1776,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
       <div className="bg-white border border-gray-200 rounded-2xl p-3 flex items-center gap-2">
         <button onClick={()=>setWeekNum(w=>Math.max(1,w-1))} className="w-9 h-9 rounded-xl border border-gray-300 font-bold flex items-center justify-center">&#8249;</button>
         <div className="flex-1 text-center">
-          <p className="font-bold text-gray-900 text-sm">Week {weekNum}{form.opponent?' - vs '+form.opponent:''}</p>
+          <p className="font-bold text-gray-900 text-sm">Game {weekNum}{form.opponent?' - vs '+form.opponent:''}</p>
           {form.match_date && <p className="text-xs text-gray-400">{new Date(form.match_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</p>}
         </div>
         <button onClick={()=>setWeekNum(w=>w+1)} className="w-9 h-9 rounded-xl border border-gray-300 font-bold flex items-center justify-center">&#8250;</button>
