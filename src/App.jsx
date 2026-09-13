@@ -2113,6 +2113,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
   const skillTheadRef = useRef(null)
   const [showFixedSkillHeader, setShowFixedSkillHeader] = useState(false)
+  const [appHeaderHeight, setAppHeaderHeight] = useState(0)
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -2134,9 +2135,13 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
     if(tab!=='skills' || skillView!=='by-skill'){ setShowFixedSkillHeader(false); return }
     const target = skillTheadRef.current
     if(!target){ setShowFixedSkillHeader(false); return }
+    // Measure the real app header's actual rendered height so our floating bar docks directly beneath it
+    const appHeader = document.querySelector('header')
+    const headerHeight = appHeader ? appHeader.getBoundingClientRect().height : 0
+    setAppHeaderHeight(headerHeight)
     const observer = new IntersectionObserver(
       ([entry])=>setShowFixedSkillHeader(!entry.isIntersecting),
-      { threshold: 0, rootMargin: '-64px 0px 0px 0px' } // offset for the app's own sticky nav bars
+      { threshold: 0, rootMargin: `-${headerHeight}px 0px 0px 0px` }
     )
     observer.observe(target)
     return ()=>observer.disconnect()
@@ -2605,6 +2610,30 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
               return (
                 <div className="space-y-3">
+                  {/* Fixed floating header - shows once the real header scrolls out of view */}
+                  {showFixedSkillHeader && (
+                    <div className="fixed left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-md" style={{top:`${appHeaderHeight}px`}}>
+                      <div className="max-w-5xl mx-auto overflow-x-auto">
+                        <table className="w-full text-xs">
+                          <tbody>
+                            <tr style={{background:N.light}}>
+                              <td className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0" style={{background:N.light,minWidth:'80px'}}>Player</td>
+                              {gridSkills.map(s=>(
+                                <td key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all"
+                                  style={{minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
+                                  onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}>
+                                  <div className="flex flex-col items-center gap-0.5">
+                                    <span>{s.icon}</span>
+                                    <span style={{fontSize:'9px',fontWeight:'600'}}>{s.label}</span>
+                                  </div>
+                                </td>
+                              ))}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                   {/* Outfield / GK toggle */}
                   <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
                     <button onClick={()=>{setSkillGroupFilter('outfield');setSelectedSkill(null)}}
