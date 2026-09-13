@@ -2112,8 +2112,10 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [formation, setFormation] = useState(preferredFormation||'3-3-2')
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
   const skillTheadRef = useRef(null)
+  const skillTableWrapRef = useRef(null)
   const [showFixedSkillHeader, setShowFixedSkillHeader] = useState(false)
   const [appHeaderHeight, setAppHeaderHeight] = useState(0)
+  const [skillHeaderRect, setSkillHeaderRect] = useState({left:0, width:'auto', tableWidth:'auto'})
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -2610,27 +2612,6 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
 
               return (
                 <div className="space-y-3">
-                  {/* Fixed floating header - shows once the real header scrolls out of view */}
-                  {showFixedSkillHeader && (
-                    <div className="fixed left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-md" style={{top:`${appHeaderHeight}px`}}>
-                      <div className="max-w-5xl mx-auto overflow-x-auto">
-                        <table className="w-full text-xs">
-                          <tbody>
-                            <tr style={{background:N.light}}>
-                              <td className="text-left px-3 py-1 font-semibold text-gray-700 sticky left-0" style={{background:N.light,width:'80px'}}>Player</td>
-                              {gridSkills.map(s=>(
-                                <td key={s.key} className="px-1 py-1 text-center cursor-pointer transition-all"
-                                  style={{width:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
-                                  onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}>
-                                  <span style={{fontSize:'13px'}}>{s.icon}</span>
-                                </td>
-                              ))}
-                            </tr>
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
                   {/* Outfield / GK toggle */}
                   <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
                     <button onClick={()=>{setSkillGroupFilter('outfield');setSelectedSkill(null)}}
@@ -2654,9 +2635,30 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                   {(!showGK || gridSquad.length>0)&&(
                     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                       {/* Skill headers */}
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto" ref={skillTableWrapRef}>
+                        {showFixedSkillHeader && (
+                          <div className="fixed z-30 bg-white border-b border-gray-200 shadow-md overflow-hidden" style={{top:`${appHeaderHeight}px`,left:skillHeaderRect.left,width:skillHeaderRect.width}}>
+                            <table className="text-xs" style={{width:skillHeaderRect.tableWidth}}>
+                              <tbody>
+                                <tr style={{background:N.light}}>
+                                  <td className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0" style={{background:N.light,minWidth:'80px'}}>Player</td>
+                                  {gridSkills.map(s=>(
+                                    <td key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all"
+                                      style={{minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
+                                      onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}>
+                                      <div className="flex flex-col items-center gap-0.5">
+                                        <span>{s.icon}</span>
+                                        <span style={{fontSize:'9px',fontWeight:'600'}}>{s.label}</span>
+                                      </div>
+                                    </td>
+                                  ))}
+                                </tr>
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
                         <table className="w-full text-xs">
-                          <thead ref={skillTheadRef}>
+                          <thead ref={skillTheadRef} style={showFixedSkillHeader?{visibility:'hidden'}:undefined}>
                             <tr style={{background:N.light}}>
                               <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 z-10" style={{background:N.light,minWidth:'80px'}}>Player</th>
                               {gridSkills.map(s=>(
