@@ -2160,7 +2160,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
     wrap.addEventListener('scroll', handleWrapScroll, { passive:true })
     handleWrapScroll()
     return ()=>{ observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); wrap.removeEventListener('scroll', handleWrapScroll) }
-  })
+  },[tab, skillView, skillGroupFilter, selectedSkill])
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
 
@@ -2654,7 +2654,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                             <table className="text-xs" style={{width:skillHeaderRect.tableWidth,transform:`translateX(-${skillScrollLeft}px)`}}>
                               <tbody>
                                 <tr style={{background:N.light}}>
-                                  <td className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0" style={{background:N.light,minWidth:'80px'}}>Player</td>
+                                  <td className="text-left px-3 py-2 font-semibold text-gray-700" style={{background:N.light,minWidth:'80px'}}>Player</td>
                                   {gridSkills.map(s=>(
                                     <td key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all"
                                       style={{minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
