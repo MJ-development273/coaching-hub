@@ -2614,18 +2614,15 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                   {showFixedSkillHeader && (
                     <div className="fixed left-0 right-0 z-30 bg-white border-b border-gray-200 shadow-md" style={{top:`${appHeaderHeight}px`}}>
                       <div className="max-w-5xl mx-auto overflow-x-auto">
-                        <table className="w-full text-xs">
+                        <table className="w-full text-xs" style={{tableLayout:'fixed'}}>
                           <tbody>
                             <tr style={{background:N.light}}>
-                              <td className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0" style={{background:N.light,minWidth:'80px'}}>Player</td>
+                              <td className="text-left px-3 py-1 font-semibold text-gray-700 sticky left-0" style={{background:N.light,width:'80px'}}>Player</td>
                               {gridSkills.map(s=>(
-                                <td key={s.key} className="px-1 py-2 text-center cursor-pointer transition-all"
-                                  style={{minWidth:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
+                                <td key={s.key} className="px-1 py-1 text-center cursor-pointer transition-all"
+                                  style={{width:'36px',background:selectedSkill?.key===s.key?N.bg:N.light,color:selectedSkill?.key===s.key?'white':N.text}}
                                   onClick={()=>setSelectedSkill(selectedSkill?.key===s.key?null:s)}>
-                                  <div className="flex flex-col items-center gap-0.5">
-                                    <span>{s.icon}</span>
-                                    <span style={{fontSize:'9px',fontWeight:'600'}}>{s.label}</span>
-                                  </div>
+                                  <span style={{fontSize:'13px'}}>{s.icon}</span>
                                 </td>
                               ))}
                             </tr>
@@ -2658,7 +2655,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                     <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
                       {/* Skill headers */}
                       <div className="overflow-x-auto">
-                        <table className="w-full text-xs">
+                        <table className="w-full text-xs" style={{tableLayout:'fixed'}}>
                           <thead ref={skillTheadRef}>
                             <tr style={{background:N.light}}>
                               <th className="text-left px-3 py-2 font-semibold text-gray-700 sticky left-0 z-10" style={{background:N.light,minWidth:'80px'}}>Player</th>
