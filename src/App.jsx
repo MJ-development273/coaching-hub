@@ -2111,12 +2111,6 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const [teamFormat, setTeamFormat] = useState(preferredTeamFormat||'9v9')
   const [formation, setFormation] = useState(preferredFormation||'3-3-2')
   const [skillGroupFilter, setSkillGroupFilter] = useState('outfield')
-  const skillTheadRef = useRef(null)
-  const skillTableWrapRef = useRef(null)
-  const [showFixedSkillHeader, setShowFixedSkillHeader] = useState(false)
-  const [appHeaderHeight, setAppHeaderHeight] = useState(0)
-  const [skillHeaderRect, setSkillHeaderRect] = useState({left:0, width:'auto', tableWidth:'auto'})
-  const [skillScrollLeft, setSkillScrollLeft] = useState(0)
   const [newName, setNewName] = useState('')
   const [newNum, setNewNum] = useState('')
   const [adding, setAdding] = useState(false)
@@ -2132,35 +2126,6 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
   const POSITIONS_11V11_LIST = ['GK','RB','CB','LB','RM','CM','LM','ST']
   const POSITIONS = teamFormat==='9v9' ? POSITIONS_9V9_LIST : POSITIONS_11V11_LIST
   const LEVELS = [{v:0,label:'Not started',color:'#e5e7eb'},{v:1,label:'Introduced',color:'#f59e0b'},{v:2,label:'Developing',color:'#3b82f6'},{v:3,label:'Confident',color:'#16a34a'}]
-
-  // Watch the real skill-grid header; once it scrolls out of view, fix it in place using the real markup (no duplicate copy)
-  useEffect(()=>{
-    if(tab!=='skills' || skillView!=='by-skill'){ setShowFixedSkillHeader(false); return }
-    const target = skillTheadRef.current
-    const wrap = skillTableWrapRef.current
-    if(!target || !wrap){ setShowFixedSkillHeader(false); return }
-    const appHeader = document.querySelector('header')
-    const headerHeight = appHeader ? appHeader.getBoundingClientRect().height : 0
-    setAppHeaderHeight(headerHeight)
-
-    const measure = () => {
-      const rect = wrap.getBoundingClientRect()
-      const table = wrap.querySelector('table')
-      setSkillHeaderRect({ left: rect.left, width: rect.width, tableWidth: table ? table.getBoundingClientRect().width : rect.width })
-    }
-    const handleWrapScroll = () => setSkillScrollLeft(wrap.scrollLeft)
-
-    const observer = new IntersectionObserver(
-      ([entry])=>{ setShowFixedSkillHeader(!entry.isIntersecting); if(!entry.isIntersecting) measure() },
-      { threshold: 0, rootMargin: `-${headerHeight}px 0px 0px 0px` }
-    )
-    observer.observe(target)
-    window.addEventListener('scroll', measure, { passive:true })
-    window.addEventListener('resize', measure)
-    wrap.addEventListener('scroll', handleWrapScroll, { passive:true })
-    handleWrapScroll()
-    return ()=>{ observer.disconnect(); window.removeEventListener('scroll', measure); window.removeEventListener('resize', measure); wrap.removeEventListener('scroll', handleWrapScroll) }
-  },[tab, skillView, skillGroupFilter, selectedSkill])
   const drillsForProgress = drills.filter(d=>d.category!=='Age Group Changes'&&d.category!=='Strength & Conditioning')
   const presentCount = squad.filter(p=>attendance[currentWeek+'-'+p.id]).length
 
@@ -2314,7 +2279,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               <div className="flex items-center gap-2">
                 <label className="text-xs font-semibold text-gray-600">Number of groups:</label>
                 <div className="flex gap-1">
-                  {[2,3,4].map(n=>(
+                  {[2,3,4,5,6].map(n=>(
                     <button key={n} onClick={()=>onGroupCountChange(n)}
                       className="w-9 h-9 rounded-xl text-sm font-bold border-2 transition-all"
                       style={groupCount===n?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>
