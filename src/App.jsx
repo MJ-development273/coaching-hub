@@ -4,6 +4,16 @@ import { SEED_DRILLS } from './drills'
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 // Primary navy: #1e3a5f  Hover navy: #152d4a  Light navy bg: #eef1f7
+
+// Parses a plain YYYY-MM-DD date string as a LOCAL date (avoiding the JS pitfall where
+// new Date("2025-09-07") is interpreted as UTC midnight, which can roll back a day
+// when displayed in timezones behind UTC).
+function parseLocalDate(dateStr) {
+  if (!dateStr) return null
+  const [y, m, d] = dateStr.split('-').map(Number)
+  return new Date(y, m - 1, d)
+}
+
 const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', text:'#1e3a5f' }
 const SITE_URL = 'https://coaching-hub-virid.vercel.app'
 
@@ -975,8 +985,8 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const isPreSeasonAuto = (() => {
     if (!preSeasonStart) return false
     const today = new Date(); today.setHours(0,0,0,0)
-    const pre = new Date(preSeasonStart); pre.setHours(0,0,0,0)
-    const comp = seasonStart ? new Date(seasonStart) : null
+    const pre = parseLocalDate(preSeasonStart); pre.setHours(0,0,0,0)
+    const comp = seasonStart ? parseLocalDate(seasonStart) : null
     if (comp) comp.setHours(0,0,0,0)
     if (today < pre) return false
     if (comp && today >= comp) return false
@@ -987,17 +997,19 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const calcWeekFor = (isPre) => {
     const base = isPre ? preSeasonStart : seasonStart
     if (!base) return 1
-    const s = new Date(base), t = new Date()
+    const s = parseLocalDate(base), t = new Date()
     s.setHours(0,0,0,0); t.setHours(0,0,0,0)
     if (t < s) return 1
+    // Advance to the next week the day AFTER each session date has passed, not after a
+    // full 7-day cycle -- e.g. training Monday 7th means the planner should already show
+    // next week's session from Tuesday 8th onwards, not wait until Monday 14th.
     let week = Math.floor((t - s) / (1000*60*60*24*7)) + 1
-    // If this week's session has a manually-set date that's different to the auto Monday date,
-    // and that specific date has already passed, advance to the next week early rather than
-    // waiting for the next auto-calculated 7-day boundary.
-    if (!isPre && dateOverrides && dateOverrides[week]) {
-      const overrideDate = new Date(dateOverrides[week])
-      overrideDate.setHours(0,0,0,0)
-      if (t > overrideDate) week += 1
+    while (true) {
+      const sessionDate = (!isPre && dateOverrides && dateOverrides[week])
+        ? parseLocalDate(dateOverrides[week])
+        : (() => { const d = new Date(s); d.setDate(d.getDate() + (week - 1) * 7); return d })()
+      sessionDate.setHours(0,0,0,0)
+      if (t > sessionDate) { week += 1 } else { break }
     }
     return week
   }
@@ -1154,10 +1166,10 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
         {/* Session date - auto from season start or manual override */}
         {(()=>{
           const baseDate = isPreSeason ? preSeasonStart : seasonStart
-          const autoDate = baseDate ? (()=>{ const d=new Date(baseDate); d.setDate(d.getDate()+(weekNum-1)*7); return d.toISOString().split('T')[0] })() : ''
+          const autoDate = baseDate ? (()=>{ const d=parseLocalDate(baseDate); d.setDate(d.getDate()+(weekNum-1)*7); const yy=d.getFullYear(),mm=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${yy}-${mm}-${dd}` })() : ''
           const hasOverride = !!(dateOverrides && dateOverrides[weekNum])
           const displayDate = (dateOverrides && dateOverrides[weekNum]) || autoDate
-          const fmt = iso => iso ? new Date(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : ''
+          const fmt = iso => iso ? parseLocalDate(iso).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short',year:'numeric'}) : ''
           return (
             <div className="space-y-2">
               <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block">Session Date</label>
@@ -1664,7 +1676,7 @@ function ParentHomeView({ drills, homeSession }) {
 // ─── Season Start helper (outside component to avoid hook issues) ──────────────
 function calcWeekNum(seasonStart) {
   if (!seasonStart) return 1
-  const s = new Date(seasonStart), t = new Date()
+  const s = parseLocalDate(seasonStart), t = new Date()
   s.setHours(0,0,0,0); t.setHours(0,0,0,0)
   if (t < s) return 1
   return Math.floor((t - s) / (1000*60*60*24*7)) + 1
@@ -1777,7 +1789,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const save = async () => { await onSave(weekNum, form); setSaved(true); setTimeout(()=>setSaved(false),2000) }
   const ic = "w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none"
   const fn = e=>e.target.style.borderColor=N.bg, fb = e=>e.target.style.borderColor='#d1d5db'
-  const fixtureDateFmt = form.match_date ? new Date(form.match_date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}) : ''
+  const fixtureDateFmt = form.match_date ? parseLocalDate(form.match_date).toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'}) : ''
   const fixtureWa = `Clydach Juniors - ${form.match_type||'Match'} Day${form.opponent?' vs '+form.opponent:''}${fixtureDateFmt?'\nDate: '+fixtureDateFmt:''}${form.match_time?'\nTime: '+form.match_time:''}${form.venue?'\nVenue: '+form.venue:''}\n\nGood luck to everyone! - Coaching Team\n🔗 ${SITE_URL}`
   const resultWa = `Clydach Juniors Result${form.opponent?' vs '+form.opponent:''}${form.result?'\nResult: '+form.result:''}${form.scorers?'\nScorers: '+form.scorers:''}\n\nWell done everyone! - Coaching Team\n🔗 ${SITE_URL}`
   return (
@@ -1786,7 +1798,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
         <button onClick={()=>setWeekNum(w=>Math.max(1,w-1))} className="w-9 h-9 rounded-xl border border-gray-300 font-bold flex items-center justify-center">&#8249;</button>
         <div className="flex-1 text-center">
           <p className="font-bold text-gray-900 text-sm">Game {weekNum}{form.opponent?' - vs '+form.opponent:''}</p>
-          {form.match_date && <p className="text-xs text-gray-400">{new Date(form.match_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</p>}
+          {form.match_date && <p className="text-xs text-gray-400">{parseLocalDate(form.match_date).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'short'})}</p>}
         </div>
         <button onClick={()=>setWeekNum(w=>w+1)} className="w-9 h-9 rounded-xl border border-gray-300 font-bold flex items-center justify-center">&#8250;</button>
         <button onClick={()=>setWeekNum(currentWeek)} className="text-xs font-semibold px-2 py-1 rounded-lg" style={{background:N.light,color:N.text}}>Today</button>
@@ -2919,7 +2931,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
         {preSeasonStart ? (
           <div className="flex items-center gap-2">
             <span className="flex-1 text-sm font-semibold text-gray-800 bg-orange-50 rounded-xl px-3 py-2 border border-orange-200">
-              {new Date(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+              {parseLocalDate(preSeasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
             </span>
             <button onClick={()=>onPreSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
           </div>
@@ -2931,7 +2943,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
         )}
         {preSeasonStart && seasonStart && (
           <p className="text-xs mt-2" style={{color:'#9a3412'}}>
-            Pre-season runs until {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+            Pre-season runs until {parseLocalDate(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
           </p>
         )}
       </div>
@@ -2944,7 +2956,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
         {seasonStart ? (
           <div className="flex items-center gap-2">
             <span className="flex-1 text-sm font-semibold text-gray-800 bg-gray-50 rounded-xl px-3 py-2">
-              {new Date(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
+              {parseLocalDate(seasonStart).toLocaleDateString('en-GB',{weekday:'short',day:'numeric',month:'long',year:'numeric'})}
             </span>
             <button onClick={()=>onSeasonStartChange('')} className="text-xs border border-red-200 text-red-400 rounded-xl px-3 py-2">Clear</button>
           </div>
@@ -2956,7 +2968,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
         )}
         {seasonStart && (
           <p className="text-xs mt-2" style={{color:N.text}}>
-            Week 1 starts {new Date(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
+            Week 1 starts {parseLocalDate(seasonStart).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}
           </p>
         )}
       </div>
@@ -2968,7 +2980,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
         </div>
       ) : (()=>{
         const weeks = Array.from({length:30},(_,i)=>i+1)
-        const getDate = w => { const d=new Date(seasonStart); d.setDate(d.getDate()+(w-1)*7); return d }
+        const getDate = w => { const d=parseLocalDate(seasonStart); d.setDate(d.getDate()+(w-1)*7); return d }
         const fmt = d => d.toLocaleDateString('en-GB',{day:'numeric',month:'short'})
         return (
         <>
@@ -3026,7 +3038,7 @@ function ParentView({ sessionStatus, matchNotes, drills, homeSession, seasonStar
   const fixtureDate = upcomingFixture?.match_date
     ? new Date(upcomingFixture.match_date)
     : (seasonStart && upcomingWeekNum) ? (()=>{
-        const d = new Date(seasonStart)
+        const d = parseLocalDate(seasonStart)
         d.setDate(d.getDate() + (upcomingWeekNum - 1) * 7)
         return d
       })() : null
@@ -3206,7 +3218,7 @@ export default function App() {
   }
   const saveProgress=async(pid,did,level)=>{setProgressData(p=>({...p,[pid+'-'+did]:level}));try{if(level===0){await supabase.from('player_progress').delete().eq('player_id',pid).eq('drill_id',did)}else{await supabase.from('player_progress').upsert({player_id:pid,drill_id:did,level},{onConflict:'player_id,drill_id'})}}catch(e){}}
 
-  const currentWeek=(()=>{if(!seasonStart)return 1;const s=new Date(seasonStart),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);if(t<s)return 1;return Math.floor((t-s)/(1000*60*60*24*7))+1})()
+  const currentWeek=(()=>{if(!seasonStart)return 1;const s=parseLocalDate(seasonStart),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);if(t<s)return 1;return Math.floor((t-s)/(1000*60*60*24*7))+1})()
 
   const isCoach=role==='coach'
 
