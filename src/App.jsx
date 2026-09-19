@@ -2054,10 +2054,25 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
 
   const downloadImage = () => {
     if (!imageUrl) return
+    // iOS Safari frequently ignores programmatic downloads of data URLs, so we open the
+    // image in a new tab as a reliable fallback -- the user can then long-press to save it.
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+    if (isIOS) {
+      const win = window.open()
+      if (win) {
+        win.document.write(`<html><head><title>Match Report</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${imageUrl}" style="max-width:100%;height:auto;" alt="Match report graphic"/></body></html>`)
+        win.document.close()
+      } else {
+        alert('Please allow pop-ups to save the image, or take a screenshot of the graphic above.')
+      }
+      return
+    }
     const link = document.createElement('a')
     link.download = `match-report-week${weekNum}.png`
     link.href = imageUrl
+    document.body.appendChild(link)
     link.click()
+    document.body.removeChild(link)
   }
 
   const saveReport = async () => {
@@ -2148,7 +2163,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
             <button onClick={downloadImage} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:'#16a34a'}}>
               ⬇️ Download Image
             </button>
-            <p className="text-xs text-gray-400 text-center">Download then share directly to Instagram, Facebook or your club's social pages</p>
+            <p className="text-xs text-gray-400 text-center">On iPhone: tap Download, then press and hold the image and choose "Save Image". On other devices it downloads automatically.</p>
           </div>
         )}
 
