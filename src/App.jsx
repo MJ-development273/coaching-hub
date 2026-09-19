@@ -1940,7 +1940,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     const sectionY = photoY + photoH + 90
     const sectionH = 380
     const colGap = 24
-    const leftColW = photoW * 0.32
+    const leftColW = photoW * 0.25
     const rightColX = photoMargin + leftColW + colGap
     const rightColW = photoW - leftColW - colGap
 
