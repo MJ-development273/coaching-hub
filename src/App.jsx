@@ -1792,7 +1792,49 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     await new Promise(r => setTimeout(r, 50)) // let UI update before heavy canvas work
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const W = 1080, H = 1450
+    const W = 1080
+
+    // ── Pass 1: measure how tall the highlights column needs to be, so we can size
+    // the canvas correctly before drawing anything (avoids cutting off long text) ──
+    const photoY = 380, photoH = 430, photoMargin = 50
+    const photoW = W - photoMargin*2
+    const sectionY = photoY + photoH + 90
+    const colGap = 24
+    const leftColW = photoW * 0.28
+
+    const measureWrap = (text, maxW, font) => {
+      ctx.font = font
+      const words = (text || '').split(' ')
+      let line = '', lines = []
+      words.forEach(word => {
+        const test = line ? line + ' ' + word : word
+        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word }
+        else { line = test }
+      })
+      if (line) lines.push(line)
+      return lines
+    }
+    const valueFont = '26px sans-serif' // matches the match report's weight/size exactly
+    const valueLineHeight = 34
+    const measureBoxHeight = (value) => {
+      const lines = measureWrap(value || '--', leftColW - 32, valueFont)
+      return 44 + lines.length * valueLineHeight + 14
+    }
+    let measuredY = sectionY + 40
+    measuredY += measureBoxHeight(scorersLine || 'None recorded') + 26
+    highlightBoxes.forEach(h => { if (h.label) measuredY += measureBoxHeight(h.value) + 26 })
+    const sectionH = measuredY - sectionY - 26
+
+    // Also measure how tall the written match report will be, so the canvas fits whichever column is taller
+    const rightColWMeasure = photoW - leftColW - colGap
+    const reportBodyMeasure = reportText.trim() || `A great effort from everyone against ${opponentLine} today. Well done to the whole squad!`
+    const reportLines = measureWrap(reportBodyMeasure, rightColWMeasure, valueFont)
+    const reportH = 45 + reportLines.length * 36
+
+    const contentH = Math.max(sectionH, reportH)
+
+    // Canvas height = however tall the content actually is, plus fixed footer space
+    const H = Math.max(1450, sectionY + contentH + 260)
     canvas.width = W
     canvas.height = H
 
@@ -1880,8 +1922,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     })
 
     // ── Main team photo, rounded card with white border ──
-    const photoY = 380, photoH = 430, photoMargin = 50
-    const photoW = W - photoMargin*2
+    // (photoY, photoH, photoMargin, photoW already calculated in the measurement pass above)
     ctx.save()
     roundRect(photoMargin, photoY, photoW, photoH, 24)
     ctx.clip()
@@ -1937,9 +1978,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     ctx.fillText(scoreLine, W/2, bannerY + 78)
 
     // ── Two-column section: narrow highlight boxes (left) + written match report (right) ──
-    const sectionY = photoY + photoH + 90
-    const colGap = 24
-    const leftColW = photoW * 0.28
+    // (sectionY, colGap, leftColW, sectionH already calculated in the measurement pass above)
     const rightColX = photoMargin + leftColW + colGap
     const rightColW = photoW - leftColW - colGap
 
@@ -1949,26 +1988,10 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     ctx.fillStyle = '#fbbf24'
     ctx.fillText('★ HIGHLIGHTS', photoMargin, sectionY)
 
-    // Helper: wrap text to a max width, returning an array of lines (no line cap -- shows everything)
-    const wrapText = (text, maxW, font) => {
-      ctx.font = font
-      const words = (text || '').split(' ')
-      let line = '', lines = []
-      words.forEach(word => {
-        const test = line ? line + ' ' + word : word
-        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word }
-        else { line = test }
-      })
-      if (line) lines.push(line)
-      return lines
-    }
-
-    // Helper: draw a labelled stat box, sized to fit however many lines the value needs (capped at 3 lines to protect layout)
-    const valueFont = 'bold 26px sans-serif'
-    const valueLineHeight = 34
+    // Helper: draw a labelled stat box, sized to fit however many lines the value needs (no cap -- full text always shown)
     const drawStatBox = (x, y, w, label, value) => {
       const maxW = w - 32
-      const lines = wrapText(value || '--', maxW, valueFont).slice(0, 3)
+      const lines = measureWrap(value || '--', maxW, valueFont)
       const h = 44 + lines.length * valueLineHeight + 14
       roundRect(x, y, w, h, 14)
       ctx.fillStyle = 'rgba(255,255,255,0.12)'
@@ -1989,7 +2012,6 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     highlightBoxes.forEach(h => {
       if (h.label) boxY += drawStatBox(photoMargin, boxY, leftColW, h.label, h.value) + boxGap
     })
-    const sectionH = boxY - sectionY - boxGap
 
     // Right column: written match report
     ctx.textAlign = 'left'
@@ -1997,27 +2019,19 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     ctx.fillStyle = '#fbbf24'
     ctx.fillText('📝 MATCH REPORT', rightColX, sectionY)
 
-    ctx.font = '26px sans-serif'
+    ctx.font = valueFont
     ctx.fillStyle = 'white'
     const reportBody = reportText.trim() || `A great effort from everyone against ${opponentLine} today. Well done to the whole squad!`
     const rWords = reportBody.split(' ')
     let rLine = '', rY = sectionY + 45
     const rMaxW = rightColW
     const lineHeight = 36
-    const maxLines = Math.floor((sectionH - 45) / lineHeight)
-    let lineCount = 0
     for (let i = 0; i < rWords.length; i++) {
       const test = rLine ? rLine + ' ' + rWords[i] : rWords[i]
       if (ctx.measureText(test).width > rMaxW && rLine) {
         ctx.fillText(rLine, rightColX, rY)
         rLine = rWords[i]
         rY += lineHeight
-        lineCount++
-        if (lineCount >= maxLines - 1) {
-          ctx.fillText(rLine + '…', rightColX, rY)
-          rLine = ''
-          break
-        }
       } else {
         rLine = test
       }
