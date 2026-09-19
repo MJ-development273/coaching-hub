@@ -1767,17 +1767,6 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
   const scorersLine = form.scorers || ''
   const opponentLine = form.opponent || 'Opponent TBC'
 
-  // Build the WhatsApp text report combining fixture + result info
-  const buildReportText = () => {
-    const lines = [`⚽ *Match Report -- Clydach Juniors*\n`]
-    lines.push(`*vs ${opponentLine}*`)
-    if (scoreLine) lines.push(`📊 ${scoreLine}`)
-    if (scorersLine) lines.push(`⚽ Scorers: ${scorersLine}`)
-    if (reportText.trim()) lines.push(`\n${reportText.trim()}`)
-    lines.push(`\n-- Coaching Team\n🔗 ${SITE_URL}`)
-    return lines.join('\n')
-  }
-
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -1814,8 +1803,8 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
       if (line) lines.push(line)
       return lines
     }
-    const valueFont = '26px sans-serif' // matches the match report's weight/size exactly
-    const valueLineHeight = 34
+    const valueFont = '30px sans-serif' // matches the match report's weight/size exactly
+    const valueLineHeight = 38
     const measureBoxHeight = (value) => {
       const lines = measureWrap(value || '--', leftColW - 32, valueFont)
       return 44 + lines.length * valueLineHeight + 14
@@ -1829,7 +1818,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     const rightColWMeasure = photoW - leftColW - colGap
     const reportBodyMeasure = reportText.trim() || `A great effort from everyone against ${opponentLine} today. Well done to the whole squad!`
     const reportLines = measureWrap(reportBodyMeasure, rightColWMeasure, valueFont)
-    const reportH = 45 + reportLines.length * 36
+    const reportH = 45 + reportLines.length * valueLineHeight
 
     const contentH = Math.max(sectionH, reportH)
 
@@ -2025,7 +2014,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     const rWords = reportBody.split(' ')
     let rLine = '', rY = sectionY + 45
     const rMaxW = rightColW
-    const lineHeight = 36
+    const lineHeight = valueLineHeight
     for (let i = 0; i < rWords.length; i++) {
       const test = rLine ? rLine + ' ' + rWords[i] : rWords[i]
       if (ctx.measureText(test).width > rMaxW && rLine) {
@@ -2075,20 +2064,15 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
         {saved?'✓ Saved!':'💾 Save Report'}
       </button>
 
-      {/* WhatsApp text report */}
+      {/* Match report text — feeds the social media graphic */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
         <h3 className="font-bold text-gray-900 text-sm mb-1">📰 Match Report</h3>
-        <p className="text-xs text-gray-400 mb-3">Written summary used in the WhatsApp message and the social media graphic.</p>
+        <p className="text-xs text-gray-400 mb-3">Written summary shown on the social media graphic.</p>
         <label className="text-xs font-semibold text-gray-600 block mb-1">Match report text</label>
         <textarea value={reportText} onChange={e=>setReportText(e.target.value)} rows={4}
           placeholder="e.g. Great team performance today against a tough opponent. Everyone got game time and showed real character in the second half..."
-          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none mb-3"
+          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none"
           onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3 text-xs text-gray-600 whitespace-pre-wrap font-mono max-h-32 overflow-y-auto">{buildReportText()}</div>
-        <a href={`https://wa.me/?text=${encodeURIComponent(buildReportText())}`} target="_blank" rel="noreferrer"
-          className="w-full text-white font-bold py-2.5 rounded-xl text-sm text-center block" style={{background:'#16a34a'}}>
-          📲 Share Report to Parents
-        </a>
       </div>
 
       {/* Highlight boxes editor */}
