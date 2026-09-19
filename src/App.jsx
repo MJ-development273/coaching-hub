@@ -1938,9 +1938,8 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
 
     // ── Two-column section: narrow highlight boxes (left) + written match report (right) ──
     const sectionY = photoY + photoH + 90
-    const sectionH = 380
     const colGap = 24
-    const leftColW = photoW * 0.25
+    const leftColW = photoW * 0.28
     const rightColX = photoMargin + leftColW + colGap
     const rightColW = photoW - leftColW - colGap
 
@@ -1950,42 +1949,47 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     ctx.fillStyle = '#fbbf24'
     ctx.fillText('★ HIGHLIGHTS', photoMargin, sectionY)
 
-    // Helper: draw a labelled stat box
-    const drawStatBox = (x, y, w, h, label, value) => {
-      roundRect(x, y, w, h, 14)
-      ctx.fillStyle = 'rgba(255,255,255,0.12)'
-      ctx.fill()
-      ctx.font = 'bold 18px sans-serif'
-      ctx.fillStyle = '#fbbf24'
-      ctx.textAlign = 'left'
-      ctx.fillText(label.toUpperCase(), x + 16, y + 30)
-      ctx.font = 'bold 24px sans-serif'
-      ctx.fillStyle = 'white'
-      // Wrap value text within the box width if needed
-      const words = (value || '--').split(' ')
+    // Helper: wrap text to a max width, returning an array of lines (no line cap -- shows everything)
+    const wrapText = (text, maxW, font) => {
+      ctx.font = font
+      const words = (text || '').split(' ')
       let line = '', lines = []
-      const maxW = w - 32
       words.forEach(word => {
         const test = line ? line + ' ' + word : word
         if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word }
         else { line = test }
       })
       if (line) lines.push(line)
-      lines.slice(0,2).forEach((l,i) => ctx.fillText(l, x + 16, y + 62 + i*30))
+      return lines
     }
 
-    let boxY = sectionY + 30
-    const boxGap = 16
-    const scorerBoxH = 90
-    drawStatBox(photoMargin, boxY, leftColW, scorerBoxH, 'Scorers', scorersLine || 'None recorded')
-    boxY += scorerBoxH + boxGap
+    // Helper: draw a labelled stat box, sized to fit however many lines the value needs (capped at 3 lines to protect layout)
+    const valueFont = 'bold 26px sans-serif'
+    const valueLineHeight = 34
+    const drawStatBox = (x, y, w, label, value) => {
+      const maxW = w - 32
+      const lines = wrapText(value || '--', maxW, valueFont).slice(0, 3)
+      const h = 44 + lines.length * valueLineHeight + 14
+      roundRect(x, y, w, h, 14)
+      ctx.fillStyle = 'rgba(255,255,255,0.12)'
+      ctx.fill()
+      ctx.font = 'bold 18px sans-serif'
+      ctx.fillStyle = '#fbbf24'
+      ctx.textAlign = 'left'
+      ctx.fillText(label.toUpperCase(), x + 16, y + 28)
+      ctx.font = valueFont
+      ctx.fillStyle = 'white'
+      lines.forEach((l,i) => ctx.fillText(l, x + 16, y + 58 + i*valueLineHeight))
+      return h
+    }
 
-    const remainingH = sectionH - (boxY - sectionY)
-    const customBoxH = highlightBoxes.length > 0 ? (remainingH - boxGap*(highlightBoxes.length-1)) / highlightBoxes.length : 0
+    let boxY = sectionY + 40
+    const boxGap = 26
+    boxY += drawStatBox(photoMargin, boxY, leftColW, 'Scorers', scorersLine || 'None recorded') + boxGap
     highlightBoxes.forEach(h => {
-      if (h.label) drawStatBox(photoMargin, boxY, leftColW, customBoxH, h.label, h.value)
-      boxY += customBoxH + boxGap
+      if (h.label) boxY += drawStatBox(photoMargin, boxY, leftColW, h.label, h.value) + boxGap
     })
+    const sectionH = boxY - sectionY - boxGap
 
     // Right column: written match report
     ctx.textAlign = 'left'
