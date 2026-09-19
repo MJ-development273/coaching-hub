@@ -2060,7 +2060,23 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     if (isIOS) {
       const win = window.open()
       if (win) {
-        win.document.write(`<html><head><title>Match Report</title></head><body style="margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;"><img src="${imageUrl}" style="max-width:100%;height:auto;" alt="Match report graphic"/></body></html>`)
+        win.document.write(`
+          <html>
+            <head>
+              <title>Match Report</title>
+              <meta name="viewport" content="width=device-width, initial-scale=1"/>
+            </head>
+            <body style="margin:0;background:#111;font-family:-apple-system,sans-serif;">
+              <div style="position:sticky;top:0;background:#1e3a5f;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.3);z-index:10;">
+                <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:white;border:none;padding:10px 16px;border-radius:10px;font-size:15px;font-weight:600;">✕ Close</button>
+                <span style="font-size:13px;text-align:right;line-height:1.3;">Press &amp; hold the image below,<br/>then tap "Save Image"</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;padding:16px;">
+                <img src="${imageUrl}" style="max-width:100%;height:auto;border-radius:8px;" alt="Match report graphic"/>
+              </div>
+            </body>
+          </html>
+        `)
         win.document.close()
       } else {
         alert('Please allow pop-ups to save the image, or take a screenshot of the graphic above.')
