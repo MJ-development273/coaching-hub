@@ -2146,10 +2146,10 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
         </div>
         {highlightBoxes.map((h,i) => (
           <div key={i} className="flex gap-2 mb-2">
-            <input value={h.label} onChange={e=>updateHighlight(i,'label',e.target.value)} placeholder="Label e.g. Man of the Match"
+            <input value={h.label} onChange={e=>updateHighlight(i,'label',e.target.value)} placeholder="Label e.g. Noticeable Mention"
               className="w-2/5 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
               onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
-            <input value={h.value} onChange={e=>updateHighlight(i,'value',e.target.value)} placeholder="Value e.g. Tom Jones"
+            <input value={h.value} onChange={e=>updateHighlight(i,'value',e.target.value)} placeholder="Value e.g. Rhys for great goalkeeping"
               className="flex-1 border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none"
               onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
             <button onClick={()=>removeHighlightBox(i)} className="text-red-400 hover:text-red-600 px-2">✕</button>
