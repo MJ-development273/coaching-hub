@@ -1768,65 +1768,89 @@ function MatchReportBuilder({ form, weekNum }) {
     await new Promise(r => setTimeout(r, 50)) // let UI update before heavy canvas work
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const W = 1080, H = 1080
+    const W = 1080, H = 1350
     canvas.width = W
     canvas.height = H
 
-    // Background
-    ctx.fillStyle = N.bg
+    // ── Background: grass-green base with diagonal navy accent bands (playful, magazine-style) ──
+    ctx.fillStyle = '#166534'
     ctx.fillRect(0, 0, W, H)
+    // Subtle grass texture stripes
+    ctx.fillStyle = 'rgba(255,255,255,0.04)'
+    for (let i = -H; i < W; i += 70) {
+      ctx.fillRect(i, 0, 35, H)
+    }
+    // Diagonal navy band across the very top
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, 150); ctx.lineTo(0, 210); ctx.closePath()
+    ctx.fillStyle = N.bg
+    ctx.fill()
+    ctx.restore()
+    // Diagonal navy band across the very bottom
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, H); ctx.lineTo(W, H); ctx.lineTo(W, H-150); ctx.lineTo(0, H-90); ctx.closePath()
+    ctx.fillStyle = N.bg
+    ctx.fill()
+    ctx.restore()
 
-    // Photo area (top 60%) - either uploaded photo or a placeholder gradient
-    const photoH = H * 0.58
-    if (photoDataUrl) {
-      const img = new Image()
-      await new Promise((resolve) => {
-        img.onload = () => {
-          // Cover-fit the image into the photo area
-          const scale = Math.max(W / img.width, photoH / img.height)
-          const sw = W / scale, sh = photoH / scale
-          const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2
-          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, photoH)
-          resolve()
-        }
-        img.onerror = resolve
-        img.src = photoDataUrl
-      })
-    } else {
-      const grad = ctx.createLinearGradient(0, 0, W, photoH)
-      grad.addColorStop(0, '#166534')
-      grad.addColorStop(1, '#1e3a5f')
-      ctx.fillStyle = grad
-      ctx.fillRect(0, 0, W, photoH)
-      // Football icon placeholder
-      ctx.font = '160px sans-serif'
-      ctx.textAlign = 'center'
-      ctx.fillStyle = 'rgba(255,255,255,0.3)'
-      ctx.fillText('⚽', W/2, photoH/2 + 55)
+    // Helper: rounded rect
+    const roundRect = (x,y,w,h,r) => {
+      ctx.beginPath()
+      ctx.moveTo(x+r,y)
+      ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r)
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r)
+      ctx.closePath()
+    }
+    // Helper: 5-point star
+    const drawStar = (cx, cy, r, color, rotation=0) => {
+      ctx.save()
+      ctx.translate(cx, cy); ctx.rotate(rotation)
+      ctx.beginPath()
+      for (let i=0; i<10; i++) {
+        const rad = i%2===0 ? r : r*0.45
+        const ang = (Math.PI/5)*i - Math.PI/2
+        ctx.lineTo(Math.cos(ang)*rad, Math.sin(ang)*rad)
+      }
+      ctx.closePath()
+      ctx.fillStyle = color
+      ctx.fill()
+      ctx.strokeStyle = 'white'; ctx.lineWidth = 4; ctx.stroke()
+      ctx.restore()
     }
 
-    // Dark gradient overlay at bottom of photo for text legibility
-    const overlayGrad = ctx.createLinearGradient(0, photoH - 200, 0, photoH)
-    overlayGrad.addColorStop(0, 'rgba(0,0,0,0)')
-    overlayGrad.addColorStop(1, 'rgba(0,0,0,0.55)')
-    ctx.fillStyle = overlayGrad
-    ctx.fillRect(0, photoH - 200, W, 200)
+    // ── Header banner: club name + "MATCH REPORT" ──
+    ctx.textAlign = 'center'
+    ctx.fillStyle = '#fbbf24'
+    ctx.font = 'bold 30px sans-serif'
+    ctx.fillText('TEAM SPIRIT • FRIENDSHIP • FUN', W/2, 45)
+    ctx.font = 'bold 62px sans-serif'
+    ctx.fillStyle = 'white'
+    ctx.fillText('CLYDACH JUNIORS', W/2, 105)
+    ctx.font = 'bold 28px sans-serif'
+    ctx.fillStyle = '#bfdbfe'
+    const fixtureDateFmt = form.match_date ? parseLocalDate(form.match_date).toLocaleDateString('en-GB',{day:'numeric',month:'numeric',year:'2-digit'}) : ''
+    ctx.fillText(`Match Report${fixtureDateFmt ? ' for ' + fixtureDateFmt : ''}`, W/2, 140)
 
-    // Club logo (top left, circular badge with white backing)
+    // Football icons flanking the crest
+    ctx.font = '70px sans-serif'
+    ctx.fillText('⚽', 110, 260)
+    ctx.fillText('⚽', W-110, 260)
+
+    // ── Club crest, centred, overlapping header/photo boundary ──
     await new Promise((resolve) => {
       const logoImg = new Image()
       logoImg.onload = () => {
-        const logoSize = 110
-        const logoX = 40, logoY = 35
-        // White circular backing so the badge stands out against the photo
+        const logoSize = 190
+        const logoX = W/2 - logoSize/2, logoY = 165
         ctx.beginPath()
-        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2 + 8, 0, Math.PI*2)
+        ctx.arc(W/2, logoY + logoSize/2, logoSize/2 + 10, 0, Math.PI*2)
         ctx.fillStyle = 'white'
         ctx.fill()
-        // Clip to circle and draw the logo image inside it
         ctx.save()
         ctx.beginPath()
-        ctx.arc(logoX + logoSize/2, logoY + logoSize/2, logoSize/2, 0, Math.PI*2)
+        ctx.arc(W/2, logoY + logoSize/2, logoSize/2, 0, Math.PI*2)
         ctx.clip()
         ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
         ctx.restore()
@@ -1836,39 +1860,105 @@ function MatchReportBuilder({ form, weekNum }) {
       logoImg.src = CLUB_LOGO_DATA_URL
     })
 
-    // Match type badge (top right)
-    ctx.fillStyle = 'rgba(255,255,255,0.9)'
-    ctx.font = 'bold 28px sans-serif'
-    ctx.textAlign = 'right'
-    ctx.fillText((form.match_type || 'Match').toUpperCase(), W - 40, 60)
-
-    // Opponent + score, bottom of photo area
-    ctx.textAlign = 'center'
-    ctx.fillStyle = 'white'
-    ctx.font = 'bold 44px sans-serif'
-    ctx.fillText(`vs ${opponentLine}`, W/2, photoH - 100)
-    ctx.font = 'bold 68px sans-serif'
-    ctx.fillText(scoreLine, W/2, photoH - 30)
-
-    // Lower panel - scorers + club name + sponsor strip
-    let y = photoH + 70
-    if (scorersLine) {
-      ctx.fillStyle = 'white'
-      ctx.font = '32px sans-serif'
-      ctx.fillText(`⚽ ${scorersLine}`, W/2, y)
-      y += 60
+    // ── Main team photo, rounded card with white border ──
+    const photoY = 380, photoH = 430, photoMargin = 50
+    const photoW = W - photoMargin*2
+    ctx.save()
+    roundRect(photoMargin, photoY, photoW, photoH, 24)
+    ctx.clip()
+    if (photoDataUrl) {
+      const img = new Image()
+      await new Promise((resolve) => {
+        img.onload = () => {
+          const scale = Math.max(photoW / img.width, photoH / img.height)
+          const sw = photoW / scale, sh = photoH / scale
+          const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2
+          ctx.drawImage(img, sx, sy, sw, sh, photoMargin, photoY, photoW, photoH)
+          resolve()
+        }
+        img.onerror = resolve
+        img.src = photoDataUrl
+      })
+    } else {
+      const grad = ctx.createLinearGradient(photoMargin, photoY, photoMargin+photoW, photoY+photoH)
+      grad.addColorStop(0, '#1e3a5f')
+      grad.addColorStop(1, '#166534')
+      ctx.fillStyle = grad
+      ctx.fillRect(photoMargin, photoY, photoW, photoH)
+      ctx.font = '160px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillStyle = 'rgba(255,255,255,0.25)'
+      ctx.fillText('⚽', W/2, photoY + photoH/2 + 55)
     }
+    ctx.restore()
+    // White border around photo card
+    roundRect(photoMargin, photoY, photoW, photoH, 24)
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 8; ctx.stroke()
 
+    // Star sticker bottom-left of photo, and opponent banner bottom-right
+    drawStar(photoMargin + 55, photoY + photoH - 20, 42, '#fbbf24', -0.2)
+    ctx.font = 'bold 32px sans-serif'
+    ctx.fillStyle = N.bg
+    ctx.textAlign = 'center'
+    ctx.fillText('⚽', photoMargin + 55, photoY + photoH - 8)
+
+    // Opponent + score banner overlapping bottom of photo
+    const bannerY = photoY + photoH - 55
+    const bannerW = 520
+    ctx.save()
+    roundRect(W/2 - bannerW/2, bannerY, bannerW, 90, 20)
+    ctx.fillStyle = '#fbbf24'
+    ctx.fill()
+    ctx.strokeStyle = 'white'; ctx.lineWidth = 6; ctx.stroke()
+    ctx.restore()
+    ctx.fillStyle = N.bg
+    ctx.font = 'bold 30px sans-serif'
+    ctx.fillText(`vs ${opponentLine}`, W/2, bannerY + 38)
+    ctx.font = 'bold 40px sans-serif'
+    ctx.fillText(scoreLine, W/2, bannerY + 78)
+
+    // ── Highlights panel ──
+    let y = photoY + photoH + 90
+    ctx.textAlign = 'left'
     ctx.font = 'bold 46px sans-serif'
-    ctx.fillStyle = 'white'
-    ctx.fillText('CLYDACH JUNIORS FC', W/2, H - 140)
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillText('★ HIGHLIGHTS', photoMargin, y)
+    y += 55
 
-    // Sponsor strip placeholder at the very bottom
-    ctx.fillStyle = 'rgba(255,255,255,0.15)'
-    ctx.fillRect(0, H - 90, W, 90)
-    ctx.font = '26px sans-serif'
-    ctx.fillStyle = 'rgba(255,255,255,0.75)'
-    ctx.fillText('Proudly sponsored by [Sponsor Name]', W/2, H - 40)
+    const highlights = []
+    if (scorersLine) highlights.push({ icon:'⚽', text:`Scorers: ${scorersLine}` })
+    highlights.push({ icon:'🏆', text: form.result ? form.result : 'Great effort from everyone' })
+    highlights.push({ icon:'❤️', text:'Positive attitude all round' })
+    highlights.push({ icon:'👥', text:'Proud coaches' })
+
+    highlights.forEach(h => {
+      // Pill background
+      roundRect(photoMargin, y-38, photoW, 58, 16)
+      ctx.fillStyle = 'rgba(255,255,255,0.12)'
+      ctx.fill()
+      ctx.font = '34px sans-serif'
+      ctx.fillStyle = 'white'
+      ctx.textAlign = 'left'
+      ctx.fillText(h.icon, photoMargin + 20, y)
+      ctx.font = 'bold 28px sans-serif'
+      ctx.fillText(h.text, photoMargin + 75, y)
+      y += 72
+    })
+
+    // "PROUD TO BE CLYDACH" banner
+    y += 15
+    ctx.textAlign = 'center'
+    ctx.font = 'bold 34px sans-serif'
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillText('PROUD TO BE CLYDACH! ⚽', W/2, y)
+
+    // ── Footer: club name + sponsor strip ──
+    ctx.font = 'bold 40px sans-serif'
+    ctx.fillStyle = 'white'
+    ctx.fillText('CLYDACH JUNIORS FC', W/2, H - 95)
+    ctx.font = '24px sans-serif'
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'
+    ctx.fillText('Proudly sponsored by [Sponsor Name]', W/2, H - 55)
 
     const dataUrl = canvas.toDataURL('image/png')
     setImageUrl(dataUrl)
