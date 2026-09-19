@@ -1793,14 +1793,19 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
 
     const measureWrap = (text, maxW, font) => {
       ctx.font = font
-      const words = (text || '').split(' ')
-      let line = '', lines = []
-      words.forEach(word => {
-        const test = line ? line + ' ' + word : word
-        if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word }
-        else { line = test }
+      const paragraphs = (text || '').split('\n')
+      const lines = []
+      paragraphs.forEach(paragraph => {
+        if (paragraph.trim() === '') { lines.push(''); return } // preserve blank lines
+        const words = paragraph.split(' ')
+        let line = ''
+        words.forEach(word => {
+          const test = line ? line + ' ' + word : word
+          if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word }
+          else { line = test }
+        })
+        if (line) lines.push(line)
       })
-      if (line) lines.push(line)
       return lines
     }
     const valueFont = '30px sans-serif' // matches the match report's weight/size exactly
@@ -2011,21 +2016,12 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     ctx.font = valueFont
     ctx.fillStyle = 'white'
     const reportBody = reportText.trim() || `A great effort from everyone against ${opponentLine} today. Well done to the whole squad!`
-    const rWords = reportBody.split(' ')
-    let rLine = '', rY = sectionY + 45
-    const rMaxW = rightColW
-    const lineHeight = valueLineHeight
-    for (let i = 0; i < rWords.length; i++) {
-      const test = rLine ? rLine + ' ' + rWords[i] : rWords[i]
-      if (ctx.measureText(test).width > rMaxW && rLine) {
-        ctx.fillText(rLine, rightColX, rY)
-        rLine = rWords[i]
-        rY += lineHeight
-      } else {
-        rLine = test
-      }
-    }
-    if (rLine) ctx.fillText(rLine, rightColX, rY)
+    const reportDrawLines = measureWrap(reportBody, rightColW, valueFont)
+    let rY = sectionY + 45
+    reportDrawLines.forEach(line => {
+      if (line) ctx.fillText(line, rightColX, rY)
+      rY += valueLineHeight
+    })
 
     // "UPPA CLYDACH" banner -- fixed distance above the footer
     ctx.textAlign = 'center'
