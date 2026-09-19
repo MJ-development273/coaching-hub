@@ -1736,7 +1736,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
   const [photoDataUrl, setPhotoDataUrl] = useState(form.report_photo || null)
   const [reportText, setReportText] = useState(form.report_text || '')
   const [highlightBoxes, setHighlightBoxes] = useState(
-    form.report_highlights || [{label:'Man of the Match', value:''}, {label:'Best Moment', value:''}]
+    form.report_highlights || [{label:'Noticeable Mention', value:''}, {label:'Overall', value:''}]
   )
   const [generating, setGenerating] = useState(false)
   const [imageUrl, setImageUrl] = useState(form.report_image || null)
@@ -1750,7 +1750,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
   useEffect(() => {
     setPhotoDataUrl(form.report_photo || null)
     setReportText(form.report_text || '')
-    setHighlightBoxes(form.report_highlights || [{label:'Man of the Match', value:''}, {label:'Best Moment', value:''}])
+    setHighlightBoxes(form.report_highlights || [{label:'Noticeable Mention', value:''}, {label:'Overall', value:''}])
     setImageUrl(form.report_image || null)
   }, [weekNum, form.report_text, form.report_photo, form.report_image, form.report_highlights])
 
@@ -2139,7 +2139,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
       {/* Highlight boxes editor */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
         <h3 className="font-bold text-gray-900 text-sm mb-1">★ Highlight Boxes</h3>
-        <p className="text-xs text-gray-400 mb-3">Scorers is fixed. Add up to 2 more custom boxes (e.g. Man of the Match, Best Moment) shown on the graphic.</p>
+        <p className="text-xs text-gray-400 mb-3">Scorers is fixed. Add up to 2 more custom boxes (e.g. Noticeable Mention, Overall) shown on the graphic.</p>
         <div className="rounded-xl bg-gray-50 border border-gray-200 p-3 mb-2">
           <p className="text-xs font-semibold text-gray-500 uppercase mb-1">Scorers</p>
           <p className="text-sm text-gray-700">{scorersLine || 'Set on the Result tab'}</p>
