@@ -1745,13 +1745,14 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
   const fileInputRef = useRef(null)
 
   // Re-sync local state whenever the active week's saved report data changes
-  // (e.g. navigating to a different match)
+  // (e.g. navigating to a different match). Depends on the actual report fields,
+  // not just weekNum, so it can't be caught reading a stale/previous form object.
   useEffect(() => {
     setPhotoDataUrl(form.report_photo || null)
     setReportText(form.report_text || '')
     setHighlightBoxes(form.report_highlights || [{label:'Man of the Match', value:''}, {label:'Best Moment', value:''}])
     setImageUrl(form.report_image || null)
-  }, [weekNum])
+  }, [weekNum, form.report_text, form.report_photo, form.report_image, form.report_highlights])
 
   const updateHighlight = (i, field, val) => {
     setHighlightBoxes(prev => prev.map((h,idx) => idx===i ? {...h, [field]:val} : h))
