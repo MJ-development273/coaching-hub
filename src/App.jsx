@@ -1728,6 +1728,211 @@ function SessionStatusManager({ sessionStatus, onSave }) {
 }
 
 // ─── Match Day Notes ───────────────────────────────────────────────────────────
+// ─── Match Report Builder (WhatsApp text + branded social media image) ─────────
+function MatchReportBuilder({ form, weekNum }) {
+  const [photoDataUrl, setPhotoDataUrl] = useState(null)
+  const [reportText, setReportText] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [imageUrl, setImageUrl] = useState(null)
+  const canvasRef = useRef(null)
+  const fileInputRef = useRef(null)
+
+  const scoreLine = form.result || 'Result TBC'
+  const scorersLine = form.scorers || ''
+  const opponentLine = form.opponent || 'Opponent TBC'
+
+  // Build the WhatsApp text report combining fixture + result info
+  const buildReportText = () => {
+    const lines = [`⚽ *Match Report -- Clydach Juniors*\n`]
+    lines.push(`*vs ${opponentLine}*`)
+    if (scoreLine) lines.push(`📊 ${scoreLine}`)
+    if (scorersLine) lines.push(`⚽ Scorers: ${scorersLine}`)
+    if (reportText.trim()) lines.push(`\n${reportText.trim()}`)
+    lines.push(`\n-- Coaching Team\n🔗 ${SITE_URL}`)
+    return lines.join('\n')
+  }
+
+  const handlePhotoUpload = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => setPhotoDataUrl(ev.target.result)
+    reader.readAsDataURL(file)
+  }
+
+  // Render the branded social media graphic onto a canvas, then export as PNG data URL
+  const generateImage = async () => {
+    setGenerating(true)
+    await new Promise(r => setTimeout(r, 50)) // let UI update before heavy canvas work
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const W = 1080, H = 1080
+    canvas.width = W
+    canvas.height = H
+
+    // Background
+    ctx.fillStyle = N.bg
+    ctx.fillRect(0, 0, W, H)
+
+    // Photo area (top 60%) - either uploaded photo or a placeholder gradient
+    const photoH = H * 0.58
+    if (photoDataUrl) {
+      const img = new Image()
+      await new Promise((resolve) => {
+        img.onload = () => {
+          // Cover-fit the image into the photo area
+          const scale = Math.max(W / img.width, photoH / img.height)
+          const sw = W / scale, sh = photoH / scale
+          const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2
+          ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, photoH)
+          resolve()
+        }
+        img.onerror = resolve
+        img.src = photoDataUrl
+      })
+    } else {
+      const grad = ctx.createLinearGradient(0, 0, W, photoH)
+      grad.addColorStop(0, '#166534')
+      grad.addColorStop(1, '#1e3a5f')
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, W, photoH)
+      // Football icon placeholder
+      ctx.font = '160px sans-serif'
+      ctx.textAlign = 'center'
+      ctx.fillStyle = 'rgba(255,255,255,0.3)'
+      ctx.fillText('⚽', W/2, photoH/2 + 55)
+    }
+
+    // Dark gradient overlay at bottom of photo for text legibility
+    const overlayGrad = ctx.createLinearGradient(0, photoH - 200, 0, photoH)
+    overlayGrad.addColorStop(0, 'rgba(0,0,0,0)')
+    overlayGrad.addColorStop(1, 'rgba(0,0,0,0.55)')
+    ctx.fillStyle = overlayGrad
+    ctx.fillRect(0, photoH - 200, W, 200)
+
+    // Club logo placeholder (top left circle)
+    ctx.beginPath()
+    ctx.arc(90, 90, 55, 0, Math.PI*2)
+    ctx.fillStyle = 'white'
+    ctx.fill()
+    ctx.font = 'bold 50px sans-serif'
+    ctx.textAlign = 'center'
+    ctx.fillStyle = N.bg
+    ctx.fillText('⚽', 90, 108)
+
+    // Match type badge (top right)
+    ctx.fillStyle = 'rgba(255,255,255,0.9)'
+    ctx.font = 'bold 28px sans-serif'
+    ctx.textAlign = 'right'
+    ctx.fillText((form.match_type || 'Match').toUpperCase(), W - 40, 60)
+
+    // Opponent + score, bottom of photo area
+    ctx.textAlign = 'center'
+    ctx.fillStyle = 'white'
+    ctx.font = 'bold 44px sans-serif'
+    ctx.fillText(`vs ${opponentLine}`, W/2, photoH - 100)
+    ctx.font = 'bold 68px sans-serif'
+    ctx.fillText(scoreLine, W/2, photoH - 30)
+
+    // Lower panel - scorers + club name + sponsor strip
+    let y = photoH + 70
+    if (scorersLine) {
+      ctx.fillStyle = 'white'
+      ctx.font = '32px sans-serif'
+      ctx.fillText(`⚽ ${scorersLine}`, W/2, y)
+      y += 60
+    }
+
+    ctx.font = 'bold 46px sans-serif'
+    ctx.fillStyle = 'white'
+    ctx.fillText('CLYDACH JUNIORS FC', W/2, H - 140)
+
+    // Sponsor strip placeholder at the very bottom
+    ctx.fillStyle = 'rgba(255,255,255,0.15)'
+    ctx.fillRect(0, H - 90, W, 90)
+    ctx.font = '26px sans-serif'
+    ctx.fillStyle = 'rgba(255,255,255,0.75)'
+    ctx.fillText('Proudly sponsored by [Sponsor Name]', W/2, H - 40)
+
+    const dataUrl = canvas.toDataURL('image/png')
+    setImageUrl(dataUrl)
+    setGenerating(false)
+  }
+
+  const downloadImage = () => {
+    if (!imageUrl) return
+    const link = document.createElement('a')
+    link.download = `match-report-week${weekNum}.png`
+    link.href = imageUrl
+    link.click()
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* WhatsApp text report */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <h3 className="font-bold text-gray-900 text-sm mb-1">📰 Match Report</h3>
+        <p className="text-xs text-gray-400 mb-3">Combines fixture, result and scorers into one message for parents.</p>
+        <label className="text-xs font-semibold text-gray-600 block mb-1">Additional notes <span className="text-gray-400 font-normal">(optional)</span></label>
+        <textarea value={reportText} onChange={e=>setReportText(e.target.value)} rows={3}
+          placeholder="e.g. Great team performance, everyone got game time..."
+          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none mb-3"
+          onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+        <div className="bg-gray-50 border border-gray-200 rounded-xl p-3 mb-3 text-xs text-gray-600 whitespace-pre-wrap font-mono max-h-32 overflow-y-auto">{buildReportText()}</div>
+        <a href={`https://wa.me/?text=${encodeURIComponent(buildReportText())}`} target="_blank" rel="noreferrer"
+          className="w-full text-white font-bold py-2.5 rounded-xl text-sm text-center block" style={{background:'#16a34a'}}>
+          📲 Share Report to Parents
+        </a>
+      </div>
+
+      {/* Social media branded image */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <h3 className="font-bold text-gray-900 text-sm mb-1">📸 Social Media Graphic</h3>
+        <p className="text-xs text-gray-400 mb-3">Branded image with club logo, sponsor strip and match photo -- ready to post.</p>
+
+        {/* Photo upload */}
+        <div className="mb-3">
+          <label className="text-xs font-semibold text-gray-600 block mb-1">Match Photo <span className="text-gray-400 font-normal">(optional)</span></label>
+          <input ref={fileInputRef} type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden"/>
+          {photoDataUrl ? (
+            <div className="relative rounded-xl overflow-hidden mb-2" style={{aspectRatio:'16/10'}}>
+              <img src={photoDataUrl} alt="Match" className="w-full h-full object-cover"/>
+              <button onClick={()=>setPhotoDataUrl(null)} className="absolute top-2 right-2 bg-black bg-opacity-60 text-white text-xs px-2 py-1 rounded-full">✕ Remove</button>
+            </div>
+          ) : (
+            <button onClick={()=>fileInputRef.current?.click()} className="w-full border-2 border-dashed border-gray-300 rounded-xl py-6 text-center text-gray-400 hover:border-gray-400">
+              <p className="text-2xl mb-1">📷</p>
+              <p className="text-xs">Tap to upload a match photo</p>
+              <p className="text-xs text-gray-300 mt-0.5">A placeholder background will be used if skipped</p>
+            </button>
+          )}
+        </div>
+
+        <canvas ref={canvasRef} style={{display:'none'}}/>
+
+        <button onClick={generateImage} disabled={generating}
+          className="w-full text-white font-bold py-2.5 rounded-xl text-sm mb-3" style={{background:generating?'#9ca3af':N.bg}}>
+          {generating ? 'Generating...' : '🎨 Generate Graphic'}
+        </button>
+
+        {imageUrl && (
+          <div className="space-y-3">
+            <div className="rounded-xl overflow-hidden border border-gray-200">
+              <img src={imageUrl} alt="Match report graphic" className="w-full"/>
+            </div>
+            <button onClick={downloadImage} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:'#16a34a'}}>
+              ⬇️ Download Image
+            </button>
+            <p className="text-xs text-gray-400 text-center">Download then share directly to Instagram, Facebook or your club's social pages</p>
+          </div>
+        )}
+
+        <p className="text-xs text-gray-400 mt-3">🏷️ Club logo and sponsor strip are placeholders for now -- ask to have your actual logos added once ready.</p>
+      </div>
+    </div>
+  )
+}
+
 function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad, preferredTeamFormat }) {
   const note = matchNotes[weekNum] || {}
   const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
