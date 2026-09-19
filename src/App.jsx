@@ -1768,7 +1768,7 @@ function MatchReportBuilder({ form, weekNum }) {
     await new Promise(r => setTimeout(r, 50)) // let UI update before heavy canvas work
     const canvas = canvasRef.current
     const ctx = canvas.getContext('2d')
-    const W = 1080, H = 1350
+    const W = 1080, H = 1450
     canvas.width = W
     canvas.height = H
 
@@ -1820,39 +1820,34 @@ function MatchReportBuilder({ form, weekNum }) {
       ctx.restore()
     }
 
-    // ── Header banner: club name + "MATCH REPORT" ──
+    // ── Header banner: club name ──
     ctx.textAlign = 'center'
-    ctx.fillStyle = '#fbbf24'
-    ctx.font = 'bold 30px sans-serif'
-    ctx.fillText('TEAM SPIRIT • FRIENDSHIP • FUN', W/2, 45)
     ctx.font = 'bold 62px sans-serif'
     ctx.fillStyle = 'white'
-    ctx.fillText('CLYDACH JUNIORS', W/2, 105)
+    ctx.fillText("CLYDACH UNDER 12'S", W/2, 90)
     ctx.font = 'bold 28px sans-serif'
     ctx.fillStyle = '#bfdbfe'
     const fixtureDateFmt = form.match_date ? parseLocalDate(form.match_date).toLocaleDateString('en-GB',{day:'numeric',month:'numeric',year:'2-digit'}) : ''
-    ctx.fillText(`Match Report${fixtureDateFmt ? ' for ' + fixtureDateFmt : ''}`, W/2, 140)
+    ctx.fillText(`Match Report${fixtureDateFmt ? ' for ' + fixtureDateFmt : ''}`, W/2, 130)
 
-    // Football icons flanking the crest
-    ctx.font = '70px sans-serif'
-    ctx.fillText('⚽', 110, 260)
-    ctx.fillText('⚽', W-110, 260)
+    // Football icons flanking the crest, enlarged
+    ctx.font = '110px sans-serif'
+    ctx.fillText('⚽', 130, 280)
+    ctx.fillText('⚽', W-130, 280)
 
-    // ── Club crest, centred, overlapping header/photo boundary ──
+    // ── Club crest, centred, drawn in its natural shield shape (no circular crop) ──
     await new Promise((resolve) => {
       const logoImg = new Image()
       logoImg.onload = () => {
-        const logoSize = 190
-        const logoX = W/2 - logoSize/2, logoY = 165
-        ctx.beginPath()
-        ctx.arc(W/2, logoY + logoSize/2, logoSize/2 + 10, 0, Math.PI*2)
-        ctx.fillStyle = 'white'
-        ctx.fill()
+        // Preserve the crest's real aspect ratio rather than forcing a square/circle
+        const logoH = 220
+        const logoW = logoH * (logoImg.width / logoImg.height)
+        const logoX = W/2 - logoW/2, logoY = 155
+        // Soft white glow behind the crest so it stands out on the green background
         ctx.save()
-        ctx.beginPath()
-        ctx.arc(W/2, logoY + logoSize/2, logoSize/2, 0, Math.PI*2)
-        ctx.clip()
-        ctx.drawImage(logoImg, logoX, logoY, logoSize, logoSize)
+        ctx.shadowColor = 'rgba(255,255,255,0.9)'
+        ctx.shadowBlur = 25
+        ctx.drawImage(logoImg, logoX, logoY, logoW, logoH)
         ctx.restore()
         resolve()
       }
@@ -1945,20 +1940,19 @@ function MatchReportBuilder({ form, weekNum }) {
       y += 72
     })
 
-    // "PROUD TO BE CLYDACH" banner
-    y += 15
+    // "PROUD TO BE CLYDACH" banner -- fixed distance above the footer, not accumulated from the highlights
     ctx.textAlign = 'center'
     ctx.font = 'bold 34px sans-serif'
     ctx.fillStyle = '#fbbf24'
-    ctx.fillText('PROUD TO BE CLYDACH! ⚽', W/2, y)
+    ctx.fillText('PROUD TO BE CLYDACH! ⚽', W/2, H - 145)
 
     // ── Footer: club name + sponsor strip ──
     ctx.font = 'bold 40px sans-serif'
     ctx.fillStyle = 'white'
-    ctx.fillText('CLYDACH JUNIORS FC', W/2, H - 95)
+    ctx.fillText('CLYDACH JUNIORS FC', W/2, H - 90)
     ctx.font = '24px sans-serif'
     ctx.fillStyle = 'rgba(255,255,255,0.8)'
-    ctx.fillText('Proudly sponsored by [Sponsor Name]', W/2, H - 55)
+    ctx.fillText('Proudly sponsored by [Sponsor Name]', W/2, H - 50)
 
     const dataUrl = canvas.toDataURL('image/png')
     setImageUrl(dataUrl)
