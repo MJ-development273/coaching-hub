@@ -1788,7 +1788,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     // the canvas correctly before drawing anything (avoids cutting off long text) ──
     const photoY = 380, photoH = 430, photoMargin = 50
     const photoW = W - photoMargin*2
-    const sectionY = photoY + photoH + 90
+    const sectionY = photoY + photoH + 145
     const colGap = 24
     const leftColW = photoW * 0.28
 
@@ -1836,11 +1836,23 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     // ── Background: grass-green base with diagonal navy accent bands (playful, magazine-style) ──
     ctx.fillStyle = '#166534'
     ctx.fillRect(0, 0, W, H)
-    // Subtle grass texture stripes
+    // Grass texture stripes -- clipped to the middle green section only, so they don't
+    // bleed messily behind/around the diagonal navy bands at the very top and bottom
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, 210); ctx.lineTo(W, 150); ctx.lineTo(W, H-150); ctx.lineTo(0, H-90); ctx.closePath()
+    ctx.clip()
+    // Subtle vertical gradient within the stripe area for a touch more depth
+    const grassGrad = ctx.createLinearGradient(0, 0, 0, H)
+    grassGrad.addColorStop(0, '#1a7a3d')
+    grassGrad.addColorStop(1, '#0f4d28')
+    ctx.fillStyle = grassGrad
+    ctx.fillRect(0, 0, W, H)
     ctx.fillStyle = 'rgba(255,255,255,0.04)'
     for (let i = -H; i < W; i += 70) {
       ctx.fillRect(i, 0, 35, H)
     }
+    ctx.restore()
     // Diagonal navy band across the very top
     ctx.save()
     ctx.beginPath()
@@ -1987,17 +1999,17 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
     const drawStatBox = (x, y, w, label, value) => {
       const maxW = w - 32
       const lines = measureWrap(value || '--', maxW, valueFont)
-      const h = 44 + lines.length * valueLineHeight + 14
+      const h = Math.max(90, 44 + lines.length * valueLineHeight + 18)
       roundRect(x, y, w, h, 14)
       ctx.fillStyle = 'rgba(255,255,255,0.12)'
       ctx.fill()
       ctx.font = 'bold 18px sans-serif'
       ctx.fillStyle = '#fbbf24'
       ctx.textAlign = 'left'
-      ctx.fillText(label.toUpperCase(), x + 16, y + 28)
+      ctx.fillText(label.toUpperCase(), x + 16, y + 30)
       ctx.font = valueFont
       ctx.fillStyle = 'white'
-      lines.forEach((l,i) => ctx.fillText(l, x + 16, y + 58 + i*valueLineHeight))
+      lines.forEach((l,i) => ctx.fillText(l, x + 16, y + 62 + i*valueLineHeight))
       return h
     }
 
@@ -2026,9 +2038,13 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
 
     // "UPPA CLYDACH" banner -- fixed distance above the footer
     ctx.textAlign = 'center'
-    ctx.font = 'bold 34px sans-serif'
+    ctx.font = 'bold 36px sans-serif'
     ctx.fillStyle = '#fbbf24'
-    ctx.fillText('UPPA CLYDACH! ⚽', W/2, H - 145)
+    const uppaText = 'UPPA CLYDACH!'
+    const uppaWidth = ctx.measureText(uppaText).width
+    ctx.fillText(uppaText, W/2 - 22, H - 145)
+    ctx.font = '46px sans-serif'
+    ctx.fillText('⚽', W/2 + uppaWidth/2 + 8, H - 141)
 
     // ── Footer: sponsor strip with actual logo ──
     ctx.font = '22px sans-serif'
@@ -2040,7 +2056,11 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
       sponsorImg.onload = () => {
         const sponsorH = 45
         const sponsorW = sponsorH * (sponsorImg.width / sponsorImg.height)
+        ctx.save()
+        ctx.shadowColor = 'rgba(255,255,255,0.6)'
+        ctx.shadowBlur = 14
         ctx.drawImage(sponsorImg, W/2 - sponsorW/2, H - 60, sponsorW, sponsorH)
+        ctx.restore()
         resolve()
       }
       sponsorImg.onerror = resolve
