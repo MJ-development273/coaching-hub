@@ -1805,7 +1805,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
       </div>
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
         <div className="flex gap-1 bg-gray-100 rounded-xl p-1 mb-4">
-          {[{id:'fixture',label:'📋 Fixture'},{id:'squadsel',label:'🎽 Squad'},{id:'result',label:'📊 Result'}].map(t=>(
+          {[{id:'fixture',label:'📋 Fixture'},{id:'squadsel',label:'🎽 Squad'},{id:'result',label:'📊 Result'},{id:'report',label:'📰 Report'}].map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all" style={tab===t.id?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>{t.label}</button>
           ))}
         </div>
@@ -2066,7 +2066,8 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
             <div><label className="text-xs font-semibold text-gray-600 block mb-1">Coach Notes (private)</label>
               <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on..." className={ic+' resize-none'} onFocus={fn} onBlur={fb}/></div>
           </>}
-          {tab!=='squadsel' && (
+          {tab==='report'&&<MatchReportBuilder form={form} weekNum={weekNum} onSaveNotes={txt=>set('report_text',txt)}/>}
+          {tab!=='squadsel' && tab!=='report' && (
             <div className="flex gap-2">
               <button onClick={save} className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:saved?'#16a34a':N.bg}}>{saved?'✓ Saved!':'💾 Save'}</button>
               <a href={`https://wa.me/?text=${encodeURIComponent(tab==='fixture'?fixtureWa:resultWa)}`} target="_blank" rel="noreferrer" className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm text-center" style={{background:'#16a34a'}}>📲 {tab==='fixture'?'Share Fixture':'Share Result'}</a>
@@ -3218,7 +3219,18 @@ export default function App() {
   }
   const saveProgress=async(pid,did,level)=>{setProgressData(p=>({...p,[pid+'-'+did]:level}));try{if(level===0){await supabase.from('player_progress').delete().eq('player_id',pid).eq('drill_id',did)}else{await supabase.from('player_progress').upsert({player_id:pid,drill_id:did,level},{onConflict:'player_id,drill_id'})}}catch(e){}}
 
-  const currentWeek=(()=>{if(!seasonStart)return 1;const s=parseLocalDate(seasonStart),t=new Date();s.setHours(0,0,0,0);t.setHours(0,0,0,0);if(t<s)return 1;return Math.floor((t-s)/(1000*60*60*24*7))+1})()
+  const currentWeek=(()=>{
+    if(!seasonStart)return 1
+    const s=parseLocalDate(seasonStart),t=new Date()
+    s.setHours(0,0,0,0);t.setHours(0,0,0,0)
+    if(t<s)return 1
+    let week=Math.floor((t-s)/(1000*60*60*24*7))+1
+    while(true){
+      const sessionDate=new Date(s); sessionDate.setDate(sessionDate.getDate()+(week-1)*7); sessionDate.setHours(0,0,0,0)
+      if(t>sessionDate){week+=1}else{break}
+    }
+    return week
+  })()
 
   const isCoach=role==='coach'
 
