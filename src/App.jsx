@@ -722,6 +722,17 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Stand over the ball, tap side to side with each foot</text>
       </svg>
     ),
+    onetouch: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={100} y={65} width="120" height="90" fill={accent} opacity="0.12" stroke={accent} strokeWidth="1" strokeDasharray="5,3"/>
+        {P(120,150,accent,'A')}{P(200,150,accent,'B')}{P(160,70,accent,'C')}
+        {P(160,110,'#ef4444','D')}
+        {Arrow(128,146,150,115,accent)}{Arrow(170,112,192,146,accent)}{Arrow(198,140,168,78,accent,true)}
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">ONE TOUCH ONLY -- DEFENDER CLOSES FAST</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Ball can't stop moving -- scan before it arrives</text>
+      </svg>
+    ),
     ballmastery: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
