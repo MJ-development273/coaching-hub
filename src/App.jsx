@@ -1094,20 +1094,28 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
 
   const activeBlocks = isPreSeason ? PRE_SEASON_BLOCKS : SESSION_BLOCKS
   const weekOverrides = overrides[`${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`] || {}
+  // Always resolve an override drill against the live `drills` array by ID, rather than trusting
+  // the stored snapshot -- this ensures diagram/description fixes made after a swap was saved
+  // still show up correctly, instead of displaying whatever the drill looked like at save time.
+  const freshenDrill = (storedDrill) => {
+    if (!storedDrill) return storedDrill
+    const live = drills.find(d => d.id === storedDrill.id)
+    return live || storedDrill
+  }
   const session = {}
   activeBlocks.forEach(b => {
     if (b.fixed) return
     // If group mode active and a group-specific override exists (stored as {__groups: {1: drill, 2: drill}}),
     // fall back to the base drill for the "default" view
     const ov = weekOverrides[b.key]
-    const baseOverride = ov && ov.__groups ? ov.base : ov
+    const baseOverride = freshenDrill(ov && ov.__groups ? ov.base : ov)
     session[b.key] = baseOverride || (b.cat ? pickDrill(drills, b.cat, weekNum, ageFilter) : null)
   })
 
   // Per-group drill: returns the drill assigned to a specific group for a block, falling back to the main session drill
   const getGroupDrill = (blockKey, groupNum) => {
     const ov = weekOverrides[blockKey]
-    if (ov && ov.__groups && ov.__groups[groupNum]) return ov.__groups[groupNum]
+    if (ov && ov.__groups && ov.__groups[groupNum]) return freshenDrill(ov.__groups[groupNum])
     return session[blockKey]
   }
 
