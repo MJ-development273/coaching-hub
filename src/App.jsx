@@ -1264,7 +1264,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                 </div>
               )}
               {drill ? (
-                <div className="flex gap-3 p-3">
+                <div className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(drill)}>
                   <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
                   <div className="flex-1 min-w-0">
                     <p className="font-semibold text-gray-900 text-sm">{drill.title}</p>
