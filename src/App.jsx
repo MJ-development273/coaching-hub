@@ -761,6 +761,24 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Serves from multiple angles -- GK reads and responds</text>
       </svg>
     ),
+    gkfootwork: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {/* Goal on the goal line */}
+        <rect x="120" y="15" width="80" height="18" fill="none" stroke="white" strokeWidth="2"/>
+        {/* 3 cones spread across the goal line */}
+        {Cone(120,50)}{Cone(160,50)}{Cone(200,50)}
+        {/* GK in low ready stance, positioned between cones */}
+        {P(160,50,accent,'GK')}
+        {/* Side-step movement arrows between cones */}
+        <path d="M148,50 L128,50" fill="none" stroke="white" strokeWidth="2" markerEnd="url(#gkfarrow1)"/>
+        <defs><marker id="gkfarrow1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="white"/></marker></defs>
+        <path d="M172,50 L192,50" fill="none" stroke="white" strokeWidth="2" markerEnd="url(#gkfarrow2)"/>
+        <defs><marker id="gkfarrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="white"/></marker></defs>
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">LOW STANCE -- SIDE-STEP ONLY, NO CROSSING FEET</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Stay on toes, weight forward, quick feet between cones</text>
+      </svg>
+    ),
     default: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
