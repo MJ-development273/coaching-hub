@@ -2249,7 +2249,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
 
 function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad, preferredTeamFormat }) {
   const note = matchNotes[weekNum] || {}
-  const [form, setForm] = useState({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
+  const [form, setForm] = useState({result:'',scorers:'',scorers_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
   const [tab, setTab] = useState('fixture')
   const [saved, setSaved] = useState(false)
   const [squadSaved, setSquadSaved] = useState(false)
@@ -2261,7 +2261,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const [squadView, setSquadView] = useState('list') // 'list' | 'pitch'
   const [posEditPlayer, setPosEditPlayer] = useState(null)
   const [matchFormation, setMatchFormation] = useState('')
-  useEffect(()=>{ setForm({result:'',scorers:'',notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
+  useEffect(()=>{ setForm({result:'',scorers:'',scorers_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
   useEffect(()=>{
     const sd = matchSquad?.[weekNum] || { starters:[], subs:[], positions:{}, subReplacements:{} }
     setStarters(sd.starters||[])
@@ -2580,8 +2580,53 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
           {tab==='result'&&<>
             <div><label className="text-xs font-semibold text-gray-600 block mb-1">Result</label>
               <input value={form.result} onChange={e=>set('result',e.target.value)} placeholder="e.g. Won 3-1" className={ic} onFocus={fn} onBlur={fb}/></div>
-            <div><label className="text-xs font-semibold text-gray-600 block mb-1">Scorers</label>
-              <input value={form.scorers} onChange={e=>set('scorers',e.target.value)} placeholder="e.g. J.Smith x2" className={ic} onFocus={fn} onBlur={fb}/></div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-2">Scorers</label>
+              {(!squad || squad.length===0) ? (
+                <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl p-3 text-center">Add players in the Squad tab to tag scorers</p>
+              ) : (()=>{
+                const scorersList = form.scorers_list || []
+                const getCount = (key) => scorersList.find(s=>s.key===key)?.count || 0
+                const setCount = (key, name, count) => {
+                  const clamped = Math.max(0, count)
+                  let updated = scorersList.filter(s=>s.key!==key)
+                  if (clamped > 0) updated = [...updated, {key, name, count: clamped}]
+                  set('scorers_list', updated)
+                  // Keep the legacy text field in sync so older report/share code still works seamlessly
+                  set('scorers', updated.map(s=>`${s.name}${s.count>1?' x'+s.count:''}`).join(', '))
+                }
+                const entries = [...(squad||[]).map(p=>({key:'p'+p.id, name:p.name, sub:p.squad_num?'#'+p.squad_num:null})), {key:'og', name:'Own Goal', sub:null}]
+                return (
+                  <div className="space-y-1.5">
+                    {entries.map(entry=>{
+                      const count = getCount(entry.key)
+                      return (
+                        <div key={entry.key} className="flex items-center gap-2 p-2 rounded-xl border" style={{borderColor:count>0?N.bg:'#e5e7eb',background:count>0?N.light:'white'}}>
+                          <span className="flex-1 text-sm font-medium text-gray-800 truncate">
+                            {entry.name}{entry.sub?<span className="text-gray-400 font-normal"> {entry.sub}</span>:null}
+                          </span>
+                          {count===0 ? (
+                            <button onClick={()=>setCount(entry.key, entry.name, 1)}
+                              className="text-xs font-bold px-3 py-1.5 rounded-lg border" style={{borderColor:N.bg+'44',color:N.text}}>
+                              + Goal
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <button onClick={()=>setCount(entry.key, entry.name, count-1)}
+                                className="w-7 h-7 rounded-lg text-white font-bold flex items-center justify-center" style={{background:N.bg}}>–</button>
+                              <span className="text-sm font-bold w-4 text-center" style={{color:N.text}}>{count}</span>
+                              <button onClick={()=>setCount(entry.key, entry.name, count+1)}
+                                className="w-7 h-7 rounded-lg text-white font-bold flex items-center justify-center" style={{background:N.bg}}>+</button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+              {form.scorers && <p className="text-xs text-gray-400 mt-2">Summary: {form.scorers}</p>}
+            </div>
             <div><label className="text-xs font-semibold text-gray-600 block mb-1">Coach Notes (private)</label>
               <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on..." className={ic+' resize-none'} onFocus={fn} onBlur={fb}/></div>
           </>}
@@ -3442,8 +3487,37 @@ function FAWReference() {
 
 // ─── Season Overview ───────────────────────────────────────────────────────────
 function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect }) {
+  // Aggregate goals across every match's structured scorer list into a season leaderboard
+  const topScorers = (() => {
+    const totals = {}
+    Object.values(matchNotes||{}).forEach(note => {
+      (note.scorers_list||[]).forEach(s => {
+        if (s.key === 'og') return // exclude own goals from the leaderboard
+        if (!totals[s.key]) totals[s.key] = { name: s.name, goals: 0 }
+        totals[s.key].goals += s.count
+      })
+    })
+    return Object.values(totals).sort((a,b) => b.goals - a.goals)
+  })()
+
   return (
     <div className="space-y-4">
+      {/* Top Scorers */}
+      {topScorers.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+          <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Top Scorers</h3>
+          <div className="space-y-1.5">
+            {topScorers.slice(0, 10).map((s, i) => (
+              <div key={s.name} className="flex items-center gap-3 p-2 rounded-xl" style={{background:i===0?'#fef9c3':'#f9fafb'}}>
+                <span className="w-6 text-center text-sm font-black" style={{color:i===0?'#ca8a04':'#9ca3af'}}>{i+1}</span>
+                <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
+                <span className="text-sm font-bold px-2 py-0.5 rounded-full text-white" style={{background:N.bg}}>{s.goals}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Pre-Season Dates */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4" style={{borderLeft:'4px solid #f97316'}}>
         <h3 className="font-bold text-gray-900 text-sm mb-3">🌱 Pre-Season</h3>
@@ -3626,7 +3700,7 @@ export default function App() {
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};const ta={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,num])=>{if(scheme.startsWith('ability-')){ga[`${scheme}-${p.id}`]=num}else if(scheme.startsWith('team-')){ta[`${scheme}-${p.id}`]=num}})}});setGroupAssignments(ga);setTeamAssignments(ta)}}catch(e){}
-      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null}});setMatchNotes(o)}}catch(e){}
+      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[]}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
@@ -3693,7 +3767,7 @@ export default function App() {
       .on('postgres_changes',{event:'*',schema:'public',table:'match_notes'},p=>{
         if(p.new){
           const r=p.new
-          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null}}))
+          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[]}}))
         }
       })
       .subscribe()
