@@ -3535,9 +3535,11 @@ function FAWReference() {
 // ─── Season Recap Builder (branded graphic summarising the whole season) ───────
 function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
   const [coachComment, setCoachComment] = useState('')
+  const [selectedPhotoWeeks, setSelectedPhotoWeeks] = useState([])
   const [generating, setGenerating] = useState(false)
   const [imageUrl1, setImageUrl1] = useState(null)
   const [imageUrl2, setImageUrl2] = useState(null)
+  const [imageUrl3, setImageUrl3] = useState(null)
   const canvasRef = useRef(null)
 
   const allMatches = Object.entries(matchNotes||{})
@@ -3547,6 +3549,17 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
       if (a.match_date && b.match_date) return new Date(a.match_date) - new Date(b.match_date)
       return a.wk - b.wk
     })
+
+  const matchesWithReports = allMatches.filter(m => m.report_text && m.report_text.trim())
+  const matchesWithPhotos = allMatches.filter(m => m.report_photo)
+  const MAX_MONTAGE_PHOTOS = 16
+  const togglePhotoWeek = (wk) => {
+    setSelectedPhotoWeeks(prev => {
+      if (prev.includes(wk)) return prev.filter(w => w !== wk)
+      if (prev.length >= MAX_MONTAGE_PHOTOS) return prev // cap reached, ignore further additions
+      return [...prev, wk]
+    })
+  }
 
   const played = allMatches.length
   const record = allMatches.reduce((acc, m) => {
@@ -3768,7 +3781,8 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
     drawLeaderList(50, '⚽ TOP SCORER', topScorers, 'goals')
     drawLeaderList(50 + leaderColW + 40, '🅰️ MOST ASSISTS', topAssists, 'assists')
 
-    await drawFooter(ctx, W, H1, footerH, played > 0 ? 'Page 1 of 2' : null)
+    const totalPages = 1 + (played > 0 ? 1 : 0) + (selectedPhotoWeeks.length > 0 ? 1 : 0)
+    await drawFooter(ctx, W, H1, footerH, totalPages > 1 ? `Page 1 of ${totalPages}` : null)
     const page1Url = canvas.toDataURL('image/png')
     setImageUrl1(page1Url)
 
@@ -3809,11 +3823,67 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
         ctx.fillText(m.result || 'TBC', W - 65, rowY)
       })
 
-      await drawFooter(ctx, W, H2, footerH, 'Page 2 of 2')
+      await drawFooter(ctx, W, H2, footerH, `Page 2 of ${totalPages}`)
       const page2Url = canvas.toDataURL('image/png')
       setImageUrl2(page2Url)
     } else {
       setImageUrl2(null)
+    }
+
+    // ═══ PAGE 3: Photo montage (only if photos were selected) ═══
+    if (selectedPhotoWeeks.length > 0) {
+      const photosToUse = allMatches.filter(m => selectedPhotoWeeks.includes(m.wk) && m.report_photo)
+      const count = photosToUse.length
+      // Choose a grid shape that scales sensibly from a handful of photos up to the cap
+      const cols = count <= 2 ? count : count <= 4 ? 2 : count <= 9 ? 3 : 4
+      const rows = Math.ceil(count / cols)
+      const gridGap = 12
+      const gridPadding = 50
+      const cellW = (W - gridPadding*2 - gridGap*(cols-1)) / cols
+      const cellH = cellW * 0.75
+      const gridH = rows * cellH + (rows-1) * gridGap
+
+      const H3 = headerH + 60 + gridH + footerH
+      canvas.width = W
+      canvas.height = H3
+      drawBackground(ctx, W, H3, headerH, footerH)
+      await drawHeader(ctx, W, headerH, 'SEASON PHOTO MONTAGE')
+
+      let py = headerH + 60
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 32px sans-serif'
+      ctx.fillStyle = '#fbbf24'
+      ctx.fillText('📸 SEASON MOMENTS', W/2, py)
+      py += 30
+
+      for (let i = 0; i < photosToUse.length; i++) {
+        const col = i % cols
+        const row = Math.floor(i / cols)
+        const cx = gridPadding + col * (cellW + gridGap)
+        const cy = py + row * (cellH + gridGap)
+        await new Promise((resolve) => {
+          const img = new Image()
+          img.onload = () => {
+            ctx.save()
+            roundRect(ctx, cx, cy, cellW, cellH, 10)
+            ctx.clip()
+            const scale = Math.max(cellW / img.width, cellH / img.height)
+            const sw = cellW / scale, sh = cellH / scale
+            const sx = (img.width - sw) / 2, sy = (img.height - sh) / 2
+            ctx.drawImage(img, sx, sy, sw, sh, cx, cy, cellW, cellH)
+            ctx.restore()
+            resolve()
+          }
+          img.onerror = resolve
+          img.src = photosToUse[i].report_photo
+        })
+      }
+
+      await drawFooter(ctx, W, H3, footerH, `Page 3 of ${totalPages}`)
+      const page3Url = canvas.toDataURL('image/png')
+      setImageUrl3(page3Url)
+    } else {
+      setImageUrl3(null)
     }
 
     setGenerating(false)
@@ -3856,15 +3926,58 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
   return (
     <div className="bg-white border border-gray-200 rounded-2xl p-4">
       <h3 className="font-bold text-gray-900 text-sm mb-1">🏆 Season Recap Graphic</h3>
-      <p className="text-xs text-gray-400 mb-3">Generates two images -- Page 1 covers stats and leaders, Page 2 lists every match result.</p>
+      <p className="text-xs text-gray-400 mb-3">Generates up to three images -- stats and leaders, full match results, and a photo montage.</p>
 
-      <div className="mb-3">
+      {/* Review past match reports for reference while writing the season story */}
+      {matchesWithReports.length > 0 && (
+        <div className="mb-4">
+          <p className="text-xs font-semibold text-gray-600 mb-1">📖 Review This Season's Match Reports</p>
+          <p className="text-xs text-gray-400 mb-2">Read back through the season before writing your comment below.</p>
+          <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-48 overflow-y-auto">
+            {matchesWithReports.map(m => (
+              <div key={m.wk} className="p-2.5">
+                <p className="text-xs font-bold text-gray-700">vs {m.opponent} {m.result ? `-- ${m.result}` : ''}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{m.report_text}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="mb-4">
         <label className="text-xs font-semibold text-gray-600 block mb-1">Coaches' Comment <span className="text-gray-400 font-normal">(optional, shown at the top of Page 1)</span></label>
         <textarea value={coachComment} onChange={e=>setCoachComment(e.target.value)} rows={3}
           placeholder="e.g. What a season it's been -- the boys have shown incredible growth both on and off the pitch. Thank you to every parent for your support!"
           className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none"
           onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
       </div>
+
+      {/* Photo montage selection */}
+      {matchesWithPhotos.length > 0 && (
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="text-xs font-semibold text-gray-600">📸 Photo Montage <span className="text-gray-400 font-normal">(optional -- Page 3)</span></label>
+            <span className="text-xs text-gray-400">{selectedPhotoWeeks.length}/{MAX_MONTAGE_PHOTOS} selected</span>
+          </div>
+          <p className="text-xs text-gray-400 mb-2">Pick up to {MAX_MONTAGE_PHOTOS} match photos to include in a season montage page.</p>
+          <div className="grid grid-cols-4 gap-2">
+            {matchesWithPhotos.map(m => {
+              const isSelected = selectedPhotoWeeks.includes(m.wk)
+              return (
+                <button key={m.wk} onClick={()=>togglePhotoWeek(m.wk)}
+                  className="relative rounded-lg overflow-hidden border-2" style={{aspectRatio:'4/3',borderColor:isSelected?N.bg:'#e5e7eb'}}>
+                  <img src={m.report_photo} alt={m.opponent} className="w-full h-full object-cover"/>
+                  {isSelected && (
+                    <div className="absolute inset-0 flex items-center justify-center" style={{background:N.bg+'66'}}>
+                      <span className="text-white text-lg font-bold">✓</span>
+                    </div>
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       <canvas ref={canvasRef} style={{display:'none'}}/>
 
@@ -3886,7 +3999,7 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
       )}
 
       {imageUrl2 && (
-        <div className="space-y-3">
+        <div className="space-y-3 mb-4">
           <p className="text-xs font-semibold text-gray-500">Page 2 -- Full Match Results</p>
           <div className="rounded-xl overflow-hidden border border-gray-200">
             <img src={imageUrl2} alt="Season recap page 2" className="w-full"/>
@@ -3894,8 +4007,23 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
           <button onClick={()=>downloadImage(imageUrl2, 'season-recap-page2.png')} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:'#16a34a'}}>
             ⬇️ Download Page 2
           </button>
-          <p className="text-xs text-gray-400 text-center">On iPhone: tap Download, then press and hold the image and choose "Save Image". On other devices it downloads automatically.</p>
         </div>
+      )}
+
+      {imageUrl3 && (
+        <div className="space-y-3">
+          <p className="text-xs font-semibold text-gray-500">Page 3 -- Photo Montage</p>
+          <div className="rounded-xl overflow-hidden border border-gray-200">
+            <img src={imageUrl3} alt="Season recap page 3" className="w-full"/>
+          </div>
+          <button onClick={()=>downloadImage(imageUrl3, 'season-recap-page3.png')} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:'#16a34a'}}>
+            ⬇️ Download Page 3
+          </button>
+        </div>
+      )}
+
+      {(imageUrl1 || imageUrl2 || imageUrl3) && (
+        <p className="text-xs text-gray-400 text-center mt-3">On iPhone: tap Download, then press and hold each image and choose "Save Image". On other devices it downloads automatically.</p>
       )}
     </div>
   )
