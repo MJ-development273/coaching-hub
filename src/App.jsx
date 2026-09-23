@@ -1954,12 +1954,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport, ageGroup }) {
         const logoH = 220
         const logoW = logoH * (logoImg.width / logoImg.height)
         const logoX = W/2 - logoW/2, logoY = 155
-        // Soft white glow behind the crest so it stands out on the green background
-        ctx.save()
-        ctx.shadowColor = 'rgba(255,255,255,0.9)'
-        ctx.shadowBlur = 25
         ctx.drawImage(logoImg, logoX, logoY, logoW, logoH)
-        ctx.restore()
         resolve()
       }
       logoImg.onerror = resolve
@@ -2094,11 +2089,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport, ageGroup }) {
       sponsorImg.onload = () => {
         const sponsorH = 45
         const sponsorW = sponsorH * (sponsorImg.width / sponsorImg.height)
-        ctx.save()
-        ctx.shadowColor = 'rgba(255,255,255,0.6)'
-        ctx.shadowBlur = 14
         ctx.drawImage(sponsorImg, W/2 - sponsorW/2, H - 60, sponsorW, sponsorH)
-        ctx.restore()
         resolve()
       }
       sponsorImg.onerror = resolve
@@ -3646,11 +3637,7 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup, seas
       sponsorImg.onload = () => {
         const sponsorH = 45
         const sponsorW = sponsorH * (sponsorImg.width / sponsorImg.height)
-        ctx.save()
-        ctx.shadowColor = 'rgba(255,255,255,0.6)'
-        ctx.shadowBlur = 14
         ctx.drawImage(sponsorImg, W/2 - sponsorW/2, H - 90, sponsorW, sponsorH)
-        ctx.restore()
         resolve()
       }
       sponsorImg.onerror = resolve
@@ -3675,11 +3662,7 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup, seas
       logoImg.onload = () => {
         const logoH = 130
         const logoW = logoH * (logoImg.width / logoImg.height)
-        ctx.save()
-        ctx.shadowColor = 'rgba(255,255,255,0.9)'
-        ctx.shadowBlur = 20
         ctx.drawImage(logoImg, W/2 - logoW/2, 155, logoW, logoH)
-        ctx.restore()
         resolve()
       }
       logoImg.onerror = resolve
