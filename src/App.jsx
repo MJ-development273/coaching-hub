@@ -2249,7 +2249,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport }) {
 
 function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, squad, matchSquad, onSaveMatchSquad, preferredTeamFormat }) {
   const note = matchNotes[weekNum] || {}
-  const [form, setForm] = useState({result:'',scorers:'',scorers_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
+  const [form, setForm] = useState({result:'',scorers:'',scorers_list:[],assists:'',assists_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false})
   const [tab, setTab] = useState('fixture')
   const [saved, setSaved] = useState(false)
   const [squadSaved, setSquadSaved] = useState(false)
@@ -2261,7 +2261,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const [squadView, setSquadView] = useState('list') // 'list' | 'pitch'
   const [posEditPlayer, setPosEditPlayer] = useState(null)
   const [matchFormation, setMatchFormation] = useState('')
-  useEffect(()=>{ setForm({result:'',scorers:'',scorers_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
+  useEffect(()=>{ setForm({result:'',scorers:'',scorers_list:[],assists:'',assists_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
   useEffect(()=>{
     const sd = matchSquad?.[weekNum] || { starters:[], subs:[], positions:{}, subReplacements:{} }
     setStarters(sd.starters||[])
@@ -2626,6 +2626,52 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                 )
               })()}
               {form.scorers && <p className="text-xs text-gray-400 mt-2">Summary: {form.scorers}</p>}
+            </div>
+            <div>
+              <label className="text-xs font-semibold text-gray-600 block mb-2">Assists</label>
+              {(!squad || squad.length===0) ? (
+                <p className="text-xs text-gray-400 border border-dashed border-gray-200 rounded-xl p-3 text-center">Add players in the Squad tab to tag assists</p>
+              ) : (()=>{
+                const assistsList = form.assists_list || []
+                const getCount = (key) => assistsList.find(s=>s.key===key)?.count || 0
+                const setCount = (key, name, count) => {
+                  const clamped = Math.max(0, count)
+                  let updated = assistsList.filter(s=>s.key!==key)
+                  if (clamped > 0) updated = [...updated, {key, name, count: clamped}]
+                  set('assists_list', updated)
+                  set('assists', updated.map(s=>`${s.name}${s.count>1?' x'+s.count:''}`).join(', '))
+                }
+                const entries = (squad||[]).map(p=>({key:'p'+p.id, name:p.name, sub:p.squad_num?'#'+p.squad_num:null}))
+                return (
+                  <div className="space-y-1.5">
+                    {entries.map(entry=>{
+                      const count = getCount(entry.key)
+                      return (
+                        <div key={entry.key} className="flex items-center gap-2 p-2 rounded-xl border" style={{borderColor:count>0?'#8b5cf6':'#e5e7eb',background:count>0?'#f5f3ff':'white'}}>
+                          <span className="flex-1 text-sm font-medium text-gray-800 truncate">
+                            {entry.name}{entry.sub?<span className="text-gray-400 font-normal"> {entry.sub}</span>:null}
+                          </span>
+                          {count===0 ? (
+                            <button onClick={()=>setCount(entry.key, entry.name, 1)}
+                              className="text-xs font-bold px-3 py-1.5 rounded-lg border" style={{borderColor:'#8b5cf644',color:'#7c3aed'}}>
+                              + Assist
+                            </button>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              <button onClick={()=>setCount(entry.key, entry.name, count-1)}
+                                className="w-7 h-7 rounded-lg text-white font-bold flex items-center justify-center" style={{background:'#8b5cf6'}}>–</button>
+                              <span className="text-sm font-bold w-4 text-center" style={{color:'#7c3aed'}}>{count}</span>
+                              <button onClick={()=>setCount(entry.key, entry.name, count+1)}
+                                className="w-7 h-7 rounded-lg text-white font-bold flex items-center justify-center" style={{background:'#8b5cf6'}}>+</button>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
+              {form.assists && <p className="text-xs text-gray-400 mt-2">Summary: {form.assists}</p>}
             </div>
             <div><label className="text-xs font-semibold text-gray-600 block mb-1">Coach Notes (private)</label>
               <textarea value={form.notes} onChange={e=>set('notes',e.target.value)} rows={3} placeholder="Key moments, areas to work on..." className={ic+' resize-none'} onFocus={fn} onBlur={fb}/></div>
@@ -3486,6 +3532,311 @@ function FAWReference() {
 }
 
 // ─── Season Overview ───────────────────────────────────────────────────────────
+// ─── Season Recap Builder (branded graphic summarising the whole season) ───────
+function SeasonRecapBuilder({ matchNotes, topScorers, topAssists }) {
+  const [generating, setGenerating] = useState(false)
+  const [imageUrl, setImageUrl] = useState(null)
+  const canvasRef = useRef(null)
+
+  const allMatches = Object.entries(matchNotes||{})
+    .filter(([wk,n]) => n.opponent)
+    .map(([wk,n]) => ({...n, wk:Number(wk)}))
+    .sort((a,b) => {
+      if (a.match_date && b.match_date) return new Date(a.match_date) - new Date(b.match_date)
+      return a.wk - b.wk
+    })
+
+  const played = allMatches.length
+  const record = allMatches.reduce((acc, m) => {
+    const r = (m.result||'').toLowerCase()
+    if (r.startsWith('won') || r.startsWith('win')) acc.won++
+    else if (r.startsWith('lost') || r.startsWith('loss')) acc.lost++
+    else if (r.startsWith('drew') || r.startsWith('draw')) acc.drawn++
+    return acc
+  }, { won:0, drawn:0, lost:0 })
+
+  const generateImage = async () => {
+    setGenerating(true)
+    await new Promise(r => setTimeout(r, 50))
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')
+    const W = 1080
+
+    const roundRect = (x,y,w,h,r) => {
+      ctx.beginPath()
+      ctx.moveTo(x+r,y)
+      ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r)
+      ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r)
+      ctx.closePath()
+    }
+    const measureWrap = (text, maxW, font) => {
+      ctx.font = font
+      const paragraphs = (text || '').split('\n')
+      const lines = []
+      paragraphs.forEach(paragraph => {
+        if (paragraph.trim() === '') { lines.push(''); return }
+        const words = paragraph.split(' ')
+        let line = ''
+        words.forEach(word => {
+          const test = line ? line + ' ' + word : word
+          if (ctx.measureText(test).width > maxW && line) { lines.push(line); line = word }
+          else { line = test }
+        })
+        if (line) lines.push(line)
+      })
+      return lines
+    }
+
+    // ── Pass 1: measure content to size the canvas correctly ──
+    const headerH = 220
+    const statsH = 160
+    const leadersH = 90 + Math.max(topScorers.length, topAssists.length, 1) * 40
+    const matchRowH = 34
+    const matchListH = 60 + played * matchRowH
+    const footerH = 260
+
+    const H = headerH + statsH + leadersH + matchListH + footerH
+    canvas.width = W
+    canvas.height = H
+
+    // ── Background ──
+    ctx.fillStyle = '#166534'
+    ctx.fillRect(0, 0, W, H)
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, headerH-40); ctx.lineTo(W, headerH-40); ctx.lineTo(W, H-footerH+60); ctx.lineTo(0, H-footerH); ctx.closePath()
+    ctx.clip()
+    const grassGrad = ctx.createLinearGradient(0, 0, 0, H)
+    grassGrad.addColorStop(0, '#1a7a3d')
+    grassGrad.addColorStop(1, '#0f4d28')
+    ctx.fillStyle = grassGrad
+    ctx.fillRect(0, 0, W, H)
+    ctx.fillStyle = 'rgba(255,255,255,0.04)'
+    for (let i = -H; i < W; i += 70) ctx.fillRect(i, 0, 35, H)
+    ctx.restore()
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, 0); ctx.lineTo(W, 0); ctx.lineTo(W, headerH-70); ctx.lineTo(0, headerH-10); ctx.closePath()
+    ctx.fillStyle = N.bg
+    ctx.fill()
+    ctx.restore()
+
+    ctx.save()
+    ctx.beginPath()
+    ctx.moveTo(0, H); ctx.lineTo(W, H); ctx.lineTo(W, H-footerH+70); ctx.lineTo(0, H-footerH+130); ctx.closePath()
+    ctx.fillStyle = N.bg
+    ctx.fill()
+    ctx.restore()
+
+    // ── Header ──
+    ctx.textAlign = 'center'
+    ctx.font = 'bold 56px sans-serif'
+    ctx.fillStyle = 'white'
+    ctx.fillText("CLYDACH UNDER 12'S", W/2, 90)
+    ctx.font = 'bold 30px sans-serif'
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillText('SEASON RECAP', W/2, 135)
+
+    await new Promise((resolve) => {
+      const logoImg = new Image()
+      logoImg.onload = () => {
+        const logoH = 130
+        const logoW = logoH * (logoImg.width / logoImg.height)
+        ctx.save()
+        ctx.shadowColor = 'rgba(255,255,255,0.9)'
+        ctx.shadowBlur = 20
+        ctx.drawImage(logoImg, W/2 - logoW/2, headerH - 145, logoW, logoH)
+        ctx.restore()
+        resolve()
+      }
+      logoImg.onerror = resolve
+      logoImg.src = CLUB_LOGO_DATA_URL
+    })
+
+    // ── Season stats row ──
+    let y = headerH + 60
+    ctx.font = 'bold 34px sans-serif'
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillText('★ SEASON STATS', W/2, y)
+    y += 55
+
+    const statBoxW = 220, statGap = 20
+    const stats = [
+      { label:'PLAYED', value: played },
+      { label:'WON', value: record.won },
+      { label:'DRAWN', value: record.drawn },
+      { label:'LOST', value: record.lost },
+    ]
+    const totalStatsW = stats.length * statBoxW + (stats.length-1) * statGap
+    let sx = W/2 - totalStatsW/2
+    stats.forEach(s => {
+      roundRect(sx, y, statBoxW, 80, 14)
+      ctx.fillStyle = 'rgba(255,255,255,0.12)'
+      ctx.fill()
+      ctx.font = 'bold 40px sans-serif'
+      ctx.fillStyle = 'white'
+      ctx.textAlign = 'center'
+      ctx.fillText(String(s.value), sx + statBoxW/2, y + 45)
+      ctx.font = 'bold 16px sans-serif'
+      ctx.fillStyle = '#fbbf24'
+      ctx.fillText(s.label, sx + statBoxW/2, y + 68)
+      sx += statBoxW + statGap
+    })
+    y += 80 + 50
+
+    // ── Leaders: Top Scorer + Top Assist side by side ──
+    const leaderColW = (W - 140) / 2
+    const drawLeaderList = (x, title, list, unitLabel) => {
+      ctx.textAlign = 'left'
+      ctx.font = 'bold 28px sans-serif'
+      ctx.fillStyle = '#fbbf24'
+      ctx.fillText(title, x, y)
+      let ly = y + 40
+      if (list.length === 0) {
+        ctx.font = '22px sans-serif'
+        ctx.fillStyle = 'rgba(255,255,255,0.7)'
+        ctx.fillText('No data recorded', x, ly)
+      } else {
+        list.slice(0,5).forEach((s, i) => {
+          roundRect(x, ly-24, leaderColW, 36, 10)
+          ctx.fillStyle = i===0 ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.1)'
+          ctx.fill()
+          ctx.font = 'bold 20px sans-serif'
+          ctx.fillStyle = 'white'
+          ctx.fillText(`${i+1}. ${s.name}`, x + 14, ly)
+          ctx.textAlign = 'right'
+          ctx.fillStyle = i===0 ? '#fbbf24' : 'white'
+          ctx.fillText(String(s[unitLabel]), x + leaderColW - 14, ly)
+          ctx.textAlign = 'left'
+          ly += 40
+        })
+      }
+    }
+    drawLeaderList(50, '⚽ TOP SCORER', topScorers, 'goals')
+    drawLeaderList(50 + leaderColW + 40, '🅰️ MOST ASSISTS', topAssists, 'assists')
+    y += Math.max(topScorers.length, topAssists.length, 1) * 40 + 50
+
+    // ── Match results list ──
+    ctx.textAlign = 'center'
+    ctx.font = 'bold 32px sans-serif'
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillText('📋 MATCH RESULTS', W/2, y)
+    y += 45
+
+    allMatches.forEach((m, i) => {
+      const rowY = y + i * matchRowH
+      if (i % 2 === 0) {
+        roundRect(50, rowY - 22, W - 100, matchRowH, 8)
+        ctx.fillStyle = 'rgba(255,255,255,0.06)'
+        ctx.fill()
+      }
+      ctx.textAlign = 'left'
+      ctx.font = '20px sans-serif'
+      ctx.fillStyle = 'white'
+      const dateStr = m.match_date ? new Date(m.match_date).toLocaleDateString('en-GB',{day:'numeric',month:'short'}) : `Wk ${m.wk}`
+      ctx.fillText(dateStr, 65, rowY)
+      ctx.fillText(`vs ${m.opponent}`, 200, rowY)
+      ctx.textAlign = 'right'
+      const resultColor = (m.result||'').toLowerCase().startsWith('won') ? '#4ade80' : (m.result||'').toLowerCase().startsWith('lost') ? '#f87171' : '#fbbf24'
+      ctx.fillStyle = resultColor
+      ctx.font = 'bold 20px sans-serif'
+      ctx.fillText(m.result || 'TBC', W - 65, rowY)
+    })
+    y += played * matchRowH + 40
+
+    // ── Footer ──
+    ctx.textAlign = 'center'
+    ctx.font = 'bold 34px sans-serif'
+    ctx.fillStyle = '#fbbf24'
+    ctx.fillText('UPPA CLYDACH! ⚽', W/2, H - 175)
+
+    ctx.font = '22px sans-serif'
+    ctx.fillStyle = 'rgba(255,255,255,0.8)'
+    ctx.fillText('Proudly sponsored by', W/2, H - 105)
+
+    await new Promise((resolve) => {
+      const sponsorImg = new Image()
+      sponsorImg.onload = () => {
+        const sponsorH = 45
+        const sponsorW = sponsorH * (sponsorImg.width / sponsorImg.height)
+        ctx.save()
+        ctx.shadowColor = 'rgba(255,255,255,0.6)'
+        ctx.shadowBlur = 14
+        ctx.drawImage(sponsorImg, W/2 - sponsorW/2, H - 90, sponsorW, sponsorH)
+        ctx.restore()
+        resolve()
+      }
+      sponsorImg.onerror = resolve
+      sponsorImg.src = SPONSOR_LOGO_DATA_URL
+    })
+
+    const dataUrl = canvas.toDataURL('image/png')
+    setImageUrl(dataUrl)
+    setGenerating(false)
+  }
+
+  const downloadImage = () => {
+    if (!imageUrl) return
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+    if (isIOS) {
+      const win = window.open()
+      if (win) {
+        win.document.write(`
+          <html>
+            <head><title>Season Recap</title><meta name="viewport" content="width=device-width, initial-scale=1"/></head>
+            <body style="margin:0;background:#111;font-family:-apple-system,sans-serif;">
+              <div style="position:sticky;top:0;background:#1e3a5f;color:white;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 2px 6px rgba(0,0,0,0.3);z-index:10;">
+                <button onclick="window.close()" style="background:rgba(255,255,255,0.15);color:white;border:none;padding:10px 16px;border-radius:10px;font-size:15px;font-weight:600;">✕ Close</button>
+                <span style="font-size:13px;text-align:right;line-height:1.3;">Press &amp; hold the image below,<br/>then tap "Save Image"</span>
+              </div>
+              <div style="display:flex;align-items:center;justify-content:center;padding:16px;">
+                <img src="${imageUrl}" style="max-width:100%;height:auto;border-radius:8px;" alt="Season recap graphic"/>
+              </div>
+            </body>
+          </html>
+        `)
+        win.document.close()
+      } else {
+        alert('Please allow pop-ups to save the image, or take a screenshot of the graphic above.')
+      }
+      return
+    }
+    const link = document.createElement('a')
+    link.download = `season-recap.png`
+    link.href = imageUrl
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
+  return (
+    <div className="bg-white border border-gray-200 rounded-2xl p-4">
+      <h3 className="font-bold text-gray-900 text-sm mb-1">🏆 Season Recap Graphic</h3>
+      <p className="text-xs text-gray-400 mb-3">Combines every match result, top scorer and most assists into one shareable image -- perfect for the end of season.</p>
+
+      <canvas ref={canvasRef} style={{display:'none'}}/>
+
+      <button onClick={generateImage} disabled={generating}
+        className="w-full text-white font-bold py-2.5 rounded-xl text-sm mb-3" style={{background:generating?'#9ca3af':N.bg}}>
+        {generating ? 'Generating...' : '🎨 Generate Season Recap'}
+      </button>
+
+      {imageUrl && (
+        <div className="space-y-3">
+          <div className="rounded-xl overflow-hidden border border-gray-200">
+            <img src={imageUrl} alt="Season recap graphic" className="w-full"/>
+          </div>
+          <button onClick={downloadImage} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:'#16a34a'}}>
+            ⬇️ Download Image
+          </button>
+          <p className="text-xs text-gray-400 text-center">On iPhone: tap Download, then press and hold the image and choose "Save Image". On other devices it downloads automatically.</p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect }) {
   // Aggregate goals across every match's structured scorer list into a season leaderboard
   const topScorers = (() => {
@@ -3498,6 +3849,18 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
       })
     })
     return Object.values(totals).sort((a,b) => b.goals - a.goals)
+  })()
+
+  // Same aggregation for assists
+  const topAssists = (() => {
+    const totals = {}
+    Object.values(matchNotes||{}).forEach(note => {
+      (note.assists_list||[]).forEach(s => {
+        if (!totals[s.key]) totals[s.key] = { name: s.name, assists: 0 }
+        totals[s.key].assists += s.count
+      })
+    })
+    return Object.values(totals).sort((a,b) => b.assists - a.assists)
   })()
 
   return (
@@ -3517,6 +3880,25 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
           </div>
         </div>
       )}
+
+      {/* Top Assists */}
+      {topAssists.length > 0 && (
+        <div className="bg-white border border-gray-200 rounded-2xl p-4">
+          <h3 className="font-bold text-gray-900 text-sm mb-3">🅰️ Most Assists</h3>
+          <div className="space-y-1.5">
+            {topAssists.slice(0, 10).map((s, i) => (
+              <div key={s.name} className="flex items-center gap-3 p-2 rounded-xl" style={{background:i===0?'#f5f3ff':'#f9fafb'}}>
+                <span className="w-6 text-center text-sm font-black" style={{color:i===0?'#7c3aed':'#9ca3af'}}>{i+1}</span>
+                <span className="flex-1 text-sm font-medium text-gray-800">{s.name}</span>
+                <span className="text-sm font-bold px-2 py-0.5 rounded-full text-white" style={{background:'#8b5cf6'}}>{s.assists}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Season Recap Graphic */}
+      <SeasonRecapBuilder matchNotes={matchNotes} topScorers={topScorers} topAssists={topAssists}/>
 
       {/* Pre-Season Dates */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4" style={{borderLeft:'4px solid #f97316'}}>
@@ -3700,7 +4082,7 @@ export default function App() {
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};const ta={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,num])=>{if(scheme.startsWith('ability-')){ga[`${scheme}-${p.id}`]=num}else if(scheme.startsWith('team-')){ta[`${scheme}-${p.id}`]=num}})}});setGroupAssignments(ga);setTeamAssignments(ta)}}catch(e){}
-      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[]}});setMatchNotes(o)}}catch(e){}
+      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[],assists:r.assists||'',assists_list:r.assists_list||[]}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
@@ -3767,7 +4149,7 @@ export default function App() {
       .on('postgres_changes',{event:'*',schema:'public',table:'match_notes'},p=>{
         if(p.new){
           const r=p.new
-          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[]}}))
+          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[],assists:r.assists||'',assists_list:r.assists_list||[]}}))
         }
       })
       .subscribe()
