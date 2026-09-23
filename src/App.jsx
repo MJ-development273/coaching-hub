@@ -4158,7 +4158,7 @@ function NewSeasonWizard({ currentAgeGroup, matchCount, onClearAndReset, onClose
 
 function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect, ageGroup, onClearAndStartNewSeason, seasonComment, onSaveSeasonComment }) {
   const [showWizard, setShowWizard] = useState(false)
-  const [seasonTab, setSeasonTab] = useState('setup') // 'setup' | 'summary'
+  const [seasonTab, setSeasonTab] = useState('setup') // 'setup' | 'stats' | 'recap'
   const matchCount = Object.values(matchNotes||{}).filter(n=>n.opponent).length
 
   // Aggregate goals across every match's structured scorer list into a season leaderboard
@@ -4192,11 +4192,15 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
       <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
         <button onClick={()=>setSeasonTab('setup')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
           style={seasonTab==='setup'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
-          🎽 Season Setup
+          🎽 Setup
         </button>
-        <button onClick={()=>setSeasonTab('summary')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
-          style={seasonTab==='summary'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
-          🏆 Summary
+        <button onClick={()=>setSeasonTab('stats')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+          style={seasonTab==='stats'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+          ⚽ Stats
+        </button>
+        <button onClick={()=>setSeasonTab('recap')} className="flex-1 py-1.5 rounded-lg text-xs font-bold transition-all"
+          style={seasonTab==='recap'?{background:'white',color:N.text,boxShadow:'0 1px 3px rgba(0,0,0,0.1)'}:{color:'#6b7280'}}>
+          🏆 Recap
         </button>
       </div>
 
@@ -4227,7 +4231,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
       )}
 
       {/* Top Scorers */}
-      {seasonTab==='summary' && topScorers.length > 0 && (
+      {seasonTab==='stats' && topScorers.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-4">
           <h3 className="font-bold text-gray-900 text-sm mb-3">⚽ Top Scorers</h3>
           <div className="space-y-1.5">
@@ -4243,7 +4247,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
       )}
 
       {/* Top Assists */}
-      {seasonTab==='summary' && topAssists.length > 0 && (
+      {seasonTab==='stats' && topAssists.length > 0 && (
         <div className="bg-white border border-gray-200 rounded-2xl p-4">
           <h3 className="font-bold text-gray-900 text-sm mb-3">🅰️ Most Assists</h3>
           <div className="space-y-1.5">
@@ -4259,7 +4263,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
       )}
 
       {/* Season Recap Graphic */}
-      {seasonTab==='summary' && (
+      {seasonTab==='recap' && (
         <SeasonRecapBuilder matchNotes={matchNotes} topScorers={topScorers} topAssists={topAssists} ageGroup={ageGroup} seasonComment={seasonComment} onSaveSeasonComment={onSaveSeasonComment}/>
       )}
 
