@@ -4037,12 +4037,15 @@ function NewSeasonWizard({ currentAgeGroup, currentSeasonStart, currentPreSeason
   const [newPreSeasonStart, setNewPreSeasonStart] = useState('')
   const [archiving, setArchiving] = useState(false)
   const [done, setDone] = useState(false)
+  const [archiveFailed, setArchiveFailed] = useState(false)
 
   const handleArchive = async () => {
     setArchiving(true)
+    setArchiveFailed(false)
     const success = await onArchive(newAgeGroup, newSeasonStart, newPreSeasonStart)
     setArchiving(false)
     if (success) setDone(true)
+    else setArchiveFailed(true)
   }
 
   return (
@@ -4113,6 +4116,11 @@ function NewSeasonWizard({ currentAgeGroup, currentSeasonStart, currentPreSeason
                   {newPreSeasonStart && <p><strong>New pre-season start:</strong> {newPreSeasonStart}</p>}
                 </div>
                 <p className="text-xs text-gray-400 mb-4">Squad, Skills and Progress data will not be affected.</p>
+                {archiveFailed && (
+                  <div className="rounded-xl p-3 mb-4 text-xs bg-red-50 border border-red-200 text-red-700">
+                    ⚠️ Something went wrong and the season could not be fully archived/cleared. Your current data has not been changed. Please check your connection and try again, or check the browser console for details.
+                  </div>
+                )}
                 <div className="flex gap-2">
                   <button onClick={()=>setStep(2)} disabled={archiving} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl text-sm">Back</button>
                   <button onClick={handleArchive} disabled={archiving}
@@ -4134,8 +4142,9 @@ function PastSeasonsView({ pastSeasons, onLoad, onLoadDetail }) {
   const [expandedId, setExpandedId] = useState(null)
   const [detail, setDetail] = useState(null)
   const [loadingDetail, setLoadingDetail] = useState(false)
+  const [loadingList, setLoadingList] = useState(true)
 
-  useEffect(()=>{ onLoad() }, [])
+  useEffect(()=>{ (async()=>{ setLoadingList(true); await onLoad(); setLoadingList(false) })() }, [])
 
   const toggleExpand = async (id) => {
     if (expandedId === id) { setExpandedId(null); setDetail(null); return }
@@ -4144,6 +4153,15 @@ function PastSeasonsView({ pastSeasons, onLoad, onLoadDetail }) {
     const d = await onLoadDetail(id)
     setDetail(d)
     setLoadingDetail(false)
+  }
+
+  if (loadingList) {
+    return (
+      <div className="bg-white border border-gray-200 rounded-2xl p-4">
+        <h3 className="font-bold text-gray-900 text-sm mb-1">📚 Past Seasons</h3>
+        <p className="text-xs text-gray-400">Loading...</p>
+      </div>
+    )
   }
 
   if (pastSeasons.length === 0) {
@@ -4585,7 +4603,8 @@ export default function App() {
   }
   const loadPastSeasons=async()=>{
     try{
-      const{data}=await supabase.from('season_archives').select('id,age_group,season_start,pre_season_start,archived_at').order('archived_at',{ascending:false})
+      const{data,error}=await supabase.from('season_archives').select('id,age_group,season_start,pre_season_start,archived_at').order('archived_at',{ascending:false})
+      if(error){ console.error('load past seasons error:', error); return }
       if(data)setPastSeasons(data)
     }catch(e){console.error('load past seasons:',e)}
   }
@@ -4601,16 +4620,22 @@ export default function App() {
   const archiveSeasonAndStartNew=async(newAgeGroup, newSeasonStart, newPreSeasonStart)=>{
     try{
       // 1. Snapshot everything currently in match_notes / match_squad
-      await supabase.from('season_archives').insert({
+      const {error: archiveError} = await supabase.from('season_archives').insert({
         age_group: ageGroup,
         season_start: seasonStart || null,
         pre_season_start: preSeasonStart || null,
         match_notes: matchNotes,
         match_squad: matchSquad,
       })
-      // 2. Clear the live match tables in Supabase
-      await supabase.from('match_notes').delete().neq('week_num', -999999)
-      await supabase.from('match_squad').delete().neq('week_num', -999999)
+      if(archiveError){ console.error('archive insert failed:', archiveError); return false }
+
+      // 2. Clear the live match tables in Supabase -- check each delete actually succeeded
+      const {error: deleteNotesError} = await supabase.from('match_notes').delete().neq('week_num', -999999)
+      if(deleteNotesError){ console.error('match_notes delete failed:', deleteNotesError); return false }
+
+      const {error: deleteSquadError} = await supabase.from('match_squad').delete().neq('week_num', -999999)
+      if(deleteSquadError){ console.error('match_squad delete failed:', deleteSquadError); return false }
+
       // 3. Reset local state for the new season
       setMatchNotes({})
       setMatchSquad({})
