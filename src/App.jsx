@@ -1954,7 +1954,11 @@ function MatchReportBuilder({ form, weekNum, onSaveReport, ageGroup }) {
         const logoH = 220
         const logoW = logoH * (logoImg.width / logoImg.height)
         const logoX = W/2 - logoW/2, logoY = 155
+        ctx.save()
+        ctx.shadowColor = 'rgba(255,255,255,0.9)'
+        ctx.shadowBlur = 25
         ctx.drawImage(logoImg, logoX, logoY, logoW, logoH)
+        ctx.restore()
         resolve()
       }
       logoImg.onerror = resolve
@@ -3662,7 +3666,11 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup, seas
       logoImg.onload = () => {
         const logoH = 130
         const logoW = logoH * (logoImg.width / logoImg.height)
+        ctx.save()
+        ctx.shadowColor = 'rgba(255,255,255,0.9)'
+        ctx.shadowBlur = 20
         ctx.drawImage(logoImg, W/2 - logoW/2, 155, logoW, logoH)
+        ctx.restore()
         resolve()
       }
       logoImg.onerror = resolve
