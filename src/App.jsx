@@ -3533,8 +3533,18 @@ function FAWReference() {
 
 // ─── Season Overview ───────────────────────────────────────────────────────────
 // ─── Season Recap Builder (branded graphic summarising the whole season) ───────
-function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup }) {
-  const [coachComment, setCoachComment] = useState('')
+function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup, seasonComment, onSaveSeasonComment }) {
+  const [coachComment, setCoachComment] = useState(seasonComment || '')
+  const [commentSaved, setCommentSaved] = useState(false)
+
+  // Re-sync if the persisted comment changes externally (e.g. loaded after mount)
+  useEffect(() => { setCoachComment(seasonComment || '') }, [seasonComment])
+
+  const handleSaveComment = async () => {
+    await onSaveSeasonComment(coachComment)
+    setCommentSaved(true)
+    setTimeout(() => setCommentSaved(false), 2000)
+  }
   const [selectedPhotoWeeks, setSelectedPhotoWeeks] = useState([])
   const [generating, setGenerating] = useState(false)
   const [imageUrl1, setImageUrl1] = useState(null)
@@ -3945,11 +3955,15 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup }) {
       )}
 
       <div className="mb-4">
-        <label className="text-xs font-semibold text-gray-600 block mb-1">Coaches' Comment <span className="text-gray-400 font-normal">(optional, shown at the top of Page 1)</span></label>
-        <textarea value={coachComment} onChange={e=>setCoachComment(e.target.value)} rows={3}
+        <label className="text-xs font-semibold text-gray-600 block mb-1">Coaches' Comment <span className="text-gray-400 font-normal">(shown at the top of Page 1)</span></label>
+        <p className="text-xs text-gray-400 mb-2">Build this up throughout the season -- save whenever you add to it.</p>
+        <textarea value={coachComment} onChange={e=>setCoachComment(e.target.value)} rows={4}
           placeholder="e.g. What a season it's been -- the boys have shown incredible growth both on and off the pitch. Thank you to every parent for your support!"
-          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none"
+          className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none resize-none mb-2"
           onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+        <button onClick={handleSaveComment} className="w-full text-white font-bold py-2 rounded-xl text-sm" style={{background:commentSaved?'#16a34a':N.bg}}>
+          {commentSaved ? '✓ Saved!' : '💾 Save Comment'}
+        </button>
       </div>
 
       {/* Photo montage selection */}
@@ -4030,22 +4044,23 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup }) {
 }
 
 // ─── New Season Wizard (archive current season, set up the next one) ───────────
-function NewSeasonWizard({ currentAgeGroup, currentSeasonStart, currentPreSeasonStart, matchCount, onArchive, onClose }) {
+function NewSeasonWizard({ currentAgeGroup, matchCount, onClearAndReset, onClose }) {
   const [step, setStep] = useState(1)
   const [newAgeGroup, setNewAgeGroup] = useState('')
   const [newSeasonStart, setNewSeasonStart] = useState('')
   const [newPreSeasonStart, setNewPreSeasonStart] = useState('')
-  const [archiving, setArchiving] = useState(false)
+  const [confirmText, setConfirmText] = useState('')
+  const [clearing, setClearing] = useState(false)
   const [done, setDone] = useState(false)
-  const [archiveFailed, setArchiveFailed] = useState(false)
+  const [failed, setFailed] = useState(false)
 
-  const handleArchive = async () => {
-    setArchiving(true)
-    setArchiveFailed(false)
-    const success = await onArchive(newAgeGroup, newSeasonStart, newPreSeasonStart)
-    setArchiving(false)
+  const handleClear = async () => {
+    setClearing(true)
+    setFailed(false)
+    const success = await onClearAndReset(newAgeGroup, newSeasonStart, newPreSeasonStart)
+    setClearing(false)
     if (success) setDone(true)
-    else setArchiveFailed(true)
+    else setFailed(true)
   }
 
   return (
@@ -4055,7 +4070,7 @@ function NewSeasonWizard({ currentAgeGroup, currentSeasonStart, currentPreSeason
           <>
             <h3 className="font-bold text-gray-900 mb-2">✓ New Season Started!</h3>
             <p className="text-sm text-gray-600 mb-4">
-              {matchCount} match{matchCount!==1?'es':''} from {currentAgeGroup} {currentSeasonStart?'('+currentSeasonStart+')':''} {matchCount!==1?'have':'has'} been archived and can be found under Past Seasons. The Match tab is now clear and ready for {newAgeGroup}.
+              All match data has been cleared. The Match tab is now ready for {newAgeGroup}.
             </p>
             <button onClick={onClose} className="w-full text-white font-bold py-2.5 rounded-xl text-sm" style={{background:N.bg}}>Done</button>
           </>
@@ -4106,26 +4121,30 @@ function NewSeasonWizard({ currentAgeGroup, currentSeasonStart, currentPreSeason
 
             {step===3 && (
               <>
-                <h3 className="font-bold text-gray-900 mb-1">⚠️ Step 3: Confirm & Archive</h3>
-                <p className="text-sm text-gray-600 mb-4">
-                  This will archive all {matchCount} match{matchCount!==1?'es':''} (results, reports, scorers, photos) from the current season and clear the Match tab for a fresh start. This action cannot be undone from the app, though archived data remains safely stored.
+                <h3 className="font-bold text-gray-900 mb-1">⚠️ Step 3: Confirm & Clear</h3>
+                <p className="text-sm text-gray-600 mb-3">
+                  This will <strong>permanently delete</strong> all {matchCount} match{matchCount!==1?'es':''} (results, reports, scorers, photos) from the current season. This cannot be undone.
                 </p>
                 <div className="rounded-xl p-3 mb-4 text-xs" style={{background:N.light}}>
                   <p><strong>New age group:</strong> {newAgeGroup}</p>
                   <p><strong>New season start:</strong> {newSeasonStart}</p>
                   {newPreSeasonStart && <p><strong>New pre-season start:</strong> {newPreSeasonStart}</p>}
                 </div>
-                <p className="text-xs text-gray-400 mb-4">Squad, Skills and Progress data will not be affected.</p>
-                {archiveFailed && (
+                <p className="text-xs text-gray-400 mb-3">Squad, Skills and Progress data will not be affected.</p>
+                <label className="text-xs font-semibold text-gray-600 block mb-1">Type DELETE to confirm</label>
+                <input value={confirmText} onChange={e=>setConfirmText(e.target.value)} placeholder="DELETE"
+                  className="w-full border border-gray-300 rounded-xl px-3 py-2.5 text-sm focus:outline-none mb-4"
+                  onFocus={e=>e.target.style.borderColor='#dc2626'} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
+                {failed && (
                   <div className="rounded-xl p-3 mb-4 text-xs bg-red-50 border border-red-200 text-red-700">
-                    ⚠️ Something went wrong and the season could not be fully archived/cleared. Your current data has not been changed. Please check your connection and try again, or check the browser console for details.
+                    ⚠️ Something went wrong clearing the data. Please check your connection and try again.
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <button onClick={()=>setStep(2)} disabled={archiving} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl text-sm">Back</button>
-                  <button onClick={handleArchive} disabled={archiving}
-                    className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:archiving?'#9ca3af':'#dc2626'}}>
-                    {archiving ? 'Archiving...' : 'Archive & Start New Season'}
+                  <button onClick={()=>setStep(2)} disabled={clearing} className="flex-1 border border-gray-300 text-gray-600 font-semibold py-2.5 rounded-xl text-sm">Back</button>
+                  <button onClick={handleClear} disabled={clearing || confirmText!=='DELETE'}
+                    className="flex-1 text-white font-bold py-2.5 rounded-xl text-sm" style={{background:(clearing||confirmText!=='DELETE')?'#9ca3af':'#dc2626'}}>
+                    {clearing ? 'Clearing...' : 'Clear & Start New Season'}
                   </button>
                 </div>
               </>
@@ -4137,87 +4156,8 @@ function NewSeasonWizard({ currentAgeGroup, currentSeasonStart, currentPreSeason
   )
 }
 
-// ─── Past Seasons Browser ───────────────────────────────────────────────────────
-function PastSeasonsView({ pastSeasons, onLoad, onLoadDetail }) {
-  const [expandedId, setExpandedId] = useState(null)
-  const [detail, setDetail] = useState(null)
-  const [loadingDetail, setLoadingDetail] = useState(false)
-  const [loadingList, setLoadingList] = useState(true)
-
-  useEffect(()=>{ (async()=>{ setLoadingList(true); await onLoad(); setLoadingList(false) })() }, [])
-
-  const toggleExpand = async (id) => {
-    if (expandedId === id) { setExpandedId(null); setDetail(null); return }
-    setExpandedId(id)
-    setLoadingDetail(true)
-    const d = await onLoadDetail(id)
-    setDetail(d)
-    setLoadingDetail(false)
-  }
-
-  if (loadingList) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-4">
-        <h3 className="font-bold text-gray-900 text-sm mb-1">📚 Past Seasons</h3>
-        <p className="text-xs text-gray-400">Loading...</p>
-      </div>
-    )
-  }
-
-  if (pastSeasons.length === 0) {
-    return (
-      <div className="bg-white border border-gray-200 rounded-2xl p-4">
-        <h3 className="font-bold text-gray-900 text-sm mb-1">📚 Past Seasons</h3>
-        <p className="text-xs text-gray-400">No archived seasons yet -- these appear here once you start a new season.</p>
-      </div>
-    )
-  }
-
-  return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-4">
-      <h3 className="font-bold text-gray-900 text-sm mb-3">📚 Past Seasons</h3>
-      <div className="space-y-2">
-        {pastSeasons.map(s => {
-          const matchesInDetail = expandedId===s.id && detail ? Object.entries(detail.match_notes||{}).filter(([wk,n])=>n.opponent) : []
-          return (
-            <div key={s.id} className="border border-gray-200 rounded-xl overflow-hidden">
-              <button onClick={()=>toggleExpand(s.id)} className="w-full flex items-center justify-between p-3 text-left">
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">{s.age_group}</p>
-                  <p className="text-xs text-gray-400">{s.season_start ? new Date(s.season_start).toLocaleDateString('en-GB',{month:'short',year:'numeric'}) : 'No date'} -- Archived {new Date(s.archived_at).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}</p>
-                </div>
-                <span className="text-gray-400">{expandedId===s.id?'▲':'▼'}</span>
-              </button>
-              {expandedId===s.id && (
-                <div className="px-3 pb-3 border-t border-gray-100 pt-3">
-                  {loadingDetail ? (
-                    <p className="text-xs text-gray-400">Loading...</p>
-                  ) : matchesInDetail.length===0 ? (
-                    <p className="text-xs text-gray-400">No matches recorded this season.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      {matchesInDetail.map(([wk,m])=>(
-                        <div key={wk} className="text-xs p-2 rounded-lg bg-gray-50">
-                          <p className="font-semibold text-gray-800">vs {m.opponent} -- {m.result||'TBC'}</p>
-                          {m.scorers && <p className="text-gray-500 mt-0.5">⚽ {m.scorers}</p>}
-                          {m.assists && <p className="text-gray-500">🅰️ {m.assists}</p>}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
-}
-
-function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect, ageGroup, onSaveAgeGroup, pastSeasons, onLoadPastSeasons, onLoadPastSeasonDetail, onArchiveSeason }) {
+function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPreSeasonStartChange, matchNotes, currentWeek, onWeekSelect, ageGroup, onClearAndStartNewSeason, seasonComment, onSaveSeasonComment }) {
   const [showWizard, setShowWizard] = useState(false)
-  const [showPastSeasons, setShowPastSeasons] = useState(false)
   const matchCount = Object.values(matchNotes||{}).filter(n=>n.opponent).length
 
   // Aggregate goals across every match's structured scorer list into a season leaderboard
@@ -4249,7 +4189,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
     <div className="space-y-4">
       {/* Current age group + start new season */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4">
-        <div className="flex items-center justify-between mb-1">
+        <div className="flex items-center justify-between">
           <div>
             <p className="text-xs text-gray-400 uppercase tracking-wide font-semibold">Current Squad</p>
             <p className="font-bold text-gray-900">Clydach {ageGroup}</p>
@@ -4258,22 +4198,13 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
             🏁 New Season
           </button>
         </div>
-        <button onClick={()=>setShowPastSeasons(s=>!s)} className="text-xs font-semibold underline mt-2" style={{color:N.text}}>
-          {showPastSeasons ? 'Hide' : 'View'} Past Seasons {pastSeasons.length>0?`(${pastSeasons.length})`:''}
-        </button>
       </div>
-
-      {showPastSeasons && (
-        <PastSeasonsView pastSeasons={pastSeasons} onLoad={onLoadPastSeasons} onLoadDetail={onLoadPastSeasonDetail}/>
-      )}
 
       {showWizard && (
         <NewSeasonWizard
           currentAgeGroup={ageGroup}
-          currentSeasonStart={seasonStart}
-          currentPreSeasonStart={preSeasonStart}
           matchCount={matchCount}
-          onArchive={onArchiveSeason}
+          onClearAndReset={onClearAndStartNewSeason}
           onClose={()=>setShowWizard(false)}
         />
       )}
@@ -4311,7 +4242,7 @@ function SeasonOverview({ seasonStart, preSeasonStart, onSeasonStartChange, onPr
       )}
 
       {/* Season Recap Graphic */}
-      <SeasonRecapBuilder matchNotes={matchNotes} topScorers={topScorers} topAssists={topAssists} ageGroup={ageGroup}/>
+      <SeasonRecapBuilder matchNotes={matchNotes} topScorers={topScorers} topAssists={topAssists} ageGroup={ageGroup} seasonComment={seasonComment} onSaveSeasonComment={onSaveSeasonComment}/>
 
       {/* Pre-Season Dates */}
       <div className="bg-white border border-gray-200 rounded-2xl p-4" style={{borderLeft:'4px solid #f97316'}}>
@@ -4477,8 +4408,7 @@ export default function App() {
   const [preferredTeamFormat,setPreferredTeamFormat]=useState('9v9')
   const [preferredFormation,setPreferredFormation]=useState('3-3-2')
   const [ageGroup,setAgeGroup]=useState("Under 12's")
-  const [pastSeasons,setPastSeasons]=useState([])
-  const [showNewSeasonWizard,setShowNewSeasonWizard]=useState(false)
+  const [seasonComment,setSeasonComment]=useState('')
   const [matchWeek,setMatchWeek]=useState(1)
   const [matchWeekInitialized,setMatchWeekInitialized]=useState(false)
   const [squadWeek,setSquadWeek]=useState(1)
@@ -4496,7 +4426,7 @@ export default function App() {
     async function load(){
       try{const{data,error}=await supabase.from('drills').select('*').order('id');if(error)throw error;const existingIds=(data||[]).map(d=>d.id);const missing=SEED_DRILLS.filter(d=>!existingIds.includes(d.id));if(missing.length>0){await supabase.from('drills').upsert(missing,{onConflict:'id'})};if(!data||data.length===0){setDrills(SEED_DRILLS)}else{setDrills([...data,...missing.filter(m=>!data.find(d=>d.id===m.id))])}}catch(e){console.error(e);setDbError(true);setDrills(SEED_DRILLS)}
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
-      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);if(ss.age_group)setAgeGroup(ss.age_group);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
+      try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);if(ss.age_group)setAgeGroup(ss.age_group);if(ss.season_comment)setSeasonComment(ss.season_comment);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};const ta={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,num])=>{if(scheme.startsWith('ability-')){ga[`${scheme}-${p.id}`]=num}else if(scheme.startsWith('team-')){ta[`${scheme}-${p.id}`]=num}})}});setGroupAssignments(ga);setTeamAssignments(ta)}}catch(e){}
       try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[],assists:r.assists||'',assists_list:r.assists_list||[]}});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
@@ -4601,54 +4531,31 @@ export default function App() {
     setAgeGroup(ag)
     try{await supabase.from('season_settings').upsert({id:1,age_group:ag})}catch(e){console.error('age group save:',e)}
   }
-  const loadPastSeasons=async()=>{
-    try{
-      const{data,error}=await supabase.from('season_archives').select('id,age_group,season_start,pre_season_start,archived_at').order('archived_at',{ascending:false})
-      if(error){ console.error('load past seasons error:', error); return }
-      if(data)setPastSeasons(data)
-    }catch(e){console.error('load past seasons:',e)}
+  const saveSeasonComment=async(comment)=>{
+    setSeasonComment(comment)
+    try{await supabase.from('season_settings').upsert({id:1,season_comment:comment})}catch(e){console.error('season comment save:',e)}
   }
-  const loadPastSeasonDetail=async(archiveId)=>{
+  // Permanently clears all match data (results, reports, scorers, assists, photos, line-ups)
+  // and applies the new season's age group and dates. No backup/archive is kept.
+  const clearAndStartNewSeason=async(newAgeGroup, newSeasonStart, newPreSeasonStart)=>{
     try{
-      const{data}=await supabase.from('season_archives').select('*').eq('id',archiveId).single()
-      return data
-    }catch(e){console.error('load past season detail:',e); return null}
-  }
-  // Archives the current season's match data (results, reports, scorers, line-ups) into
-  // season_archives, then clears the live match_notes/match_squad tables and resets the
-  // season dates ready for the new season -- Squad, Skills and Progress are left untouched.
-  const archiveSeasonAndStartNew=async(newAgeGroup, newSeasonStart, newPreSeasonStart)=>{
-    try{
-      // 1. Snapshot everything currently in match_notes / match_squad
-      const {error: archiveError} = await supabase.from('season_archives').insert({
-        age_group: ageGroup,
-        season_start: seasonStart || null,
-        pre_season_start: preSeasonStart || null,
-        match_notes: matchNotes,
-        match_squad: matchSquad,
-      })
-      if(archiveError){ console.error('archive insert failed:', archiveError); return false }
-
-      // 2. Clear the live match tables in Supabase -- check each delete actually succeeded
       const {error: deleteNotesError} = await supabase.from('match_notes').delete().neq('week_num', -999999)
       if(deleteNotesError){ console.error('match_notes delete failed:', deleteNotesError); return false }
 
       const {error: deleteSquadError} = await supabase.from('match_squad').delete().neq('week_num', -999999)
       if(deleteSquadError){ console.error('match_squad delete failed:', deleteSquadError); return false }
 
-      // 3. Reset local state for the new season
       setMatchNotes({})
       setMatchSquad({})
       setMatchWeek(1)
       setMatchWeekInitialized(false)
       setDateOverrides({})
-      // 4. Apply the new season's settings
       await saveAgeGroup(newAgeGroup)
       await saveSeasonStart(newSeasonStart)
       await savePreSeasonStart(newPreSeasonStart || '')
       return true
     }catch(e){
-      console.error('archive season failed:', e)
+      console.error('clear and start new season failed:', e)
       return false
     }
   }
@@ -4802,7 +4709,7 @@ export default function App() {
         {isCoach&&view==='match'&&<MatchDayNotes weekNum={matchWeek} setWeekNum={setMatchWeek} currentWeek={currentWeek} matchNotes={matchNotes} onSave={saveMatchNote} squad={squad} matchSquad={matchSquad} onSaveMatchSquad={saveMatchSquad} preferredTeamFormat={preferredTeamFormat} ageGroup={ageGroup}/>}
         {isCoach&&view==='squad'&&<SquadManager currentWeek={squadWeek} setWeekNum={setSquadWeek} currentWeekNum={currentWeek} squad={squad} attendance={attendance} onToggle={toggleAttendance} onAdd={addSquadPlayer} onRemove={removeSquadPlayer} onUpdatePos={updatePlayerPosition} playerNotes={playerNotes} onSaveNote={savePlayerNote} drills={drills} progressData={progressData} onSaveProgress={saveProgress} skillsData={skillsData} onSaveSkill={saveSkill} groupCount={groupCount} onGroupCountChange={saveGroupCount} groupAssignments={groupAssignments} onAssignGroup={assignPlayerGroup} preferredTeamFormat={preferredTeamFormat} preferredFormation={preferredFormation} onSaveFormationPref={saveFormationPref} teamCount={teamCount} onSaveTeamCount={saveTeamCount} teamAssignments={teamAssignments} onAssignTeam={assignPlayerTeam}/>}
         {isCoach&&view==='faw'&&<FAWReference/>}
-        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')} ageGroup={ageGroup} onSaveAgeGroup={saveAgeGroup} pastSeasons={pastSeasons} onLoadPastSeasons={loadPastSeasons} onLoadPastSeasonDetail={loadPastSeasonDetail} onArchiveSeason={archiveSeasonAndStartNew}/>}
+        {isCoach&&view==='season'&&<SeasonOverview seasonStart={seasonStart} preSeasonStart={preSeasonStart} onSeasonStartChange={saveSeasonStart} onPreSeasonStartChange={savePreSeasonStart} matchNotes={matchNotes} currentWeek={currentWeek} onWeekSelect={(w)=>setView('planner')} ageGroup={ageGroup} onClearAndStartNewSeason={clearAndStartNewSeason} seasonComment={seasonComment} onSaveSeasonComment={saveSeasonComment}/>}
         {!isCoach&&<ParentView sessionStatus={sessionStatus} matchNotes={matchNotes} drills={drills} homeSession={homeSession} seasonStart={seasonStart}/>}
 
         {isCoach&&view==='drills'&&(
