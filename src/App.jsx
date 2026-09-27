@@ -5114,15 +5114,15 @@ export default function App() {
 
         {isCoach&&view==='drills'&&(
           <>
-            <div className="grid grid-cols-5 gap-2 mb-5">
+            <div className="grid grid-cols-5 gap-1.5 mb-5">
               {CATEGORIES.map(c=>(
                 <div key={c} onClick={()=>setFilterCat(filterCat===c?'All':c)}
-                  className="bg-white border rounded-xl p-2.5 text-center cursor-pointer transition-all"
+                  className="bg-white border rounded-xl p-1.5 text-center cursor-pointer transition-all"
                   style={filterCat===c?{borderColor:N.bg,background:N.light}:{borderColor:'#e5e7eb'}}
                   onMouseEnter={e=>{if(filterCat!==c)e.currentTarget.style.borderColor=N.bg}}
                   onMouseLeave={e=>{if(filterCat!==c)e.currentTarget.style.borderColor='#e5e7eb'}}>
-                  <div className="text-lg font-black text-gray-900">{catCounts[c]}</div>
-                  <div className="text-gray-500 leading-tight mt-0.5" style={{fontSize:'9px'}}>{CAT_COLORS[c]?.icon} {c.split(' ')[0]}</div>
+                  <div className="text-base font-black text-gray-900">{catCounts[c]}</div>
+                  <div className="text-gray-500 leading-tight mt-0.5" style={{fontSize:'8px'}}>{CAT_COLORS[c]?.icon} {c.split(' ')[0]}</div>
                 </div>
               ))}
             </div>
@@ -5155,3 +5155,4 @@ export default function App() {
     </div>
   )
 }
+ 
