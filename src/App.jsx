@@ -1429,6 +1429,8 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const [ageFilter,setAgeFilter]=useState('U12')
   const [overrides,setOverrides]=useState({})
   const [swapTarget,setSwapTarget]=useState(null)
+  const [swapCatFilter,setSwapCatFilter]=useState(null) // null = default to the block's own category
+  useEffect(()=>{ setSwapCatFilter(null) }, [swapTarget])
   const [sessionNotes,setSessionNotes]=useState('')
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
@@ -1836,9 +1838,15 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
         <Modal onClose={()=>{setSwapTarget(null);setGroupSwapTarget(null)}} wide>
           <div className="p-6">
             <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}{groupSwapTarget?` -- Group ${groupSwapTarget.groupNum}`:''}</h2>
-            <p className="text-sm text-gray-500 mb-4">{groupSwapTarget?`Choose a drill for Group ${groupSwapTarget.groupNum} only:`:'Choose a different drill for this block:'}</p>
+            <p className="text-sm text-gray-500 mb-3">{groupSwapTarget?`Choose a drill for Group ${groupSwapTarget.groupNum} only:`:'Choose a different drill for this block:'}</p>
+            <div className="flex gap-2 overflow-x-auto pb-1 mb-3">
+              {['All',...CATEGORIES].map(cat=>(
+                <FilterPill key={cat} label={cat===swapBlock.cat?`${cat} (default)`:cat}
+                  active={(swapCatFilter||swapBlock.cat)===cat} onClick={()=>setSwapCatFilter(cat)}/>
+              ))}
+            </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-96 overflow-y-auto pr-1">
-              {drills.filter(d => d.category === swapBlock.cat && (ageFilter==='All'||(d.age_groups||[]).includes(ageFilter))).map(d => (
+              {drills.filter(d => ((swapCatFilter||swapBlock.cat)==='All' || d.category === (swapCatFilter||swapBlock.cat)) && (ageFilter==='All'||(d.age_groups||[]).includes(ageFilter))).map(d => (
                 <div key={d.id} onClick={()=>handleSwap(swapTarget, d)}
                   className="bg-white rounded-xl overflow-hidden cursor-pointer transition-all border-2"
                   style={{borderColor: d.id===session[swapTarget]?.id ? N.bg : '#e5e7eb'}}
@@ -1847,6 +1855,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                   <div className="h-20"><DrillDiagram type={d.diagram} category={d.category}/></div>
                   <div className="p-2">
                     <p className="text-xs font-semibold text-gray-900 leading-tight">{d.title}</p>
+                    {(swapCatFilter||swapBlock.cat)==='All' && <p className="text-xs font-semibold" style={{color:CAT_COLORS[d.category]?.accent}}>{CAT_COLORS[d.category]?.icon} {d.category}</p>}
                     <p className="text-xs text-gray-400">⏱ {d.duration} · 👥 {d.players}</p>
                   </div>
                   {d.id===session[swapTarget]?.id && <div className="text-white text-xs font-bold text-center py-1" style={{background:N.bg}}>✓ Current</div>}
@@ -5155,4 +5164,3 @@ export default function App() {
     </div>
   )
 }
- 
