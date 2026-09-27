@@ -17,7 +17,7 @@ function parseLocalDate(dateStr) {
 const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', text:'#1e3a5f' }
 const SITE_URL = 'https://coaching-hub-virid.vercel.app'
 
-const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Goalkeeping', 'Age Group Changes']
+const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Goalkeeping', 'Age Group Changes', 'Tactical']
 const AGE_GROUPS = ['U12', 'U13', 'U14', 'U15']
 const COACH_PIN = '1234'
 
@@ -28,6 +28,7 @@ const CAT_COLORS = {
   'Strength & Conditioning':  { pill:'bg-green-100 text-green-800',  border:'border-green-300',   bg:'bg-green-50',   icon:'💪', accent:'#22c55e' },
   'Goalkeeping':              { pill:'bg-cyan-100 text-cyan-800',    border:'border-cyan-300',    bg:'bg-cyan-50',    icon:'🧤', accent:'#0891b2' },
   'Age Group Changes':        { pill:'bg-purple-100 text-purple-800',border:'border-purple-300',  bg:'bg-purple-50',  icon:'📈', accent:'#8b5cf6' },
+  'Tactical':                 { pill:'bg-indigo-100 text-indigo-800',border:'border-indigo-300',  bg:'bg-indigo-50',  icon:'📋', accent:'#6366f1' },
 }
 
 // ─── Reusable navy button style helpers ───────────────────────────────────────
@@ -777,6 +778,387 @@ function TacticalDiagram({ type, category }) {
         <defs><marker id="gkfarrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="white"/></marker></defs>
         <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">LOW STANCE -- SIDE-STEP ONLY, NO CROSSING FEET</text>
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Stay on toes, weight forward, quick feet between cones</text>
+      </svg>
+    ),
+    // ── NEW ADDITIONS (Sept 2026) ─────────────────────────────────────────────
+    sixcone: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Zone(95,45,130,130)}
+        {[0,60,120,180,240].map((a,i) => {
+          const r=55, cx=160+r*Math.cos((a-90)*Math.PI/180), cy=110+r*Math.sin((a-90)*Math.PI/180)
+          return <g key={i}>{P(cx,cy,accent,String(i+1))}</g>
+        })}
+        <circle cx="112.4" cy="82.5" r="9" fill="none" stroke="white" strokeWidth="1.5" strokeDasharray="3,2"/>
+        <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
+        {Arrow(168,58,200,80,accent)}
+        {Arrow(150,58,122,78,accent,true)}
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">SIX CONES -- ONE ALWAYS EMPTY</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass, then sprint into the open cone</text>
+      </svg>
+    ),
+    fourcorners: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Zone(80,50,160,130)}
+        {P(95,65,accent,'A')}{P(95,80,accent)}
+        {P(225,65,'#ef4444','B')}{P(225,80,'#ef4444')}
+        {P(95,165,'#f59e0b','C')}{P(95,150,'#f59e0b')}
+        {P(225,165,'#8b5cf6','D')}{P(225,150,'#8b5cf6')}
+        {P(160,30,'white','CH')}
+        <circle cx="160" cy="115" r="7" fill="white" opacity="0.9"/>
+        {Arrow(160,42,160,105,'white',true)}
+        {Arrow(100,70,150,110,accent,true)}{Arrow(220,70,170,110,'#ef4444',true)}{Arrow(100,160,150,120,'#f59e0b',true)}{Arrow(220,160,170,120,'#8b5cf6',true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Coach feeds the ball in -- first player from each corner races to win it</text>
+      </svg>
+    ),
+    boxwarmup: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Cone(140,90)}{Cone(180,90)}{Cone(180,130)}{Cone(140,130)}
+        {P(160,110,accent,'W')}
+        {P(60,110,accent,'P1')}
+        {P(160,175,accent,'P2')}
+        {Arrow(72,110,148,110,accent)}
+        {Arrow(168,122,162,166,accent)}
+        <path d="M160,120 Q195,125 180,95" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,3" markerEnd="url(#boxarrow)"/>
+        <defs><marker id="boxarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">4x4 BOX -- SPRINT AROUND A CONE AFTER EACH PASS</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Receive, pass to the far side, sprint round a cone, repeat</text>
+      </svg>
+    ),
+    jampacked: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <circle cx="160" cy="110" r="70" fill="none" stroke={accent} strokeWidth="1.5" strokeDasharray="4,3" opacity="0.6"/>
+        {[0,45,90,135,180,225,270,315].map((a,i) => {
+          const r=70, cx=160+r*Math.cos((a-90)*Math.PI/180), cy=110+r*Math.sin((a-90)*Math.PI/180)
+          return <g key={i}>{P(cx,cy,accent)}</g>
+        })}
+        <path d="M100,150 Q160,110 220,70" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,3" markerEnd="url(#jamarrow1)"/>
+        <path d="M220,150 Q160,110 100,70" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,3" markerEnd="url(#jamarrow2)"/>
+        <defs>
+          <marker id="jamarrow1" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker>
+          <marker id="jamarrow2" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker>
+        </defs>
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">JOG / FULL SPEED / CUT / CROSS -- ON COMMAND</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Everyone dribbles with a ball -- react instantly to the call</text>
+      </svg>
+    ),
+    namegame: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {[0,60,120,180,240,300].map((a,i) => {
+          const r=55, cx=160+r*Math.cos((a-90)*Math.PI/180), cy=110+r*Math.sin((a-90)*Math.PI/180)
+          return <g key={i}>{P(cx,cy,accent,String(i+1))}</g>
+        })}
+        <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
+        {Arrow(168,58,200,80,accent)}
+        <rect x="130" y="25" width="60" height="16" rx="8" fill="white" opacity="0.9"/>
+        <text x="160" y="36" fill={accent} fontSize="8" textAnchor="middle" fontWeight="bold">"TO PLAYER 3!"</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Call the name of your next pass before you receive the ball</text>
+      </svg>
+    ),
+    soccertennis: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <line x1="160" y1="20" x2="160" y2="200" stroke="white" strokeWidth="2" strokeDasharray="4,3" opacity="0.7"/>
+        {Cone(160,70)}{Cone(160,110)}{Cone(160,150)}
+        {P(100,90,accent,'A')}{P(90,140,accent,'B')}
+        {P(220,90,'#ef4444','C')}{P(230,140,'#ef4444','D')}
+        <path d="M110,95 Q160,50 210,95" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="5,3" markerEnd="url(#tennisarrow)"/>
+        <defs><marker id="tennisarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="35" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">VOLLEYS OVER THE MIDDLE LINE -- SCORE LIKE TENNIS</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">One bounce, two touches max, keep it in the court</text>
+      </svg>
+    ),
+    turnshoot: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x="130" y="10" width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {Cone(120,140)}{Cone(200,140)}
+        {P(60,190,accent,'1')}{P(260,190,accent,'2')}
+        {Arrow(70,185,112,145,accent)}
+        {Arrow(128,138,155,55,accent)}
+        <path d="M120,140 Q100,120 118,105" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#turnarrow)"/>
+        <defs><marker id="turnarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass around the cone, sprint on, first-time shot -- no extra touch</text>
+      </svg>
+    ),
+    // ── GRASSROOTS UK PACK ADDITIONS ───────────────────────────────────────────
+    conesweave: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {[70,115,160,205,250].map((x,i) => <g key={i}>{Cone(x,110)}</g>)}
+        <path d="M50,110 Q70,90 90,110 T130,110 T170,110 T210,110 T250,110 T270,110" fill="none" stroke={accent} strokeWidth="2" strokeDasharray="5,3" markerEnd="url(#weavearrow)"/>
+        <defs><marker id="weavearrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill={accent}/></marker></defs>
+        {P(50,110,accent,'P')}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">5 WAYS THROUGH -- INSIDE / OUTSIDE / R / L / ROLLOVER</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Same cone line, five different ways to navigate it</text>
+      </svg>
+    ),
+    twoconemoves: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Cone(140,110)}{Cone(180,110)}
+        {P(160,110,accent,'P')}
+        <circle cx="160" cy="128" r="6" fill="white" stroke={accent} strokeWidth="1.5"/>
+        {Arrow(150,128,132,128,accent)}{Arrow(170,128,188,128,accent,true)}
+        <path d="M160,122 Q185,140 160,158 Q135,140 160,122" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3"/>
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">SOLE ROLLS -- FIGURE 8 -- V-CUT -- L-DRAG</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">1 minute per move -- both feet, then heads up</text>
+      </svg>
+    ),
+    outsiderun: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Cone(50,90)}{Cone(50,130)}{Cone(90,90)}{Cone(90,130)}
+        {Cone(230,90)}{Cone(230,130)}{Cone(270,90)}{Cone(270,130)}
+        <path d="M70,110 Q160,70 250,110" fill="none" stroke={accent} strokeWidth="2" strokeDasharray="5,3" markerEnd="url(#outsidearrow)"/>
+        <defs><marker id="outsidearrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill={accent}/></marker></defs>
+        {P(70,110,accent,'P')}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">OUTSIDE OF FOOT ONLY -- ACCELERATE THROUGH THE ARC</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Close control in, sprint through, close control out -- then swap feet</text>
+      </svg>
+    ),
+    diagsquare: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Zone(90,50,140,120)}
+        {P(100,60,accent,'1')}{P(100,80,accent)}{P(220,60,accent,'2')}{P(220,160,accent,'3')}{P(100,160,accent,'4')}
+        {Arrow(112,68,208,68,accent)}
+        {Arrow(220,72,220,150,accent,true)}
+        {Arrow(208,160,112,160,accent,true)}
+        <text x="160" y="40" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">DIAGONAL THEN SIDEWAYS -- FOLLOW YOUR PASS</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Call the name of the receiver before every pass</text>
+      </svg>
+    ),
+    movesquare: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Cone(100,60)}{Cone(220,60)}{Cone(220,160)}{Cone(100,160)}
+        {[[130,90],[160,70],[190,100],[140,140],[180,150],[150,110]].map(([x,y],i) => <circle key={i} cx={x} cy={y} r="4" fill="white" opacity="0.5"/>)}
+        {P(130,90,accent,'A')}{P(160,70,accent,'B')}{P(190,100,accent,'C')}{P(140,140,accent,'D')}
+        {Arrow(138,95,155,75,accent)}
+        <path d="M130,90 Q145,120 140,138" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#movearrow)"/>
+        <defs><marker id="movearrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass, then everyone shifts to a new open spot</text>
+      </svg>
+    ),
+    threecone: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Cone(70,110)}{Cone(160,110)}{Cone(210,110)}
+        {P(70,140,accent,'1')}{P(210,80,accent,'2')}
+        {Arrow(80,138,150,115,accent)}
+        {Arrow(170,110,200,90,accent,true)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">LONG GAP -- SHORT GAP -- ROTATE THROUGH</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass, follow the ball, take the next cone in the chain</text>
+      </svg>
+    ),
+    relayrace: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {[70,140,210].map((x,i) => <g key={i}>{P(x,175,accent,String(i+1))}{P(x,190,accent)}</g>)}
+        {[70,140,210].map((x,i) => <g key={i}>{Cone(x,45)}</g>)}
+        {Arrow(70,165,70,55,accent,true)}{Arrow(140,165,140,55,accent,true)}{Arrow(210,165,210,55,accent,true)}
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">RACE OUT, ROUND THE CONE, RACE BACK</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Left foot out, right foot back -- first team home wins</text>
+      </svg>
+    ),
+    chaosdribble: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x="100" y="10" width="120" height="80" fill="none" stroke="#4ade80" strokeWidth="1" opacity="0.4"/>
+        {P(105,30,accent,'1')}{P(215,30,accent,'2')}{P(105,80,accent,'3')}{P(215,80,accent,'4')}
+        {Arrow(115,32,205,32,accent,true)}{Arrow(205,78,115,78,accent,true)}
+        {[[140,50],[180,60],[150,70],[170,40]].map(([x,y],i) => <g key={i}>{P(x,y,'#f59e0b')}</g>)}
+        <text x="160" y="105" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">FREESTYLE DRIBBLERS WEAVE THROUGH THE PASSING LANE</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Heads up for everyone -- don't collide, don't get hit</text>
+      </svg>
+    ),
+    channelrun: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(50,150,accent,'1')}{P(120,120,accent,'4')}{P(200,160,accent,'2')}{P(220,150,accent,'3')}
+        {P(160,60,'#ef4444','D')}
+        {Arrow(60,145,110,125,accent)}
+        <path d="M120,120 Q90,80 110,35" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#channelarrow)"/>
+        <defs><marker id="channelarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Ball into the channel -- CF times the run to beat the defender</text>
+      </svg>
+    ),
+    linkplay: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(160,150,accent,'CF')}{P(60,110,accent,'W')}{P(160,175,'#ef4444','D')}
+        {Arrow(150,145,90,115,accent)}
+        <path d="M160,140 Q220,100 190,40" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#linkarrow)"/>
+        <defs><marker id="linkarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        {Arrow(70,100,150,45,accent,true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Drop, lay off, spin in behind for the far post cross</text>
+      </svg>
+    ),
+    riskretain: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Zone(90,60,140,110)}
+        {P(160,80,accent,'A')}{P(130,130,'#ef4444','D')}{P(160,150,'#ef4444','D')}{P(190,130,'#ef4444','D')}
+        <circle cx="160" cy="110" r="7" fill="white" opacity="0.9"/>
+        <text x="255" y="70" fill="#f59e0b" fontSize="9" textAnchor="middle" fontWeight="bold">RISK: 3</text>
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">1 ATTACKER, 3 DEFENDERS -- SPEND YOUR RISK POINTS WISELY</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Lose the ball and lose a point -- score before they run out</text>
+      </svg>
+    ),
+    targetman: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(160,100,accent,'CF')}{P(160,120,'#ef4444','D')}
+        {P(70,60,accent,'W1')}{P(250,60,accent,'W2')}
+        <circle cx="160" cy="95" r="7" fill="white" opacity="0.9"/>
+        {Arrow(150,95,85,65,accent,true)}{Arrow(170,95,240,65,accent,true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Body side-on, shield the ball, find the free winger</text>
+      </svg>
+    ),
+    switchfinish: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(80,190,'#f59e0b','R')}{P(160,190,'#3b82f6','B')}{P(240,190,'#eab308','Y')}
+        {Arrow(80,178,80,80,'#f59e0b',true)}
+        {Arrow(90,80,150,35,'#3b82f6')}
+        {Arrow(160,178,120,50,'#3b82f6',true)}
+        {Arrow(240,178,190,45,'#eab308',true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Runner drives through poles -- switch pass in -- box runners cross</text>
+      </svg>
+    ),
+    controlfinish: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {[60,90,120].map((y,i) => <g key={i}>{Cone(230,y)}</g>)}
+        {P(160,20,accent,'GK')}{P(230,190,accent,'F')}
+        {Arrow(160,30,160,55,accent,true)}
+        {Arrow(230,178,230,100,accent)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">GK backpedals into goal as forward runs on to the pass -- one touch, shoot</text>
+      </svg>
+    ),
+    onetwofinish: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {[70,120,170,220].map((x,i) => <g key={i}>{Cone(x,140)}</g>)}
+        {P(50,160,accent,'1')}{P(70,110,accent,'2')}
+        {Arrow(60,155,68,120,accent)}{Arrow(80,118,110,145,accent,true)}{Arrow(120,150,168,120,accent)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Pass, quick 1-2 round each cone, first-time shot on the last one</text>
+      </svg>
+    ),
+    twozonedribble: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {Zone(60,40,90,150)}{Zone(170,40,90,150)}
+        {P(105,150,'#ef4444','D')}{P(215,150,'#ef4444','D')}
+        {P(50,90,accent,'W1')}{P(250,90,accent,'W2')}{P(160,70,accent,'CF')}
+        {Arrow(65,90,145,80,accent,true)}{Arrow(175,80,235,90,accent,true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Defenders locked in their zone -- wingers combine, CF finds space</text>
+      </svg>
+    ),
+    mannequincall: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        <rect x="120" y="55" width="14" height="30" fill="#94a3b8" opacity="0.8"/><rect x="186" y="55" width="14" height="30" fill="#94a3b8" opacity="0.8"/>
+        {Cone(115,45)}{Cone(205,45)}{Cone(160,110)}
+        {P(160,150,accent,'S')}{P(80,150,accent,'P1')}{P(240,150,accent,'P2')}
+        {Arrow(90,145,150,115,accent)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">"RED!" OR "GREEN!" -- ONE TOUCH THAT SIDE, THEN SHOOT</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Reacts to the call after the pass, not before</text>
+      </svg>
+    ),
+    nobounce: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {[50,80,110,140,170].map((y,i) => <g key={i}>{Cone(160,y)}<text x={195} y={y+3} fill="#f59e0b" fontSize="7" fontWeight="bold">{i+1}</text></g>)}
+        {P(160,192,accent,'P')}
+        {Arrow(160,180,160,35,accent,true)}
+        <text x="160" y="203" fill="#86efac" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.9">Score without a bounce to move back a cone -- one bounce, you're out</text>
+      </svg>
+    ),
+    shoulderbattle: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {Cone(150,140)}{Cone(170,140)}
+        {P(160,130,accent,'A')}{P(160,150,'#ef4444','B')}
+        <circle cx="160" cy="60" r="6" fill="white" opacity="0.9"/>
+        <path d="M160,55 Q200,90 160,125" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#shoulderarrow)"/>
+        <defs><marker id="shoulderarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Shoulder-to-shoulder, back to goal -- coach throws it over, first to react wins</text>
+      </svg>
+    ),
+    crossfirst: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {Cone(60,110)}{Cone(260,110)}
+        {P(40,150,accent,'Y1')}{P(280,150,'#3b82f6','B1')}
+        {Arrow(50,145,55,120,accent)}
+        {Arrow(65,105,150,45,accent,true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Round the cone, call for the cross, first-time finish -- both sides, both feet</text>
+      </svg>
+    ),
+    goalkickoverload: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={190} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(160,195,accent,'GK')}
+        {P(80,150,accent,'D1')}{P(240,150,accent,'D2')}
+        {P(60,120,accent,'M')}{P(100,120,accent,'M')}
+        {P(240,110,'#ef4444','CF')}
+        {Arrow(160,185,90,155,accent)}
+        {Arrow(100,150,60,115,accent,true)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">OVERLOAD ONE SIDE -- PLAY INTO THE SPACE IT CREATES</text>
+        <text x="160" y="30" fill="#86efac" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.9">U7-U8 GOAL KICK BUILD-UP</text>
+      </svg>
+    ),
+    goalkicktriangle: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={190} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(160,195,accent,'GK')}{P(160,140,accent,'CM')}{P(100,150,accent,'D')}{P(220,150,accent,'D')}{P(60,90,accent,'W')}
+        {Arrow(160,185,160,150,accent)}
+        {Arrow(150,138,110,148,accent,true)}
+        {Arrow(95,145,70,100,accent,true)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">PLAY THE WAY YOU'RE FACING -- KEEP IT SIMPLE UNDER PRESSURE</text>
+        <text x="160" y="30" fill="#86efac" fontSize="8" textAnchor="middle" fontWeight="bold" opacity="0.9">U9-U10 GOAL KICK BUILD-UP</text>
+      </svg>
+    ),
+    controlbox: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Cone(120,80)}{Cone(200,80)}{Cone(200,150)}{Cone(120,150)}
+        {P(160,130,accent,'P')}
+        {P(160,190,accent,'C')}
+        <circle cx="160" cy="115" r="6" fill="white" opacity="0.9"/>
+        {Arrow(160,180,160,140,accent,true)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">5 DIFFERENT SERVES -- FIRM, HIGH, BOUNCING, CHEST</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Control cleanly inside the box every time</text>
+      </svg>
+    ),
+    multiangle: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <rect x={130} y={10} width="60" height="16" fill="none" stroke="white" strokeWidth="2"/>
+        {P(90,180,accent,'1')}{P(140,190,accent,'2')}{P(180,190,accent,'3')}{P(230,180,accent,'4')}
+        {P(160,195,accent,'5')}
+        {Cone(100,130)}{Cone(220,130)}
+        {Arrow(95,175,100,140,accent)}{Arrow(160,188,160,60,accent,true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">5 shots from 5 angles -- round a cone between each one</text>
       </svg>
     ),
     default: (
