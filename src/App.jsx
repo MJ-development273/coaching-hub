@@ -1663,11 +1663,12 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
         const existing = prev[okey]?.[blockKey]
         const existingGroups = (existing && existing.__groups) ? existing.__groups : {}
         const existingBase = (existing && existing.__groups) ? existing.base : existing
+        const existingCount = (existing && existing.__groups) ? existing.count : undefined
         return {
           ...prev,
           [okey]: {
             ...(prev[okey]||{}),
-            [blockKey]: { __groups: { ...existingGroups, [groupNum]: drill }, base: existingBase || session[blockKey] }
+            [blockKey]: { __groups: { ...existingGroups, [groupNum]: drill }, base: existingBase || session[blockKey], count: existingCount || groupCount || 2 }
           }
         }
       })
@@ -1691,7 +1692,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
         ...prev,
         [okey]: {
           ...(prev[okey]||{}),
-          [blockKey]: hasAnyGroups ? { __groups: newGroups, base: existing.base } : existing.base
+          [blockKey]: hasAnyGroups ? { __groups: newGroups, base: existing.base, count: existing.count } : existing.base
         }
       }
     })
