@@ -1547,7 +1547,6 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
   const [shareOpen,setShareOpen]=useState(false)
   const [detailDrill,setDetailDrill]=useState(null)
   const [showGroupsFor,setShowGroupsFor]=useState(null)
-  const [groupMode,setGroupMode]=useState(false)
   const [groupSwapTarget,setGroupSwapTarget]=useState(null) // {blockKey, groupNum}
   const [editingDate,setEditingDate]=useState(false)
   const [tempDate,setTempDate]=useState('')
@@ -1615,6 +1614,46 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
     return session[blockKey]
   }
 
+  // Whether a given block is currently split into separate drills per ability group.
+  // This is decided per block, not session-wide -- some blocks can be whole-team, others split.
+  const isBlockSplit = (blockKey) => {
+    const ov = weekOverrides[blockKey]
+    return !!(ov && typeof ov === 'object' && '__groups' in ov)
+  }
+  // How many groups a specific (split) block uses -- can differ from the squad-wide ability group count
+  const getBlockGroupCount = (blockKey) => {
+    const ov = weekOverrides[blockKey]
+    return (ov && ov.count) || groupCount || 2
+  }
+  const toggleBlockSplit = (blockKey) => {
+    const okey = `${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`
+    setOverrides(prev => {
+      const existing = prev[okey]?.[blockKey]
+      const alreadySplit = existing && typeof existing === 'object' && '__groups' in existing
+      const next = { ...(prev[okey]||{}) }
+      if (alreadySplit) {
+        // Turning off: collapse back to a single drill for the whole team (the base that was in place before splitting)
+        const collapsed = existing.base || session[blockKey]
+        if (collapsed) next[blockKey] = collapsed; else delete next[blockKey]
+      } else {
+        // Turning on: carry the current drill forward as the shared starting point for every group
+        const currentDrill = existing || session[blockKey]
+        next[blockKey] = { __groups:{}, base: currentDrill, count: groupCount||2 }
+      }
+      return { ...prev, [okey]: next }
+    })
+  }
+  const setBlockGroupCount = (blockKey, count) => {
+    const okey = `${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`
+    setOverrides(prev => {
+      const existing = prev[okey]?.[blockKey]
+      if (!existing || !('__groups' in existing)) return prev
+      // Drop any per-group overrides for group numbers that no longer exist at the new count
+      const trimmedGroups = Object.fromEntries(Object.entries(existing.__groups).filter(([g])=>Number(g)<=count))
+      return { ...prev, [okey]: { ...(prev[okey]||{}), [blockKey]: { ...existing, __groups: trimmedGroups, count } } }
+    })
+  }
+
   const handleSwap = (key, drill) => {
     const okey = `${isPreSeason?'pre':'season'}-${weekNum}-${ageFilter}`
     if (groupSwapTarget) {
@@ -1669,14 +1708,9 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
         {squad && squad.length>0 && groupCount>1 && (
-          <div className="flex items-center justify-between mb-3 p-2.5 rounded-xl" style={{background:groupMode?N.light:'#f9fafb'}}>
-            <div>
-              <p className="text-xs font-semibold text-gray-800">🎯 Group-Aware Planning</p>
-              <p className="text-xs text-gray-400">{groupMode?(groupCount===2?'Set different drills for Development vs Experienced':'Set different drills per ability group'):'Same drill for whole squad'}</p>
-            </div>
-            <button onClick={()=>setGroupMode(!groupMode)} className="w-12 h-6 rounded-full transition-all relative shrink-0 ml-3" style={{background:groupMode?N.bg:'#d1d5db'}}>
-              <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow" style={{left:groupMode?'26px':'2px'}}/>
-            </button>
+          <div className="mb-3 p-2.5 rounded-xl" style={{background:'#f9fafb'}}>
+            <p className="text-xs font-semibold text-gray-800">🎯 Group-Aware Planning</p>
+            <p className="text-xs text-gray-400">Use the "Whole team" toggle on each drill below to split that block into separate drills per group -- some blocks can be whole-team, others split, and each split block can use its own number of groups.</p>
           </div>
         )}
         <div className="grid grid-cols-2 gap-3 mb-3">
@@ -1826,6 +1860,8 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
           )
 
           // Drill blocks
+          const splitActive = isBlockSplit(block.key)
+          const blockCount = getBlockGroupCount(block.key)
           return (
             <div key={block.key} className="bg-white rounded-2xl overflow-hidden border-2" style={{borderColor:isOverridden?N.bg:'#e5e7eb'}}>
               <div className="px-4 py-2 flex items-center justify-between border-b border-gray-100" style={{background:N.light}}>
@@ -1840,9 +1876,29 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                   {!block.fixed && <button onClick={()=>setSwapTarget(block.key)} className="text-xs font-semibold underline underline-offset-2 ml-1" style={{color:N.text}}>swap</button>}
                 </div>
               </div>
+              {drill && squad && squad.length>0 && !block.fixed && (
+                <div className="flex items-center justify-between px-3 pt-2.5 pb-1">
+                  <button onClick={()=>toggleBlockSplit(block.key)}
+                    className="flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full border transition-all shrink-0"
+                    style={splitActive?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#6b7280',borderColor:'#e5e7eb'}}>
+                    👥 {splitActive?'Split':'Whole team'}
+                  </button>
+                  {splitActive && (
+                    <div className="flex gap-1 overflow-x-auto">
+                      {[2,3,4,5,6].map(n=>(
+                        <button key={n} onClick={()=>setBlockGroupCount(block.key,n)}
+                          className="w-6 h-6 rounded-full text-xs font-bold border transition-all shrink-0"
+                          style={blockCount===n?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#9ca3af',borderColor:'#e5e7eb'}}>
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               {drill ? (
                 <>
-                  {!groupMode && (
+                  {!splitActive && (
                     <div className="flex gap-3 p-3 cursor-pointer hover:bg-gray-50" onClick={()=>setDetailDrill(drill)}>
                       <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0"><DrillDiagram type={drill.diagram} category={drill.category}/></div>
                       <div className="flex-1 min-w-0">
@@ -1852,21 +1908,21 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                       </div>
                     </div>
                   )}
-                  {groupMode && squad && squad.length>0 && (()=>{
+                  {splitActive && squad && squad.length>0 && (()=>{
                     const GROUP_COLORS = ['#1e3a5f','#16a34a','#f59e0b','#8b5cf6','#ef4444','#0891b2']
-                    const groups = Array.from({length:groupCount||2},(_,i)=>i+1)
+                    const groups = Array.from({length:blockCount},(_,i)=>i+1)
                     return (
                       <div className="p-3 space-y-2">
                         {groups.map(g=>{
                           const groupDrill = getGroupDrill(block.key, g)
-                          const players = squad.filter(p=>groupAssignments?.[`ability-${groupCount}-${p.id}`]===g)
+                          const players = squad.filter(p=>groupAssignments?.[`ability-${blockCount}-${p.id}`]===g)
                           const isCustom = weekOverrides[block.key]?.__groups?.[g]
                           return (
                             <div key={g} className="rounded-xl overflow-hidden border" style={{borderColor:GROUP_COLORS[g-1]+'44'}}>
                               <div className="px-3 py-1.5 flex items-center justify-between" style={{background:GROUP_COLORS[g-1]+'11'}}>
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold shrink-0" style={{background:GROUP_COLORS[g-1],fontSize:'9px'}}>{g}</div>
-                                  <span className="text-xs font-bold" style={{color:GROUP_COLORS[g-1]}}>{abilityGroupLabel(g,groupCount||2)}</span>
+                                  <span className="text-xs font-bold" style={{color:GROUP_COLORS[g-1]}}>{abilityGroupLabel(g,blockCount)}</span>
                                   <span className="text-xs text-gray-400">({players.length})</span>
                                   {isCustom && <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-semibold" style={{background:GROUP_COLORS[g-1]}}>Custom</span>}
                                 </div>
@@ -1891,7 +1947,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                       </div>
                     )
                   })()}
-                  {squad && squad.length>0 && !groupMode && (
+                  {squad && squad.length>0 && !splitActive && (
                     <div className="px-3 pb-3">
                       <button onClick={()=>setShowGroupsFor(showGroupsFor===block.key?null:block.key)}
                         className="text-xs font-semibold underline underline-offset-2" style={{color:N.text}}>
@@ -1949,8 +2005,8 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
       {swapTarget && swapBlock && (
         <Modal onClose={()=>{setSwapTarget(null);setGroupSwapTarget(null)}} wide>
           <div className="p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}{groupSwapTarget?` -- ${abilityGroupLabel(groupSwapTarget.groupNum,groupCount||2)}`:''}</h2>
-            <p className="text-sm text-gray-500 mb-3">{groupSwapTarget?`Choose a drill for ${abilityGroupLabel(groupSwapTarget.groupNum,groupCount||2)} only:`:'Choose a different drill for this block:'}</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}{groupSwapTarget?` -- ${abilityGroupLabel(groupSwapTarget.groupNum,getBlockGroupCount(groupSwapTarget.blockKey))}`:''}</h2>
+            <p className="text-sm text-gray-500 mb-3">{groupSwapTarget?`Choose a drill for ${abilityGroupLabel(groupSwapTarget.groupNum,getBlockGroupCount(groupSwapTarget.blockKey))} only:`:'Choose a different drill for this block:'}</p>
             <div className="flex gap-2 overflow-x-auto pb-1 mb-3">
               {['All',...CATEGORIES].map(cat=>(
                 <FilterPill key={cat} label={cat===swapBlock.cat?`${cat} (default)`:cat}
