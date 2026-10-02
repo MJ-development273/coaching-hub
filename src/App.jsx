@@ -1707,12 +1707,6 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
           <h2 className="font-bold text-gray-900 text-sm">📅 {isPreSeason ? 'Pre-Season Session' : '1-Hour Session Planner'}</h2>
           <span className="text-xs font-semibold px-2 py-1 rounded-lg text-white" style={{background:N.bg}}>60 min</span>
         </div>
-        {squad && squad.length>0 && groupCount>1 && (
-          <div className="mb-3 p-2.5 rounded-xl" style={{background:'#f9fafb'}}>
-            <p className="text-xs font-semibold text-gray-800">🎯 Group-Aware Planning</p>
-            <p className="text-xs text-gray-400">Use the "Whole team" toggle on each drill below to split that block into separate drills per group -- some blocks can be whole-team, others split, and each split block can use its own number of groups.</p>
-          </div>
-        )}
         <div className="grid grid-cols-2 gap-3 mb-3">
           <div>
             <label className="text-xs font-semibold text-gray-600 uppercase tracking-wide block mb-1">Week</label>
