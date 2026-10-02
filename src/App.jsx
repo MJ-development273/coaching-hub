@@ -17,7 +17,7 @@ function parseLocalDate(dateStr) {
 const N = { bg:'#1e3a5f', hover:'#152d4a', light:'#eef1f7', border:'#1e3a5f', text:'#1e3a5f' }
 const SITE_URL = 'https://coaching-hub-virid.vercel.app'
 
-const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Goalkeeping', 'Age Group Changes', 'Tactical']
+const CATEGORIES = ['Strength & Conditioning', 'Passing', 'Tackling', 'Attacking', 'Goalkeeping', 'Age Group Changes', 'Tactical', 'Fundamentals']
 const AGE_GROUPS = ['U12', 'U13', 'U14', 'U15']
 const COACH_PIN = '1234'
 
@@ -29,6 +29,15 @@ const CAT_COLORS = {
   'Goalkeeping':              { pill:'bg-cyan-100 text-cyan-800',    border:'border-cyan-300',    bg:'bg-cyan-50',    icon:'🧤', accent:'#0891b2' },
   'Age Group Changes':        { pill:'bg-purple-100 text-purple-800',border:'border-purple-300',  bg:'bg-purple-50',  icon:'📈', accent:'#8b5cf6' },
   'Tactical':                 { pill:'bg-indigo-100 text-indigo-800',border:'border-indigo-300',  bg:'bg-indigo-50',  icon:'📋', accent:'#6366f1' },
+  'Fundamentals':             { pill:'bg-teal-100 text-teal-800',    border:'border-teal-300',    bg:'bg-teal-50',    icon:'🔰', accent:'#14b8a6' },
+}
+
+// Ability groups are commonly split 2 ways (a development group and a more experienced group).
+// When exactly 2 groups are set up, label them that way everywhere instead of generic "Group 1/2".
+// Any other group count falls back to the generic numbered label.
+function abilityGroupLabel(g, count) {
+  if (count === 2) return g === 1 ? 'Development' : 'Experienced'
+  return `Group ${g}`
 }
 
 // ─── Reusable navy button style helpers ───────────────────────────────────────
@@ -1161,6 +1170,109 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">5 shots from 5 angles -- round a cone between each one</text>
       </svg>
     ),
+    // ── FUNDAMENTALS ADDITIONS ─────────────────────────────────────────────────
+    basicpass: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(100,140,accent,'P')}
+        <circle cx="118" cy="140" r="4" fill="white" opacity="0.4"/>
+        <circle cx="130" cy="140" r="7" fill="white" opacity="0.9"/>
+        {Cone(230,140)}
+        {Arrow(140,140,220,140,accent)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">NON-KICKING FOOT BESIDE THE BALL, POINTING AT TARGET</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Lock the ankle -- strike the centre of the ball with the inside of the foot</text>
+      </svg>
+    ),
+    footparts: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(60,170,accent,'P')}
+        <circle cx="80" cy="170" r="6" fill="white" opacity="0.9"/>
+        {Cone(100,80)}{Cone(160,80)}{Cone(220,80)}
+        {Arrow(85,165,100,95,accent)}{Arrow(85,168,160,95,accent)}{Arrow(85,170,220,95,accent)}
+        <text x="100" y="62" fill="#f59e0b" fontSize="8" textAnchor="middle" fontWeight="bold">TOE</text>
+        <text x="160" y="62" fill="#f59e0b" fontSize="8" textAnchor="middle" fontWeight="bold">LACES</text>
+        <text x="220" y="62" fill="#f59e0b" fontSize="8" textAnchor="middle" fontWeight="bold">INSIDE</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Same distance, three contacts -- feel the difference each one makes</text>
+      </svg>
+    ),
+    cushion: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(80,140,accent,'C')}
+        {P(220,140,accent,'P')}
+        <path d="M95,140 Q160,100 205,138" fill="none" stroke="white" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#cushionarrow)"/>
+        <defs><marker id="cushionarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="white"/></marker></defs>
+        <circle cx="210" cy="150" r="10" fill="none" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="2,2" opacity="0.8"/>
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">RELAX THE FOOT ON CONTACT -- DON'T BLOCK IT STIFFLY</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Cushion the ball dead, like catching it with your foot</text>
+      </svg>
+    ),
+    standonit: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(90,140,accent,'P')}
+        <circle cx="190" cy="140" r="7" fill="white" opacity="0.9"/>
+        {Arrow(110,140,180,140,accent,true)}
+        <circle cx="190" cy="140" r="14" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="3,3"/>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Roll it, then stop it dead under the sole -- every single time</text>
+      </svg>
+    ),
+    shorttarget: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(110,140,accent,'A')}{P(210,140,accent,'B')}
+        {Arrow(130,135,195,135,accent)}{Arrow(195,145,130,145,accent,true)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">3-4 YARDS -- PURE REPETITION, NO PRESSURE</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">10 passes each foot -- groove the technique before adding distance</text>
+      </svg>
+    ),
+    openbody: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(80,140,accent,'C')}
+        {P(200,140,accent,'P')}
+        <circle cx="150" cy="140" r="7" fill="white" opacity="0.9"/>
+        {Arrow(95,140,180,140,'white',true)}
+        <path d="M200,140 Q230,120 215,90" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3" markerEnd="url(#openarrow)"/>
+        <defs><marker id="openarrow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#f59e0b"/></marker></defs>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Side-on, touch across the body -- open up to see more of the pitch</text>
+      </svg>
+    ),
+    rollstop: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(70,140,accent,'P')}
+        {[110,150,190,230].map((x,i) => <circle key={i} cx={x} cy={140} r={i%2===0?4:7} fill="white" opacity={i%2===0?0.4:0.9}/>)}
+        {Arrow(85,140,105,140,accent,true)}{Arrow(120,140,145,140,accent,true)}{Arrow(160,140,185,140,accent,true)}{Arrow(200,140,225,140,accent,true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Push it, stop it, push it again -- close, controlled touches</text>
+      </svg>
+    ),
+    weaktouch: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(160,130,accent,'P')}
+        <circle cx="160" cy="150" r="6" fill="white" opacity="0.9"/>
+        <text x="172" y="153" fill="#f59e0b" fontSize="7" fontWeight="bold">W</text>
+        {Arrow(150,150,140,150,accent)}{Arrow(140,158,150,158,accent,true)}
+        <text x="160" y="45" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">STANDING STILL -- WEAKER FOOT ONLY, LIGHT TOUCHES</text>
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">No movement needed -- just get the foot comfortable on the ball</text>
+      </svg>
+    ),
+    bridgefoot: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(70,140,accent,'A')}
+        {P(210,140,accent,'B')}
+        <circle cx="195" cy="140" r="4" fill="white" opacity="0.4"/>
+        <text x="195" y="128" fill="#f59e0b" fontSize="7" fontWeight="bold" textAnchor="middle">S</text>
+        {Arrow(90,140,185,140,accent)}
+        <circle cx="225" cy="140" r="4" fill="white" opacity="0.4"/>
+        <text x="225" y="128" fill="#f59e0b" fontSize="7" fontWeight="bold" textAnchor="middle">W</text>
+        {Arrow(215,145,260,165,'#f59e0b',true)}
+        <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Control with the strong foot, pass on with the weak one</text>
+      </svg>
+    ),
     default: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
@@ -1560,7 +1672,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
           <div className="flex items-center justify-between mb-3 p-2.5 rounded-xl" style={{background:groupMode?N.light:'#f9fafb'}}>
             <div>
               <p className="text-xs font-semibold text-gray-800">🎯 Group-Aware Planning</p>
-              <p className="text-xs text-gray-400">{groupMode?'Set different drills per ability group':'Same drill for whole squad'}</p>
+              <p className="text-xs text-gray-400">{groupMode?(groupCount===2?'Set different drills for Development vs Experienced':'Set different drills per ability group'):'Same drill for whole squad'}</p>
             </div>
             <button onClick={()=>setGroupMode(!groupMode)} className="w-12 h-6 rounded-full transition-all relative shrink-0 ml-3" style={{background:groupMode?N.bg:'#d1d5db'}}>
               <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 transition-all shadow" style={{left:groupMode?'26px':'2px'}}/>
@@ -1754,7 +1866,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                               <div className="px-3 py-1.5 flex items-center justify-between" style={{background:GROUP_COLORS[g-1]+'11'}}>
                                 <div className="flex items-center gap-1.5">
                                   <div className="w-5 h-5 rounded-full flex items-center justify-center text-white font-bold shrink-0" style={{background:GROUP_COLORS[g-1],fontSize:'9px'}}>{g}</div>
-                                  <span className="text-xs font-bold" style={{color:GROUP_COLORS[g-1]}}>Group {g}</span>
+                                  <span className="text-xs font-bold" style={{color:GROUP_COLORS[g-1]}}>{abilityGroupLabel(g,groupCount||2)}</span>
                                   <span className="text-xs text-gray-400">({players.length})</span>
                                   {isCustom && <span className="text-xs px-1.5 py-0.5 rounded-full text-white font-semibold" style={{background:GROUP_COLORS[g-1]}}>Custom</span>}
                                 </div>
@@ -1794,7 +1906,7 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
                               const players = squad.filter(p=>groupAssignments?.[`ability-${groupCount}-${p.id}`]===g)
                               return (
                                 <div key={g} className="rounded-xl p-2" style={{background:GROUP_COLORS[g-1]+'11',border:`1px solid ${GROUP_COLORS[g-1]}33`}}>
-                                  <p className="text-xs font-bold mb-1" style={{color:GROUP_COLORS[g-1]}}>Group {g} ({players.length})</p>
+                                  <p className="text-xs font-bold mb-1" style={{color:GROUP_COLORS[g-1]}}>{abilityGroupLabel(g,groupCount||2)} ({players.length})</p>
                                   {players.length===0 ? <p className="text-xs text-gray-400">No players</p> : (
                                     <div className="flex flex-wrap gap-1">
                                       {players.map(p=><span key={p.id} className="text-xs bg-white px-1.5 py-0.5 rounded-full text-gray-700 font-medium">{p.name.split(' ')[0]}</span>)}
@@ -1837,8 +1949,8 @@ function TrainingPlanner({ drills, seasonStart, preSeasonStart, onSeasonStartCha
       {swapTarget && swapBlock && (
         <Modal onClose={()=>{setSwapTarget(null);setGroupSwapTarget(null)}} wide>
           <div className="p-6">
-            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}{groupSwapTarget?` -- Group ${groupSwapTarget.groupNum}`:''}</h2>
-            <p className="text-sm text-gray-500 mb-3">{groupSwapTarget?`Choose a drill for Group ${groupSwapTarget.groupNum} only:`:'Choose a different drill for this block:'}</p>
+            <h2 className="text-lg font-bold text-gray-900 mb-1">{swapBlock.icon} Swap {swapBlock.label}{groupSwapTarget?` -- ${abilityGroupLabel(groupSwapTarget.groupNum,groupCount||2)}`:''}</h2>
+            <p className="text-sm text-gray-500 mb-3">{groupSwapTarget?`Choose a drill for ${abilityGroupLabel(groupSwapTarget.groupNum,groupCount||2)} only:`:'Choose a different drill for this block:'}</p>
             <div className="flex gap-2 overflow-x-auto pb-1 mb-3">
               {['All',...CATEGORIES].map(cat=>(
                 <FilterPill key={cat} label={cat===swapBlock.cat?`${cat} (default)`:cat}
@@ -3363,7 +3475,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       <div className="flex items-center justify-between mb-3">
                         <div className="flex items-center gap-2">
                           <div className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold" style={{background:GROUP_COLORS[g-1]}}>{g}</div>
-                          <p className="font-bold text-gray-900 text-sm">{mode==='team'?`Team ${g}`:`Group ${g}`}</p>
+                          <p className="font-bold text-gray-900 text-sm">{mode==='team'?`Team ${g}`:abilityGroupLabel(g,count)}</p>
                         </div>
                         <span className="text-xs text-gray-400">{groupPlayers.length} players</span>
                       </div>
@@ -3380,7 +3492,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                                   <button key={og} onClick={()=>onAssign(p.id,og,count)}
                                     className="w-5 h-5 rounded-full text-xs font-bold text-white flex items-center justify-center opacity-50 hover:opacity-100"
                                     style={{background:GROUP_COLORS[og-1]}}
-                                    title={`Move to ${mode==='team'?'Team':'Group'} ${og}`}>
+                                    title={mode==='team'?`Move to Team ${og}`:`Move to ${abilityGroupLabel(og,count)}`}>
                                     {og}
                                   </button>
                                 ))}
