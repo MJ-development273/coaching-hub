@@ -2423,27 +2423,35 @@ function MatchReportBuilder({ form, weekNum, onSaveReport, ageGroup }) {
       })
       return lines
     }
-    const valueFont = '30px sans-serif' // matches the match report's weight/size exactly
-    const valueLineHeight = 38
-    const measureBoxHeight = (value) => {
-      const lines = measureWrap(value || '--', leftColW - 32, valueFont)
-      return 44 + lines.length * valueLineHeight + 14
-    }
-    let measuredY = sectionY + 40
-    measuredY += measureBoxHeight(scorersLine || 'None recorded') + 26
-    highlightBoxes.forEach(h => { if (h.label) measuredY += measureBoxHeight(h.value) + 26 })
-    const sectionH = measuredY - sectionY - 26
-
-    // Also measure how tall the written match report will be, so the canvas fits whichever column is taller
     const rightColWMeasure = photoW - leftColW - colGap
     const reportBodyMeasure = reportText.trim() || `A great effort from everyone against ${opponentLine} today. Well done to the whole squad!`
-    const reportLines = measureWrap(reportBodyMeasure, rightColWMeasure, valueFont)
-    const reportH = 45 + reportLines.length * valueLineHeight
 
-    const contentH = Math.max(sectionH, reportH)
+    // ── Shrink-to-fit: a long match report can run to a lot of text. Rather than letting
+    // the graphic grow indefinitely tall, scale the body text size down in steps until the
+    // whole image fits within a sensible maximum height, or we hit a minimum readable size. ──
+    const MAX_H = 2100, MIN_SCALE = 0.72
+    let scale = 1, valueFont, valueLineHeight, measureBoxHeight, sectionH, reportH, contentH, H
+    for (let attempt = 0; attempt < 10; attempt++) {
+      valueFont = `${Math.round(30*scale)}px sans-serif` // matches the match report's weight/size exactly
+      valueLineHeight = Math.round(38*scale)
+      measureBoxHeight = (value) => {
+        const lines = measureWrap(value || '--', leftColW - 32, valueFont)
+        return Math.max(Math.round(90*scale), Math.round(44*scale) + lines.length * valueLineHeight + Math.round(18*scale))
+      }
+      let measuredY = sectionY + Math.round(40*scale)
+      measuredY += measureBoxHeight(scorersLine || 'None recorded') + Math.round(26*scale)
+      highlightBoxes.forEach(h => { if (h.label) measuredY += measureBoxHeight(h.value) + Math.round(26*scale) })
+      sectionH = measuredY - sectionY - Math.round(26*scale)
 
-    // Canvas height = however tall the content actually is, plus fixed footer space
-    const H = Math.max(1450, sectionY + contentH + 260)
+      // Also measure how tall the written match report will be, so the canvas fits whichever column is taller
+      const reportLines = measureWrap(reportBodyMeasure, rightColWMeasure, valueFont)
+      reportH = Math.round(45*scale) + reportLines.length * valueLineHeight
+
+      contentH = Math.max(sectionH, reportH)
+      H = Math.max(1450, sectionY + contentH + 260)
+      if (H <= MAX_H || scale <= MIN_SCALE) break
+      scale = Math.max(MIN_SCALE, scale - 0.06) // step down and re-measure
+    }
     canvas.width = W
     canvas.height = H
 
@@ -2612,7 +2620,7 @@ function MatchReportBuilder({ form, weekNum, onSaveReport, ageGroup }) {
     const drawStatBox = (x, y, w, label, value) => {
       const maxW = w - 32
       const lines = measureWrap(value || '--', maxW, valueFont)
-      const h = Math.max(90, 44 + lines.length * valueLineHeight + 18)
+      const h = measureBoxHeight(value)
       roundRect(x, y, w, h, 14)
       ctx.fillStyle = 'rgba(255,255,255,0.12)'
       ctx.fill()
