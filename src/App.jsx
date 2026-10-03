@@ -5110,7 +5110,7 @@ export default function App() {
   const saveSeasonStart=async(d)=>{setSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,season_start:d||null})}catch(e){}}
   const savePreSeasonStart=async(d)=>{setPreSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,pre_season_start:d||null})}catch(e){}}
   const saveSessionStatus=async(s)=>{setSessionStatus(s);try{await supabase.from('season_settings').upsert({id:1,session_status:s.status,session_location:s.location,session_time:s.time,show_status_to_parents:s.show_parents||false})}catch(e){}}
-  const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{const{error}=await supabase.from('match_notes').upsert({week_num:wk,...note});if(error){console.error('match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}}catch(e){console.error('match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
+  const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{const{error}=await supabase.from('match_notes').upsert({week_num:wk,...note},{onConflict:'week_num'});if(error){console.error('match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}}catch(e){console.error('match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
   const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note},{onConflict:'player_id'})}catch(e){console.error('player_notes save:',e)}}
   const addSquadPlayer=async(name,num)=>{try{const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single();if(data)setSquad(p=>[...p,data])}catch(e){}}
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
@@ -5155,7 +5155,7 @@ export default function App() {
   }
   const saveMatchSquad=async(wk,data)=>{
     setMatchSquad(p=>({...p,[wk]:data}))
-    try{await supabase.from('match_squad').upsert({week_num:wk,starters:data.starters,subs:data.subs,minutes:data.minutes,positions:data.positions||{},sub_replacements:data.subReplacements||{}})}catch(e){console.error('match_squad save:',e)}
+    try{await supabase.from('match_squad').upsert({week_num:wk,starters:data.starters,subs:data.subs,minutes:data.minutes,positions:data.positions||{},sub_replacements:data.subReplacements||{}},{onConflict:'week_num'})}catch(e){console.error('match_squad save:',e)}
   }
   const saveGroupCount=async(count)=>{
     setGroupCount(count)
