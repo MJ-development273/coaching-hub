@@ -2364,7 +2364,29 @@ function MatchReportBuilder({ form, weekNum, onSaveReport, ageGroup }) {
     const file = e.target.files?.[0]
     if (!file) return
     const reader = new FileReader()
-    reader.onload = (ev) => setPhotoDataUrl(ev.target.result)
+    reader.onload = (ev) => {
+      // Resize down to a sensible max dimension before storing. A full-resolution phone
+      // photo can be several MB as base64 -- large enough that the Supabase save can
+      // silently fail (and does, since save errors here weren't being surfaced -- see
+      // saveMatchNote). Re-encoding as JPEG at a max of 1600px keeps quality high while
+      // bringing the size down to something that reliably saves.
+      const img = new Image()
+      img.onload = () => {
+        const MAX_DIM = 1600
+        let { width, height } = img
+        if (width > MAX_DIM || height > MAX_DIM) {
+          const scale = MAX_DIM / Math.max(width, height)
+          width = Math.round(width * scale)
+          height = Math.round(height * scale)
+        }
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        canvas.getContext('2d').drawImage(img, 0, 0, width, height)
+        setPhotoDataUrl(canvas.toDataURL('image/jpeg', 0.82))
+      }
+      img.src = ev.target.result
+    }
     reader.readAsDataURL(file)
   }
 
@@ -5088,7 +5110,7 @@ export default function App() {
   const saveSeasonStart=async(d)=>{setSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,season_start:d||null})}catch(e){}}
   const savePreSeasonStart=async(d)=>{setPreSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,pre_season_start:d||null})}catch(e){}}
   const saveSessionStatus=async(s)=>{setSessionStatus(s);try{await supabase.from('season_settings').upsert({id:1,session_status:s.status,session_location:s.location,session_time:s.time,show_status_to_parents:s.show_parents||false})}catch(e){}}
-  const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{await supabase.from('match_notes').upsert({week_num:wk,...note})}catch(e){}}
+  const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{const{error}=await supabase.from('match_notes').upsert({week_num:wk,...note});if(error){console.error('match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}}catch(e){console.error('match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
   const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note},{onConflict:'player_id'})}catch(e){console.error('player_notes save:',e)}}
   const addSquadPlayer=async(name,num)=>{try{const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single();if(data)setSquad(p=>[...p,data])}catch(e){}}
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
