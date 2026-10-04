@@ -4271,13 +4271,11 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup, seas
     const headerH = 280
     const footerH = 260
 
-    // ═══ PAGE 1: Header, coach comment, stats, leaders ═══
+    // ═══ PAGE 1: Header, coach comment only -- kept short regardless of how much the season's data grows ═══
     const commentLines = coachComment.trim() ? measureWrap(ctx, coachComment.trim(), W - 160, '24px sans-serif') : []
     const commentH = commentLines.length > 0 ? 60 + commentLines.length * 32 + 30 : 0
-    const statsH = 200
-    const leadersH = 90 + Math.max(topScorers.length, topAssists.length, 1) * 40 + 40
 
-    const H1 = headerH + commentH + statsH + leadersH + footerH
+    const H1 = headerH + commentH + footerH
     canvas.width = W
     canvas.height = H1
     drawBackground(ctx, W, H1, headerH, footerH)
@@ -4305,83 +4303,88 @@ function SeasonRecapBuilder({ matchNotes, topScorers, topAssists, ageGroup, seas
       y += commentH
     }
 
-    // Season stats
-    ctx.textAlign = 'center'
-    ctx.font = 'bold 34px sans-serif'
-    ctx.fillStyle = '#fbbf24'
-    ctx.fillText('★ SEASON STATS', W/2, y)
-    y += 55
-    const statBoxW = 220, statGap = 20
-    const stats = [
-      { label:'PLAYED', value: played },
-      { label:'WON', value: record.won },
-      { label:'DRAWN', value: record.drawn },
-      { label:'LOST', value: record.lost },
-    ]
-    const totalStatsW = stats.length * statBoxW + (stats.length-1) * statGap
-    let sx = W/2 - totalStatsW/2
-    stats.forEach(s => {
-      roundRect(ctx, sx, y, statBoxW, 80, 14)
-      ctx.fillStyle = 'rgba(255,255,255,0.12)'
-      ctx.fill()
-      ctx.font = 'bold 40px sans-serif'
-      ctx.fillStyle = 'white'
-      ctx.textAlign = 'center'
-      ctx.fillText(String(s.value), sx + statBoxW/2, y + 45)
-      ctx.font = 'bold 16px sans-serif'
-      ctx.fillStyle = '#fbbf24'
-      ctx.fillText(s.label, sx + statBoxW/2, y + 68)
-      sx += statBoxW + statGap
-    })
-    y += 80 + 50
-
-    // Leaders
-    const leaderColW = (W - 140) / 2
-    const drawLeaderList = (x, title, list, unitLabel) => {
-      ctx.textAlign = 'left'
-      ctx.font = 'bold 28px sans-serif'
-      ctx.fillStyle = '#fbbf24'
-      ctx.fillText(title, x, y)
-      let ly = y + 40
-      if (list.length === 0) {
-        ctx.font = '22px sans-serif'
-        ctx.fillStyle = 'rgba(255,255,255,0.7)'
-        ctx.fillText('No data recorded', x, ly)
-      } else {
-        list.slice(0,5).forEach((s, i) => {
-          roundRect(ctx, x, ly-24, leaderColW, 36, 10)
-          ctx.fillStyle = i===0 ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.1)'
-          ctx.fill()
-          ctx.font = 'bold 20px sans-serif'
-          ctx.fillStyle = 'white'
-          ctx.fillText(`${i+1}. ${s.name}`, x + 14, ly)
-          ctx.textAlign = 'right'
-          ctx.fillStyle = i===0 ? '#fbbf24' : 'white'
-          ctx.fillText(String(s[unitLabel]), x + leaderColW - 14, ly)
-          ctx.textAlign = 'left'
-          ly += 40
-        })
-      }
-    }
-    drawLeaderList(50, '⚽ TOP SCORER', topScorers, 'goals')
-    drawLeaderList(50 + leaderColW + 40, '🅰️ MOST ASSISTS', topAssists, 'assists')
-
     const totalPages = 1 + (played > 0 ? 1 : 0) + (selectedPhotoWeeks.length > 0 ? 1 : 0)
     await drawFooter(ctx, W, H1, footerH, totalPages > 1 ? `Page 1 of ${totalPages}` : null)
     const page1Url = canvas.toDataURL('image/png')
     setImageUrl1(page1Url)
 
-    // ═══ PAGE 2: Full match results list ═══
+    // ═══ PAGE 2: Season stats, leaders, and the full match results list ═══
     if (played > 0) {
+      const statsH = 200
+      const leadersH = 90 + Math.max(topScorers.length, topAssists.length, 1) * 40 + 40
       const matchRowH = 34
       const matchListH = 80 + played * matchRowH
-      const H2 = headerH + matchListH + footerH
+      const H2 = headerH + statsH + leadersH + matchListH + footerH
       canvas.width = W
       canvas.height = H2
       drawBackground(ctx, W, H2, headerH, footerH)
-      await drawHeader(ctx, W, headerH, 'FULL SEASON RESULTS')
+      await drawHeader(ctx, W, headerH, 'SEASON STATS & RESULTS')
 
-      let y2 = headerH + 60
+      let y2 = headerH + 50
+
+      // Season stats
+      ctx.textAlign = 'center'
+      ctx.font = 'bold 34px sans-serif'
+      ctx.fillStyle = '#fbbf24'
+      ctx.fillText('★ SEASON STATS', W/2, y2)
+      y2 += 55
+      const statBoxW = 220, statGap = 20
+      const stats = [
+        { label:'PLAYED', value: played },
+        { label:'WON', value: record.won },
+        { label:'DRAWN', value: record.drawn },
+        { label:'LOST', value: record.lost },
+      ]
+      const totalStatsW = stats.length * statBoxW + (stats.length-1) * statGap
+      let sx = W/2 - totalStatsW/2
+      stats.forEach(s => {
+        roundRect(ctx, sx, y2, statBoxW, 80, 14)
+        ctx.fillStyle = 'rgba(255,255,255,0.12)'
+        ctx.fill()
+        ctx.font = 'bold 40px sans-serif'
+        ctx.fillStyle = 'white'
+        ctx.textAlign = 'center'
+        ctx.fillText(String(s.value), sx + statBoxW/2, y2 + 45)
+        ctx.font = 'bold 16px sans-serif'
+        ctx.fillStyle = '#fbbf24'
+        ctx.fillText(s.label, sx + statBoxW/2, y2 + 68)
+        sx += statBoxW + statGap
+      })
+      y2 += 80 + 50
+
+      // Leaders
+      const leaderColW = (W - 140) / 2
+      const drawLeaderList = (x, title, list, unitLabel) => {
+        ctx.textAlign = 'left'
+        ctx.font = 'bold 28px sans-serif'
+        ctx.fillStyle = '#fbbf24'
+        ctx.fillText(title, x, y2)
+        let ly = y2 + 40
+        if (list.length === 0) {
+          ctx.font = '22px sans-serif'
+          ctx.fillStyle = 'rgba(255,255,255,0.7)'
+          ctx.fillText('No data recorded', x, ly)
+        } else {
+          list.slice(0,5).forEach((s, i) => {
+            roundRect(ctx, x, ly-24, leaderColW, 36, 10)
+            ctx.fillStyle = i===0 ? 'rgba(251,191,36,0.25)' : 'rgba(255,255,255,0.1)'
+            ctx.fill()
+            ctx.font = 'bold 20px sans-serif'
+            ctx.fillStyle = 'white'
+            ctx.fillText(`${i+1}. ${s.name}`, x + 14, ly)
+            ctx.textAlign = 'right'
+            ctx.fillStyle = i===0 ? '#fbbf24' : 'white'
+            ctx.fillText(String(s[unitLabel]), x + leaderColW - 14, ly)
+            ctx.textAlign = 'left'
+            ly += 40
+          })
+        }
+      }
+      drawLeaderList(50, '⚽ TOP SCORER', topScorers, 'goals')
+      drawLeaderList(50 + leaderColW + 40, '🅰️ MOST ASSISTS', topAssists, 'assists')
+      y2 += leadersH
+
+      // Match results list
       ctx.textAlign = 'center'
       ctx.font = 'bold 32px sans-serif'
       ctx.fillStyle = '#fbbf24'
