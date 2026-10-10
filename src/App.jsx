@@ -3411,6 +3411,25 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
               ))}
             </div>
           </div>
+          {squad.length>0 && (
+            <button onClick={()=>{
+              const esc = v => `"${String(v||'').replace(/"/g,'""')}"`
+              const sorted = [...squad].sort((a,b)=>(parseInt(a.squad_num)||999)-(parseInt(b.squad_num)||999))
+              const rows = [['Name','Best Position','Reason'], ...sorted.map(p=>[p.name, p.preferred||'', p.position_note||''])]
+              const csv = rows.map(r=>r.map(esc).join(',')).join('\n')
+              const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'})
+              const url = URL.createObjectURL(blob)
+              const link = document.createElement('a')
+              link.href = url
+              link.download = 'squad-positions.csv'
+              document.body.appendChild(link)
+              link.click()
+              document.body.removeChild(link)
+              URL.revokeObjectURL(url)
+            }} className="w-full text-xs font-semibold underline underline-offset-2 text-left mb-2" style={{color:N.text}}>
+              ⬇️ Download squad (name, best position, reason)
+            </button>
+          )}
           {squad.length===0?<p className="text-sm text-gray-400 text-center py-4">No players yet — add one above</p>:(()=>{
             const sortedSquad = [...squad].sort((a,b)=>
               squadSort==='name'
@@ -3420,10 +3439,11 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
             return (
             <div className="space-y-2">
               {sortedSquad.map(p=>(
-                <button key={p.id} onClick={()=>{setEditPlayer(p);setEditName(p.name);setEditNum(p.squad_num||'');setPosForm({preferred:p.preferred||'',secondary:p.secondary||''})}} className="w-full flex items-center gap-3 p-3 rounded-xl border text-left" style={{borderColor:editPlayer?.id===p.id?N.bg:'#e5e7eb',background:editPlayer?.id===p.id?N.light:'white'}}>
+                <button key={p.id} onClick={()=>{setEditPlayer(p);setEditName(p.name);setEditNum(p.squad_num||'');setPosForm({preferred:p.preferred||'',secondary:p.secondary||'',position_note:p.position_note||''})}} className="w-full flex items-center gap-3 p-3 rounded-xl border text-left" style={{borderColor:editPlayer?.id===p.id?N.bg:'#e5e7eb',background:editPlayer?.id===p.id?N.light:'white'}}>
                   <div className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold shrink-0" style={{background:N.bg}}>{p.squad_num||p.name[0]}</div>
-                  <div className="flex-1"><p className="text-sm font-semibold text-gray-900">{p.name}</p>
-                    <p className="text-xs text-gray-400">{p.preferred||'No position set'}{p.secondary?' / '+p.secondary:''}</p></div>
+                  <div className="flex-1 min-w-0"><p className="text-sm font-semibold text-gray-900">{p.name}</p>
+                    <p className="text-xs text-gray-400">{p.preferred||'No position set'}{p.secondary?' / '+p.secondary:''}</p>
+                    {p.position_note&&<p className="text-xs text-gray-400 italic truncate mt-0.5">"{p.position_note}"</p>}</div>
                   <span className="text-gray-300 text-xs">&#8250;</span>
                 </button>
               ))}
@@ -3442,13 +3462,18 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                     <div className="flex-1"><label className="text-xs font-semibold text-gray-600 block mb-1">Name</label>
                       <input value={editName} onChange={e=>setEditName(e.target.value)} placeholder="Player name" className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none" onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/></div>
                   </div>
-                  {/* Preferred position */}
+                  {/* Best position */}
                   <div>
                     <div className="flex items-center justify-between mb-2">
-                      <label className="text-xs font-semibold text-gray-600">Preferred Position</label>
+                      <label className="text-xs font-semibold text-gray-600">Best Position</label>
                       {posForm.preferred && <button onClick={()=>setPosForm(f=>({...f,preferred:''}))} className="text-xs text-red-400 font-semibold">Clear</button>}
                     </div>
                     <div className="flex flex-wrap gap-2">{POSITIONS.map(pos=><button key={pos} onClick={()=>setPosForm(f=>({...f,preferred:f.preferred===pos?'':pos}))} className="px-3 py-1.5 rounded-full text-xs font-bold border-2 transition-all" style={posForm.preferred===pos?{background:N.bg,color:'white',borderColor:N.bg}:{background:'white',color:'#4b5563',borderColor:'#e5e7eb'}}>{pos}</button>)}</div>
+                  </div>
+                  {/* Reason for best position */}
+                  <div>
+                    <label className="text-xs font-semibold text-gray-600 block mb-1">Why this position? (optional)</label>
+                    <textarea value={posForm.position_note||''} onChange={e=>setPosForm(f=>({...f,position_note:e.target.value}))} placeholder="e.g. Reads the game well, comfortable under pressure, good distribution..." rows={2} className="w-full border border-gray-300 rounded-xl px-3 py-2 text-sm focus:outline-none resize-none" onFocus={e=>e.target.style.borderColor=N.bg} onBlur={e=>e.target.style.borderColor='#d1d5db'}/>
                   </div>
                   {/* Secondary position */}
                   <div>
@@ -5125,7 +5150,7 @@ export default function App() {
   const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note},{onConflict:'player_id'})}catch(e){console.error('player_notes save:',e)}}
   const addSquadPlayer=async(name,num)=>{try{const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single();if(data)setSquad(p=>[...p,data])}catch(e){}}
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
-  const updatePlayerPosition=async(id,form)=>{setSquad(p=>p.map(x=>x.id===id?{...x,...form}:x));try{await supabase.from('squad').update(form).eq('id',id)}catch(e){}}
+  const updatePlayerPosition=async(id,form)=>{setSquad(p=>p.map(x=>x.id===id?{...x,...form}:x));try{const{error}=await supabase.from('squad').update(form).eq('id',id);if(error){console.error('player update failed:',error);alert(`That player's details didn't save to the server (${error.message}). They're only updated on this device for now.`)}}catch(e){console.error('player update failed:',e);alert("That player's details didn't save to the server. They're only updated on this device for now.")}}
   const toggleAttendance=async(wk,pid,cur)=>{const k=wk+'-'+pid;setAttendance(p=>({...p,[k]:!cur}));try{await supabase.from('attendance').upsert({week_num:wk,player_name:String(pid),present:!cur},{onConflict:'week_num,player_name'})}catch(e){}}
   const saveFormationPref=async(fmt,form)=>{
     setPreferredTeamFormat(fmt)
