@@ -2335,6 +2335,12 @@ function MatchReportBuilder({ form, weekNum, onFieldChange, onSaveReport, ageGro
   const [saved, setSaved] = useState(false)
   const canvasRef = useRef(null)
   const fileInputRef = useRef(null)
+  // Photo resizing and graphic generation below are async and can take a moment on a
+  // slow connection/phone. If the coach has already navigated to a different week by the
+  // time that work finishes, writing the result into the (now different) live form would
+  // silently misattribute it. This ref lets those callbacks check before writing back.
+  const weekNumRef = useRef(weekNum)
+  useEffect(() => { weekNumRef.current = weekNum }, [weekNum])
 
   const updateHighlight = (i, field, val) => {
     onFieldChange('report_highlights', highlightBoxes.map((h,idx) => idx===i ? {...h, [field]:val} : h))
@@ -2354,6 +2360,7 @@ function MatchReportBuilder({ form, weekNum, onFieldChange, onSaveReport, ageGro
   const handlePhotoUpload = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
+    const uploadedForWeek = weekNum
     const reader = new FileReader()
     reader.onload = (ev) => {
       // Resize down to a sensible max dimension before storing. A full-resolution phone
@@ -2374,7 +2381,7 @@ function MatchReportBuilder({ form, weekNum, onFieldChange, onSaveReport, ageGro
         canvas.width = width
         canvas.height = height
         canvas.getContext('2d').drawImage(img, 0, 0, width, height)
-        onFieldChange('report_photo', canvas.toDataURL('image/jpeg', 0.82))
+        if (weekNumRef.current === uploadedForWeek) onFieldChange('report_photo', canvas.toDataURL('image/jpeg', 0.82))
       }
       img.src = ev.target.result
     }
@@ -2383,6 +2390,7 @@ function MatchReportBuilder({ form, weekNum, onFieldChange, onSaveReport, ageGro
 
   // Render the branded social media graphic onto a canvas, then export as PNG data URL
   const generateImage = async () => {
+    const generatedForWeek = weekNum
     setGenerating(true)
     await new Promise(r => setTimeout(r, 50)) // let UI update before heavy canvas work
     const canvas = canvasRef.current
@@ -2676,7 +2684,7 @@ function MatchReportBuilder({ form, weekNum, onFieldChange, onSaveReport, ageGro
     })
 
     const dataUrl = canvas.toDataURL('image/png')
-    onFieldChange('report_image', dataUrl)
+    if (weekNumRef.current === generatedForWeek) onFieldChange('report_image', dataUrl)
     setGenerating(false)
   }
 
