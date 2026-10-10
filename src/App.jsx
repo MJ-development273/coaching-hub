@@ -2840,7 +2840,18 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   const [squadView, setSquadView] = useState('list') // 'list' | 'pitch'
   const [posEditPlayer, setPosEditPlayer] = useState(null)
   const [matchFormation, setMatchFormation] = useState('')
-  useEffect(()=>{ setForm({result:'',scorers:'',scorers_list:[],assists:'',assists_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}); setSaved(false) },[weekNum, matchNotes])
+  const prevFormWeekRef = useRef(null)
+  const formLoadedOnceRef = useRef(false)
+  useEffect(()=>{
+    const weekChanged = prevFormWeekRef.current !== weekNum
+    const isFirstDataLoad = !formLoadedOnceRef.current && Object.keys(matchNotes).length > 0
+    if (weekChanged || isFirstDataLoad) {
+      setForm({result:'',scorers:'',scorers_list:[],assists:'',assists_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})})
+      setSaved(false)
+      prevFormWeekRef.current = weekNum
+      if (Object.keys(matchNotes).length > 0) formLoadedOnceRef.current = true
+    }
+  },[weekNum, matchNotes])
   useEffect(()=>{
     const sd = matchSquad?.[weekNum] || { starters:[], subs:[], positions:{}, subReplacements:{} }
     setStarters(sd.starters||[])
