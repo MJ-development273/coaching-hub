@@ -40,6 +40,16 @@ function abilityGroupLabel(g, count) {
   return `Group ${g}`
 }
 
+// Converts a match_notes database row into the shape the app uses in memory.
+function matchNoteFromRow(r) {
+  return {
+    result:r.result||'', scorers:r.scorers||'', notes:r.notes||'', opponent:r.opponent||'', venue:r.venue||'',
+    match_time:r.match_time||'', match_date:r.match_date||'', match_type:r.match_type||'League', show_parents:r.show_parents||false,
+    report_text:r.report_text||'', report_photo:r.report_photo||null, report_image:r.report_image||null,
+    report_highlights:r.report_highlights||null, scorers_list:r.scorers_list||[], assists:r.assists||'', assists_list:r.assists_list||[]
+  }
+}
+
 // ─── Reusable navy button style helpers ───────────────────────────────────────
 const navyBtn  = { background: N.bg }
 const navyBtnHover = (e) => { e.currentTarget.style.background = N.hover }
@@ -2844,11 +2854,8 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
   useEffect(()=>{
     const weekChanged = prevFormWeekRef.current !== weekNum
     const isFirstDataLoad = !formLoadedOnceRef.current && Object.keys(matchNotes).length > 0
-    console.log('[match-debug] sync effect fired', {weekNum, prevWeek:prevFormWeekRef.current, weekChanged, isFirstDataLoad, noteForThisWeek: matchNotes[weekNum], allWeekKeys: Object.keys(matchNotes)})
     if (weekChanged || isFirstDataLoad) {
-      const next = {result:'',scorers:'',scorers_list:[],assists:'',assists_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})}
-      console.log('[match-debug] applying form for week', weekNum, next)
-      setForm(next)
+      setForm({result:'',scorers:'',scorers_list:[],assists:'',assists_list:[],notes:'',opponent:'',venue:'',match_time:'',match_date:'',match_type:'League',show_parents:false,...(matchNotes[weekNum]||{})})
       setSaved(false)
       prevFormWeekRef.current = weekNum
       if (Object.keys(matchNotes).length > 0) formLoadedOnceRef.current = true
@@ -5071,7 +5078,7 @@ export default function App() {
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);if(ss.age_group)setAgeGroup(ss.age_group);if(ss.season_comment)setSeasonComment(ss.season_comment);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};const ta={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,num])=>{if(scheme.startsWith('ability-')){ga[`${scheme}-${p.id}`]=num}else if(scheme.startsWith('team-')){ta[`${scheme}-${p.id}`]=num}})}});setGroupAssignments(ga);setTeamAssignments(ta)}}catch(e){}
-      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const weekCounts={};mn.forEach(r=>{weekCounts[r.week_num]=(weekCounts[r.week_num]||0)+1});const dupes=Object.entries(weekCounts).filter(([,c])=>c>1);console.log('[match-debug] initial load: rows=',mn.length,'duplicate week_nums:',dupes.length?dupes:'none');const o={};mn.forEach(r=>{o[r.week_num]={result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[],assists:r.assists||'',assists_list:r.assists_list||[]}});setMatchNotes(o)}}catch(e){}
+      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]=matchNoteFromRow(r)});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
@@ -5135,11 +5142,17 @@ export default function App() {
           setSessionStatus({status:p.new.session_status||'on',location:p.new.session_location||'',time:p.new.session_time||'',show_parents:p.new.show_status_to_parents||false})
         }
       })
-      .on('postgres_changes',{event:'*',schema:'public',table:'match_notes'},p=>{
-        console.log('[match-debug] realtime match_notes event:', p.eventType, 'week', p.new?.week_num, 'has report_text:', !!p.new?.report_text, 'has report_photo:', !!p.new?.report_photo)
+      .on('postgres_changes',{event:'*',schema:'public',table:'match_notes'},async p=>{
+        // A saved match note can be several MB (photo + graphic), and realtime change events can
+        // arrive with large/trailing columns dropped. Trusting that payload overwrote good in-memory
+        // data with an incomplete copy (report text, photo, scorer lists vanished until a reload).
+        // So treat the event only as a signal that this week changed, and re-read the full row.
         if(p.new){
-          const r=p.new
-          setMatchNotes(prev=>({...prev,[r.week_num]:{result:r.result||'',scorers:r.scorers||'',notes:r.notes||'',opponent:r.opponent||'',venue:r.venue||'',match_time:r.match_time||'',match_date:r.match_date||'',match_type:r.match_type||'League',show_parents:r.show_parents||false,report_text:r.report_text||'',report_photo:r.report_photo||null,report_image:r.report_image||null,report_highlights:r.report_highlights||null,scorers_list:r.scorers_list||[],assists:r.assists||'',assists_list:r.assists_list||[]}}))
+          const wk=p.new.week_num
+          try{
+            const{data:rows,error}=await supabase.from('match_notes').select('*').eq('week_num',wk).limit(1)
+            if(!error&&rows&&rows[0]) setMatchNotes(prev=>({...prev,[wk]:matchNoteFromRow(rows[0])}))
+          }catch(e){console.error('match_notes refresh failed:',e)}
         }
       })
       .subscribe()
@@ -5160,7 +5173,7 @@ export default function App() {
   const saveSeasonStart=async(d)=>{setSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,season_start:d||null})}catch(e){}}
   const savePreSeasonStart=async(d)=>{setPreSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,pre_season_start:d||null})}catch(e){}}
   const saveSessionStatus=async(s)=>{setSessionStatus(s);try{await supabase.from('season_settings').upsert({id:1,session_status:s.status,session_location:s.location,session_time:s.time,show_status_to_parents:s.show_parents||false})}catch(e){}}
-  const saveMatchNote=async(wk,note)=>{console.log('[match-debug] saveMatchNote called for week',wk,note);setMatchNotes(p=>({...p,[wk]:note}));try{const payloadSize=JSON.stringify({week_num:wk,...note}).length;console.log('[match-debug] upserting week',wk,'payload size (chars):',payloadSize);const{error}=await supabase.from('match_notes').upsert({week_num:wk,...note},{onConflict:'week_num'});if(error){console.error('[match-debug] match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}else{console.log('[match-debug] upsert for week',wk,'completed with no error')}}catch(e){console.error('[match-debug] match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
+  const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{const{error}=await supabase.from('match_notes').upsert({week_num:wk,...note},{onConflict:'week_num'});if(error){console.error('match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}}catch(e){console.error('match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
   const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note},{onConflict:'player_id'})}catch(e){console.error('player_notes save:',e)}}
   const addSquadPlayer=async(name,num)=>{try{const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single();if(data)setSquad(p=>[...p,data])}catch(e){}}
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
