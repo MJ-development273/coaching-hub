@@ -1288,6 +1288,70 @@ function TacticalDiagram({ type, category }) {
         <text x="160" y="195" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Control with the strong foot, pass on with the weak one</text>
       </svg>
     ),
+    // ── COMMITMENT & CONFIDENCE IN CHALLENGES ──────────────────────────────────
+    looseball: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(60,150,accent,'A1')}{P(60,176,accent)}{P(260,150,'#3b82f6','B1')}{P(260,176,'#3b82f6')}
+        {P(160,40,'white','C')}
+        <circle cx="160" cy="105" r="7" fill="white" opacity="0.9"/>
+        {Arrow(72,145,148,112,accent,true)}{Arrow(248,145,172,112,'#3b82f6',true)}
+        {Arrow(160,52,160,96,'white',true)}
+        {Cone(150,70)}{Cone(170,70)}
+        <text x="160" y="25" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">FIRST TO THE BALL WINS -- NO CONTACT AT FIRST</text>
+        <text x="160" y="203" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Go first -- don't wait to see what the other player does</text>
+      </svg>
+    ),
+    baconrace: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        <line x1="62" y1="35" x2="62" y2="185" stroke="white" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.5"/>
+        <line x1="258" y1="35" x2="258" y2="185" stroke="white" strokeWidth="1.5" strokeDasharray="4,3" opacity="0.5"/>
+        {P(40,55,accent,'1')}{P(40,90,accent,'2')}{P(40,125,accent,'3')}{P(40,160,accent,'4')}
+        {P(280,55,'#3b82f6','1')}{P(280,90,'#3b82f6','2')}{P(280,125,'#3b82f6','3')}{P(280,160,'#3b82f6','4')}
+        <circle cx="160" cy="105" r="7" fill="white" opacity="0.9"/>
+        {Arrow(52,92,148,104,accent,true)}{Arrow(268,92,172,104,'#3b82f6',true)}
+        <text x="160" y="25" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">COACH CALLS "2!" -- BOTH NUMBER 2s RACE FOR THE BALL</text>
+        <text x="160" y="203" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Win it, then bring it back over your own line</text>
+      </svg>
+    ),
+    blocktackle: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {P(110,100,accent,'D')}{P(215,100,'#3b82f6','P')}
+        <circle cx="168" cy="100" r="7" fill="white" opacity="0.9"/>
+        {Arrow(122,100,156,100,accent)}
+        <text x="85" y="140" fill="#f59e0b" fontSize="8" textAnchor="middle" fontWeight="bold">1. STILL BALL</text>
+        <text x="160" y="140" fill="#f59e0b" fontSize="8" textAnchor="middle" fontWeight="bold">2. SLOW ROLL</text>
+        <text x="235" y="140" fill="#f59e0b" fontSize="8" textAnchor="middle" fontWeight="bold">3. LIVE 1v1</text>
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">PLANT FOOT -- LOCK ANKLE -- WEIGHT THROUGH THE BALL</text>
+        <text x="160" y="203" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Learn the technique first -- confidence follows</text>
+      </svg>
+    ),
+    shieldsquare: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Zone(95,45,130,125)}
+        {P(150,118,'#3b82f6','A')}{P(195,92,accent,'D')}
+        <circle cx="165" cy="130" r="7" fill="white" opacity="0.9"/>
+        {Arrow(185,100,172,124,accent,true)}
+        <path d="M135,130 Q125,112 140,100" fill="none" stroke="#f59e0b" strokeWidth="2" strokeDasharray="4,3"/>
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">ATTACKER SHIELDS -- DEFENDER TRIES TO WIN IT</text>
+        <text x="160" y="203" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Half effort first, then full effort -- swap every 30 seconds</text>
+      </svg>
+    ),
+    winback: (
+      <svg viewBox={vb} className="w-full h-full">
+        {Pitch()}
+        {Zone(55,45,210,125)}
+        {P(105,80,accent,'1')}{P(150,145,accent,'2')}{P(215,72,accent,'3')}
+        {P(180,108,'#3b82f6','B')}{P(125,112,'#3b82f6')}{P(235,140,'#3b82f6')}
+        <circle cx="190" cy="118" r="6" fill="white" opacity="0.9"/>
+        {Arrow(116,86,170,104,accent,true)}{Arrow(158,138,184,118,accent,true)}{Arrow(207,80,190,98,accent,true)}
+        <text x="160" y="30" fill="white" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">POSSESSION LOST -- EVERYONE PRESSES FOR 5 SECONDS</text>
+        <text x="160" y="203" fill="#86efac" fontSize="9" textAnchor="middle" fontWeight="bold" opacity="0.9">Win it back inside five seconds for a bonus point</text>
+      </svg>
+    ),
     default: (
       <svg viewBox={vb} className="w-full h-full">
         {Pitch()}
