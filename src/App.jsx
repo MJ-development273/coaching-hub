@@ -40,12 +40,17 @@ function abilityGroupLabel(g, count) {
   return `Group ${g}`
 }
 
+// The generated social graphic (report_image) is deliberately NOT stored or loaded: it's ~2MB per
+// week, can be regenerated at any time from the saved text/photo/highlights, and storing it made
+// every save and every app load heavier as the season went on. So it's left out of what we read.
+const MATCH_NOTE_COLUMNS = 'week_num,result,scorers,notes,opponent,venue,match_time,match_date,match_type,show_parents,report_text,report_photo,report_highlights,scorers_list,assists,assists_list'
+
 // Converts a match_notes database row into the shape the app uses in memory.
 function matchNoteFromRow(r) {
   return {
     result:r.result||'', scorers:r.scorers||'', notes:r.notes||'', opponent:r.opponent||'', venue:r.venue||'',
     match_time:r.match_time||'', match_date:r.match_date||'', match_type:r.match_type||'League', show_parents:r.show_parents||false,
-    report_text:r.report_text||'', report_photo:r.report_photo||null, report_image:r.report_image||null,
+    report_text:r.report_text||'', report_photo:r.report_photo||null,
     report_highlights:r.report_highlights||null, scorers_list:r.scorers_list||[], assists:r.assists||'', assists_list:r.assists_list||[]
   }
 }
@@ -2816,6 +2821,7 @@ function MatchReportBuilder({ form, weekNum, onFieldChange, onSaveReport, ageGro
           className="w-full text-white font-bold py-2.5 rounded-xl text-sm mb-3" style={{background:generating?'#9ca3af':N.bg}}>
           {generating ? 'Generating...' : '🎨 Generate Graphic'}
         </button>
+        <p className="text-xs text-gray-400 -mt-1 mb-3">Your text, photo and highlights are saved. The graphic itself isn't stored -- tap Generate whenever you need it.</p>
 
         {imageUrl && (
           <div className="space-y-3">
@@ -5078,7 +5084,7 @@ export default function App() {
       try{const{data:hs}=await supabase.from('home_session').select('*').eq('id',1).single();if(hs)setHomeSession({drill_ids:hs.drill_ids||[],message:hs.message||''})}catch(e){}
       try{const{data:ss}=await supabase.from('season_settings').select('*').eq('id',1).single();if(ss){if(ss.season_start)setSeasonStart(ss.season_start);if(ss.pre_season_start)setPreSeasonStart(ss.pre_season_start);if(ss.group_count)setGroupCount(ss.group_count);if(ss.team_count)setTeamCount(ss.team_count);if(ss.pref_team_format)setPreferredTeamFormat(ss.pref_team_format);if(ss.pref_formation)setPreferredFormation(ss.pref_formation);if(ss.age_group)setAgeGroup(ss.age_group);if(ss.season_comment)setSeasonComment(ss.season_comment);setSessionStatus({status:ss.session_status||'on',location:ss.session_location||'',time:ss.session_time||'',show_parents:ss.show_status_to_parents||false})}}catch(e){}
       try{const{data:sq}=await supabase.from('squad').select('*').order('name');if(sq){setSquad(sq);const ga={};const ta={};sq.forEach(p=>{if(p.group_assignments){Object.entries(p.group_assignments).forEach(([scheme,num])=>{if(scheme.startsWith('ability-')){ga[`${scheme}-${p.id}`]=num}else if(scheme.startsWith('team-')){ta[`${scheme}-${p.id}`]=num}})}});setGroupAssignments(ga);setTeamAssignments(ta)}}catch(e){}
-      try{const{data:mn}=await supabase.from('match_notes').select('*');if(mn){const o={};mn.forEach(r=>{o[r.week_num]=matchNoteFromRow(r)});setMatchNotes(o)}}catch(e){}
+      try{let{data:mn,error:mnErr}=await supabase.from('match_notes').select(MATCH_NOTE_COLUMNS);if(mnErr){console.error('match_notes column read failed, falling back:',mnErr);({data:mn}=await supabase.from('match_notes').select('*'))};if(mn){const o={};mn.forEach(r=>{o[r.week_num]=matchNoteFromRow(r)});setMatchNotes(o)}}catch(e){}
       try{const{data:pn}=await supabase.from('player_notes').select('*');if(pn){const o={};pn.forEach(r=>{o[r.player_id]=r.note||''});setPlayerNotes(o)}}catch(e){}
       try{const{data:at}=await supabase.from('attendance').select('*');if(at){const o={};at.forEach(r=>{o[r.week_num+'-'+r.player_name]=r.present});setAttendance(o)}}catch(e){}
       try{const{data:pp}=await supabase.from('player_progress').select('*');if(pp){const o={};pp.forEach(r=>{o[r.player_id+'-'+r.drill_id]=r.level});setProgressData(o)}}catch(e){}
@@ -5150,7 +5156,8 @@ export default function App() {
         if(p.new){
           const wk=p.new.week_num
           try{
-            const{data:rows,error}=await supabase.from('match_notes').select('*').eq('week_num',wk).limit(1)
+            let{data:rows,error}=await supabase.from('match_notes').select(MATCH_NOTE_COLUMNS).eq('week_num',wk).limit(1)
+            if(error)({data:rows,error}=await supabase.from('match_notes').select('*').eq('week_num',wk).limit(1))
             if(!error&&rows&&rows[0]) setMatchNotes(prev=>({...prev,[wk]:matchNoteFromRow(rows[0])}))
           }catch(e){console.error('match_notes refresh failed:',e)}
         }
@@ -5173,7 +5180,7 @@ export default function App() {
   const saveSeasonStart=async(d)=>{setSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,season_start:d||null})}catch(e){}}
   const savePreSeasonStart=async(d)=>{setPreSeasonStart(d);try{await supabase.from('season_settings').upsert({id:1,pre_season_start:d||null})}catch(e){}}
   const saveSessionStatus=async(s)=>{setSessionStatus(s);try{await supabase.from('season_settings').upsert({id:1,session_status:s.status,session_location:s.location,session_time:s.time,show_status_to_parents:s.show_parents||false})}catch(e){}}
-  const saveMatchNote=async(wk,note)=>{setMatchNotes(p=>({...p,[wk]:note}));try{const{error}=await supabase.from('match_notes').upsert({week_num:wk,...note},{onConflict:'week_num'});if(error){console.error('match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}}catch(e){console.error('match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
+  const saveMatchNote=async(wk,note)=>{const{report_image:_graphic,...stored}=note;setMatchNotes(p=>({...p,[wk]:stored}));try{const{error}=await supabase.from('match_notes').upsert({week_num:wk,...stored,report_image:null},{onConflict:'week_num'});if(error){console.error('match_notes save failed:',error);alert(`Week ${wk} didn't save to the server (${error.message}). It's only showing on this device for now -- try again, and if a photo is attached, try a smaller one.`)}}catch(e){console.error('match_notes save failed:',e);alert(`Week ${wk} didn't save to the server. It's only showing on this device for now -- please try again.`)}}
   const savePlayerNote=async(pid,note)=>{setPlayerNotes(p=>({...p,[pid]:note}));try{await supabase.from('player_notes').upsert({player_id:pid,note},{onConflict:'player_id'})}catch(e){console.error('player_notes save:',e)}}
   const addSquadPlayer=async(name,num)=>{try{const{data}=await supabase.from('squad').insert({name,squad_num:num}).select().single();if(data)setSquad(p=>[...p,data])}catch(e){}}
   const removeSquadPlayer=async(id)=>{setSquad(p=>p.filter(x=>x.id!==id));try{await supabase.from('squad').delete().eq('id',id)}catch(e){}}
