@@ -3109,33 +3109,15 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                                   ))}
                                 </div>
                               </div>
-                              <div className="relative rounded-xl overflow-hidden" style={{background:'#166534',paddingTop:'130%'}}>
-                                <div className="absolute inset-0">
-                                  <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                                    <rect width="100" height="100" fill="#166534"/>
-                                    <rect x="3" y="3" width="94" height="94" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
-                                    <line x1="3" y1="50" x2="97" y2="50" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                                    <circle cx="50" cy="50" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                                    <rect x="30" y="3" width="40" height="14" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                                    <rect x="30" y="83" width="40" height="14" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                                  </svg>
-                                  {slotAssignments.map(({slot,player},i)=>(
-                                    <div key={i} onClick={()=>player&&setPosEditPlayer(player)} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)',cursor:player?'pointer':'default'}}>
-                                      <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg" style={{width:'26px',height:'26px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px dashed rgba(255,255,255,0.6)'}}>
-                                        {player ? (player.squad_num||player.name[0]) : slot.pos}
-                                      </div>
-                                      {player ? (
-                                        <>
-                                          <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'40px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>
-                                          <div className="text-white opacity-90" style={{fontSize:'6px'}}>{slot.pos}</div>
-                                        </>
-                                      ) : (
-                                        <div className="text-white opacity-60 mt-0.5" style={{fontSize:'7px'}}>Empty</div>
-                                      )}
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
+                              <FormationPitch
+                                entries={slotAssignments.map(({slot,player})=>({
+                                  slot, player,
+                                  // subs who are due to replace this starter show up behind their circle
+                                  behind: player ? subsList.filter(s=>subReplacements[s.id]===player.id) : []
+                                }))}
+                                onPlayerClick={setPosEditPlayer}
+                                showSlotPos/>
+                              {subsList.length>0 && <p className="text-xs text-gray-400 mt-1.5">Subs appear behind the player they're replacing (set on the bench below).</p>}
                               {leftover.length>0 && (
                                 <div className="mt-2 p-2 rounded-xl" style={{background:'#fff7ed',border:'1px solid #fed7aa'}}>
                                   <p className="text-xs font-semibold text-orange-700 mb-1">⚠️ {leftover.length} player{leftover.length>1?'s':''} not placed in a slot -- tap to assign a position that fits the formation</p>
@@ -3401,6 +3383,50 @@ const PITCH_FORMATIONS = {
       {pos:'ST',  x:50, y:14},
     ],
   }
+}
+
+// One pitch used by both Team View (Squad tab) and the Match squad pitch, so they always look the same.
+// entries: [{ slot:{pos,x,y}, player: player|null, behind: [players] }]
+//  - player is shown in the main circle for that slot
+//  - behind are shown as smaller indigo circles stacked underneath (alternates in Team View, the subs
+//    replacing that starter in the Match squad)
+function FormationPitch({ entries, onPlayerClick, showSlotPos }) {
+  return (
+    <div className="relative rounded-xl overflow-hidden" style={{background:'#166534',paddingTop:'140%'}}>
+      <div className="absolute inset-0">
+        <svg viewBox="0 0 100 140" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+          <rect width="100" height="140" fill="#166534"/>
+          <rect x="3" y="3" width="94" height="134" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
+          <line x1="3" y1="70" x2="97" y2="70" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+          <circle cx="50" cy="70" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+          <rect x="28" y="3" width="44" height="18" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+          <rect x="28" y="119" width="44" height="18" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+          <rect x="38" y="3" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+          <rect x="38" y="129" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
+        </svg>
+        {entries.map(({slot,player,behind},i)=>(
+          <div key={i} onClick={()=>player&&onPlayerClick&&onPlayerClick(player)} className="absolute flex flex-col items-center"
+            style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)',cursor:(player&&onPlayerClick)?'pointer':'default'}}>
+            <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg"
+              style={{width:'28px',height:'28px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px solid rgba(255,255,255,0.3)'}}>
+              {player ? (player.squad_num||player.name[0]) : slot.pos}
+            </div>
+            {player && <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'36px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>}
+            {player && showSlotPos && <div className="text-white opacity-90" style={{fontSize:'6px'}}>{slot.pos}</div>}
+            {!player && <div className="text-white opacity-40 mt-0.5" style={{fontSize:'7px'}}>{slot.pos}</div>}
+            {(behind||[]).map((bp,bi)=>(
+              <div key={bi} onClick={e=>e.stopPropagation()} className="flex flex-col items-center mt-0.5">
+                <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'22px',height:'22px',fontSize:'8px',background:'#6366f1',border:'1.5px solid white',opacity:0.9}}>
+                  {bp.squad_num||bp.name[0]}
+                </div>
+                <div className="text-white mt-0.5 px-1 rounded text-center" style={{fontSize:'6px',background:'rgba(99,102,241,0.7)',maxWidth:'32px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{bp.name.split(' ')[0]}</div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendance, onToggle, onAdd, onRemove, onUpdatePos, playerNotes, onSaveNote, drills, progressData, onSaveProgress, skillsData, onSaveSkill, groupCount, onGroupCountChange, groupAssignments, onAssignGroup, preferredTeamFormat, preferredFormation, onSaveFormationPref, teamCount, onSaveTeamCount, teamAssignments, onAssignTeam }) {
@@ -4099,60 +4125,26 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
           ) : (()=>{
             return (
               <>
-                <div className="relative rounded-xl overflow-hidden mb-4" style={{background:'#166534',paddingTop:'140%'}}>
-                  <div className="absolute inset-0">
-                    {/* Pitch markings */}
-                    <svg viewBox="0 0 100 140" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
-                      <rect width="100" height="140" fill="#166534"/>
-                      <rect x="3" y="3" width="94" height="134" fill="none" stroke="#4ade80" strokeWidth="0.5" opacity="0.5"/>
-                      <line x1="3" y1="70" x2="97" y2="70" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                      <circle cx="50" cy="70" r="10" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                      <rect x="28" y="3" width="44" height="18" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                      <rect x="28" y="119" width="44" height="18" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                      <rect x="38" y="3" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                      <rect x="38" y="129" width="24" height="8" fill="none" stroke="#4ade80" strokeWidth="0.4" opacity="0.4"/>
-                    </svg>
-                    {/* Player dots */}
-                    {(()=>{
-                      // Group all players by preferred position
-                      const byPos = {}
-                      squad.forEach(p=>{ if(p.preferred){ if(!byPos[p.preferred]) byPos[p.preferred]=[]; byPos[p.preferred].push(p) } })
-                      // Track which positions have been rendered to avoid duplicate slot labels
-                      const renderedPos = new Set()
-                      return PITCH_POSITIONS.map((slot,i)=>{
-                        const players = byPos[slot.pos] || []
-                        const alreadyShown = renderedPos.has(slot.pos)
-                        if(!alreadyShown) renderedPos.add(slot.pos)
-                        // For positions with multiple slots (e.g. CB x2), distribute players
-                        const slotIndex = PITCH_POSITIONS.slice(0,i).filter(s=>s.pos===slot.pos).length
-                        const player = players[slotIndex] || null
-                        // Show extra players stacked if more than slots available
-                        const extraPlayers = slotIndex===0 && players.length > PITCH_POSITIONS.filter(s=>s.pos===slot.pos).length
-                          ? players.slice(PITCH_POSITIONS.filter(s=>s.pos===slot.pos).length)
-                          : []
-                        return (
-                          <div key={i} className="absolute flex flex-col items-center" style={{left:`${slot.x}%`,top:`${slot.y}%`,transform:'translate(-50%,-50%)'}}>
-                            {/* Primary slot player */}
-                            <div className="rounded-full flex items-center justify-center text-white font-bold shadow-lg"
-                              style={{width:'28px',height:'28px',fontSize:'9px',background:player?N.bg:'rgba(255,255,255,0.15)',border:player?'2px solid white':'2px solid rgba(255,255,255,0.3)'}}>
-                              {player ? (player.squad_num||player.name[0]) : slot.pos}
-                            </div>
-                            {player && <div className="text-white font-semibold mt-0.5 px-1 rounded text-center" style={{fontSize:'7px',background:'rgba(0,0,0,0.5)',maxWidth:'36px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{player.name.split(' ')[0]}</div>}
-                            {!player && <div className="text-white opacity-40 mt-0.5" style={{fontSize:'7px'}}>{slot.pos}</div>}
-                            {/* Extra players beyond available slots - shown as smaller stacked dots */}
-                            {extraPlayers.map((ep,ei)=>(
-                              <div key={ei} className="flex flex-col items-center mt-0.5">
-                                <div className="rounded-full flex items-center justify-center text-white font-bold" style={{width:'22px',height:'22px',fontSize:'8px',background:'#6366f1',border:'1.5px solid white',opacity:0.9}}>
-                                  {ep.squad_num||ep.name[0]}
-                                </div>
-                                <div className="text-white mt-0.5 px-1 rounded text-center" style={{fontSize:'6px',background:'rgba(99,102,241,0.7)',maxWidth:'32px',overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{ep.name.split(' ')[0]}</div>
-                              </div>
-                            ))}
-                          </div>
-                        )
-                      })
-                    })()}
-                  </div>
+                <div className="mb-4">
+                  <FormationPitch entries={(()=>{
+                    // Group players by preferred position
+                    const byPos = {}
+                    squad.forEach(p=>{ if(p.preferred){ if(!byPos[p.preferred]) byPos[p.preferred]=[]; byPos[p.preferred].push(p) } })
+                    // How many slots each position has in this formation (e.g. 2 x CM in a 3-4-1)
+                    const slotCount = {}
+                    PITCH_POSITIONS.forEach(s=>{ slotCount[s.pos]=(slotCount[s.pos]||0)+1 })
+                    const seen = {}
+                    return PITCH_POSITIONS.map(slot=>{
+                      const players = byPos[slot.pos] || []
+                      const n = slotCount[slot.pos]
+                      const k = seen[slot.pos] || 0
+                      seen[slot.pos] = k+1
+                      // First n players take the slots; anyone beyond that is shared out evenly across
+                      // the slots for that position (instead of all stacking behind the first one)
+                      const behind = players.slice(n).filter((_,j)=>j%n===k)
+                      return { slot, player: players[k] || null, behind }
+                    })
+                  })()}/>
                 </div>
                 {/* Players not placed */}
                 {(() => {
@@ -4164,7 +4156,7 @@ function SquadManager({ currentWeek, setWeekNum, currentWeekNum, squad, attendan
                       <p className="text-xs font-semibold text-gray-500 mb-2">No position set ({unplaced.length})</p>
                       <div className="flex flex-wrap gap-2">
                         {unplaced.map(p=>(
-                          <button key={p.id} onClick={()=>{setEditPlayer(p);setPosForm({preferred:p.preferred||'',secondary:p.secondary||''});setTab('squad')}}
+                          <button key={p.id} onClick={()=>{setEditPlayer(p);setEditName(p.name);setEditNum(p.squad_num||'');setPosForm({preferred:p.preferred||'',secondary:p.secondary||'',position_note:p.position_note||''});setTab('squad')}}
                             className="text-xs px-2 py-1 rounded-full text-white font-semibold flex items-center gap-1 transition-opacity hover:opacity-80"
                             style={{background:'#9ca3af'}}>
                             {p.squad_num?`#${p.squad_num} `:''}{p.name.split(' ')[0]} <span style={{fontSize:'9px'}}>+ pos</span>
