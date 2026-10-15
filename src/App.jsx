@@ -40,6 +40,19 @@ function abilityGroupLabel(g, count) {
   return `Group ${g}`
 }
 
+// Sub-replacement links are stored as { subPlayerId: starterPlayerId }. Keep only links where the sub is
+// actually on the bench AND the starter is actually in the Starting XI, so stale links (left behind when a
+// player is moved or removed) can't silently re-appear later and pre-fill a dropdown.
+function cleanReplacements(reps, startersArr, subsArr) {
+  const starterSet = new Set((startersArr||[]).map(String))
+  const subSet = new Set((subsArr||[]).map(String))
+  const out = {}
+  Object.entries(reps||{}).forEach(([subId, starterId]) => {
+    if (starterId!=null && starterId!=='' && subSet.has(String(subId)) && starterSet.has(String(starterId))) out[subId] = starterId
+  })
+  return out
+}
+
 // The generated social graphic (report_image) is deliberately NOT stored or loaded: it's ~2MB per
 // week, can be regenerated at any time from the saved text/photo/highlights, and storing it made
 // every save and every app load heavier as the season went on. So it's left out of what we read.
@@ -2936,18 +2949,25 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
     setStarters(sd.starters||[])
     setBenchSubs(sd.subs||[])
     setStartingPositions(sd.positions||{})
-    setSubReplacements(sd.subReplacements||{})
+    setSubReplacements(cleanReplacements(sd.subReplacements, sd.starters, sd.subs))
     setSquadSaved(false)
   },[weekNum, matchSquad])
 
   const toggleStarter = (pid) => {
-    setStarters(prev => prev.includes(pid) ? prev.filter(x=>x!==pid) : [...prev, pid])
-    setBenchSubs(prev => prev.filter(x=>x!==pid))
+    const nextStarters = starters.includes(pid) ? starters.filter(x=>x!==pid) : [...starters, pid]
+    const nextSubs = benchSubs.filter(x=>x!==pid)
+    setStarters(nextStarters)
+    setBenchSubs(nextSubs)
+    // drop any replacement links involving someone who just moved or was removed
+    setSubReplacements(prev => cleanReplacements(prev, nextStarters, nextSubs))
     setSquadSaved(false)
   }
   const toggleSub = (pid) => {
-    setBenchSubs(prev => prev.includes(pid) ? prev.filter(x=>x!==pid) : [...prev, pid])
-    setStarters(prev => prev.filter(x=>x!==pid))
+    const nextSubs = benchSubs.includes(pid) ? benchSubs.filter(x=>x!==pid) : [...benchSubs, pid]
+    const nextStarters = starters.filter(x=>x!==pid)
+    setBenchSubs(nextSubs)
+    setStarters(nextStarters)
+    setSubReplacements(prev => cleanReplacements(prev, nextStarters, nextSubs))
     setSquadSaved(false)
   }
   const setPlayerPosition = (pid, pos) => {
@@ -2959,7 +2979,7 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
     setSquadSaved(false)
   }
   const saveSquadSelection = async () => {
-    await onSaveMatchSquad(weekNum, { starters, subs: benchSubs, minutes: squadData.minutes||{}, positions: startingPositions, subReplacements })
+    await onSaveMatchSquad(weekNum, { starters, subs: benchSubs, minutes: squadData.minutes||{}, positions: startingPositions, subReplacements: cleanReplacements(subReplacements, starters, benchSubs) })
     setSquadSaved(true)
     setTimeout(()=>setSquadSaved(false), 2000)
   }
@@ -3162,9 +3182,17 @@ function MatchDayNotes({ weekNum, setWeekNum, currentWeek, matchNotes, onSave, s
                                   <select value={replacingId||''} onChange={e=>setSubReplacement(p.id, e.target.value?Number(e.target.value):null)}
                                     className="flex-1 text-xs border border-blue-200 rounded-lg px-2 py-1 bg-white focus:outline-none">
                                     <option value="">-- Select player --</option>
-                                    {startersList.map(s=><option key={s.id} value={s.id}>{s.name}{s.preferred?' ('+s.preferred+')':''}</option>)}
+                                    {startersList.map(s=>{
+                                      // a starter already being replaced by a different sub can't be picked again
+                                      const takenBy = subsList.find(o=>o.id!==p.id && subReplacements[o.id]===s.id)
+                                      return <option key={s.id} value={s.id} disabled={!!takenBy}>{s.name}{s.preferred?' ('+s.preferred+')':''}{takenBy?' -- already replaced by '+takenBy.name.split(' ')[0]:''}</option>
+                                    })}
                                   </select>
                                 </div>
+                                {replacingId && (()=>{
+                                  const dup = subsList.find(o=>o.id!==p.id && subReplacements[o.id]===replacingId)
+                                  return dup ? <p className="px-2 pb-2 text-xs text-orange-600">⚠️ {dup.name.split(' ')[0]} is also set to replace this player -- pick someone else for one of them.</p> : null
+                                })()}
                               </div>
                             )
                           })}
