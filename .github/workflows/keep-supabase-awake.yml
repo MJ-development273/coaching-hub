@@ -20,17 +20,32 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
-            echo "SUPABASE_URL or SUPABASE_ANON_KEY secret is missing"
+            echo "SUPABASE_URL or SUPABASE_ANON_KEY secret is missing."
+            echo "Check Settings > Secrets and variables > Actions > the Secrets tab (not Variables), and the exact names."
             exit 1
           fi
           BASE="${SUPABASE_URL%/}"
-          if curl --fail --silent --show-error --max-time 30 \
+          case "$BASE" in
+            https://*|http://*) ;;
+            *) echo "SUPABASE_URL must start with https:// (it currently starts with: ${BASE:0:12})"; exit 1 ;;
+          esac
+          # Older anon keys are long tokens starting "eyJ" and are sent in both headers.
+          # Newer "sb_publishable_..." keys are sent in the apikey header only.
+          AUTH_ARGS=()
+          case "$SUPABASE_ANON_KEY" in
+            eyJ*) AUTH_ARGS=(-H "Authorization: Bearer $SUPABASE_ANON_KEY") ;;
+          esac
+          if ! STATUS=$(curl --silent --show-error --max-time 30 -o /tmp/response.txt -w "%{http_code}" \
             "$BASE/rest/v1/home_session?select=id&limit=1" \
-            -H "apikey: $SUPABASE_ANON_KEY" \
-            -H "Authorization: Bearer $SUPABASE_ANON_KEY"; then
-            echo
-            echo "Supabase responded OK"
+            -H "apikey: $SUPABASE_ANON_KEY" "${AUTH_ARGS[@]}"); then
+            echo "Could not reach $BASE - check the URL is exactly your Project URL, or the project may be paused."
+            exit 1
+          fi
+          if [ "$STATUS" -ge 200 ] && [ "$STATUS" -lt 300 ]; then
+            echo "Supabase responded OK (HTTP $STATUS)"
           else
-            echo "Supabase did not respond OK - the project may be paused or unreachable"
+            echo "Supabase answered HTTP $STATUS. Response:"
+            head -c 300 /tmp/response.txt
+            echo
             exit 1
           fi
